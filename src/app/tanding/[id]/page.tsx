@@ -452,13 +452,12 @@ export default function ArenaBattleMatchPage() {
         timeFormatted: "00:00",
         corner: "system",
         teamName: "ARENA SYSTEM",
-        actionLabel: `🚶 Waktu Persiapan Selesai — Sesi Peserta Kembali ke Tempat (Sesi ${activeLeg})`,
+        actionLabel: `Waktu Persiapan Selesai — Sesi Peserta Kembali ke Tempat (Sesi ${activeLeg})`,
         delta: 0,
         leg: activeLeg,
       },
       ...prev,
     ]);
-    showPointToast("🚶 Waktu Persiapan Selesai! Silakan peserta kembali ke tempat, lalu klik Mulai Hitung Mundur.", true);
   };
 
   // Mulai Hitung Mundur 3-2-1 secara manual lewat tombol setelah peserta kembali ke tempat
@@ -626,7 +625,7 @@ export default function ArenaBattleMatchPage() {
         timeFormatted: `00:${sec.toString().padStart(2, "0")}`,
         corner: "system",
         teamName: "ARENA SYSTEM",
-        actionLabel: `🚀 Waktu Persiapan Dimulai (${sec} Detik)`,
+        actionLabel: `Waktu Persiapan Dimulai (${sec} Detik)`,
         delta: 0,
         leg: activeLeg,
       },
@@ -1966,7 +1965,7 @@ export default function ArenaBattleMatchPage() {
                   : timerPhase === "prep_paused"
                   ? "WAKTU PERSIAPAN (JEDA)"
                   : timerPhase === "prep_ended"
-                  ? "🚶 SESI KEMBALI KE TEMPAT • PERSIAPAN SELESAI (00:00)"
+                  ? "SESI KEMBALI KE TEMPAT • PERSIAPAN SELESAI (00:00)"
                   : timerPhase === "countdown"
                   ? "HITUNG MUNDUR (3-2-1)"
                   : timerPhase === "match"
@@ -1997,13 +1996,6 @@ export default function ArenaBattleMatchPage() {
             </div>
           )}
 
-          {/* Banner Instruksi Khusus Sesi Kembali ke Tempat */}
-          {timerPhase === "prep_ended" && (
-            <div className="px-5 py-2.5 rounded-2xl bg-cyan-500/15 border border-cyan-400/40 text-cyan-200 font-mono text-xs sm:text-sm font-bold text-center max-w-2xl animate-in fade-in duration-200">
-              🚶 Waktu persiapan habis! Pastikan seluruh peserta sudah kembali ke tempat start masing-masing, lalu klik tombol di bawah (atau tekan <kbd className="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-200">SPASI</kbd>) untuk memulai Hitung Mundur 3-2-1.
-            </div>
-          )}
-
           {/* Timer Control Buttons - Unified Sequential Control (Persiapan -> Sesi Kembali ke Tempat -> Hitung Mundur 3-2-1 -> Pertandingan) */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             {/* Tombol Utama Tunggal Berurutan */}
@@ -2015,7 +2007,7 @@ export default function ArenaBattleMatchPage() {
                 title="Mulai Waktu Persiapan (Mario Kart TV Channel OST)"
               >
                 <Play className="w-5 h-5 fill-current" />
-                <span>🚀 Mulai Waktu Persiapan ({prepDuration}s)</span>
+                <span>Mulai Waktu Persiapan ({prepDuration}s)</span>
               </button>
             )}
 
@@ -2037,7 +2029,7 @@ export default function ArenaBattleMatchPage() {
                   title="Akhiri Waktu Persiapan & Masuk ke Sesi Kembali ke Tempat"
                 >
                   <FastForward className="w-4 h-4 text-cyan-300" />
-                  <span>🚶 Selesai Persiapan (Kembali ke Tempat)</span>
+                  <span>Selesai Persiapan (Kembali ke Tempat)</span>
                 </button>
               </>
             )}
@@ -2060,7 +2052,7 @@ export default function ArenaBattleMatchPage() {
                   title="Akhiri Waktu Persiapan & Masuk ke Sesi Kembali ke Tempat"
                 >
                   <FastForward className="w-4 h-4 text-cyan-300" />
-                  <span>🚶 Selesai Persiapan (Kembali ke Tempat)</span>
+                  <span>Selesai Persiapan (Kembali ke Tempat)</span>
                 </button>
               </>
             )}
