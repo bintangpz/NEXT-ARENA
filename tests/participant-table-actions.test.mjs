@@ -87,11 +87,21 @@ describe("Participant Table Refinements & Stage Progression Test Suite", () => {
       );
     });
 
-    it("Table action buttons include 'Lanjut ke Babak Selanjutnya'", () => {
+    it("Table action buttons include 'Lanjut ke Babak Selanjutnya' and 'Batal Lanjut'", () => {
       assert.strictEqual(
-        homeContent.includes("handleAdvanceStage(p)"),
+        homeContent.includes("handleAdvanceStage"),
         true,
         "Must have handleAdvanceStage handler"
+      );
+      assert.strictEqual(
+        homeContent.includes("handleRevertStage"),
+        true,
+        "Must have handleRevertStage handler"
+      );
+      assert.strictEqual(
+        homeContent.includes("<span>Batal Lanjut</span>"),
+        true,
+        "Must render Batal Lanjut button when advanced"
       );
       assert.strictEqual(
         homeContent.includes("Lanjut"),
@@ -100,17 +110,16 @@ describe("Participant Table Refinements & Stage Progression Test Suite", () => {
       );
     });
 
-    it("Lanjut button disappears when participant reaches the final stage", () => {
-      // Must check that if isLastStage, return null
+    it("Stage isolation prevents consecutive skips and requires opening round tab", () => {
       assert.strictEqual(
-        homeContent.includes("if (isLastStage) return null"),
+        homeContent.includes("currentIdx > tabIdx"),
         true,
-        "Lanjut button must disappear in final stage"
+        "Must detect when participant has already advanced beyond the current tab"
       );
       assert.strictEqual(
-        homeContent.includes("currentIdx >= tournamentStages.length - 1"),
+        homeContent.includes("handleRevertStage(p, tabIdx)"),
         true,
-        "Must compare current stage index with tournamentStages.length - 1"
+        "Clicking Batal Lanjut in a round tab must revert to that tab's stage"
       );
     });
   });

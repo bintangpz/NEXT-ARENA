@@ -179,8 +179,8 @@ export async function PUT(req: Request) {
       return NextResponse.json({ success: true, data: getAllArenaData() });
     }
 
-    // Mode 3: Advance Stage (Lanjut ke Babak Selanjutnya)
-    if (body.type === "advance_stage") {
+    // Mode 3: Advance Stage / Revert Stage (Lanjut / Batal Lanjut Babak)
+    if (body.type === "advance_stage" || body.type === "revert_stage") {
       const { participantId, targetStageIdx, status } = body;
       const current = db.prepare("SELECT * FROM participants WHERE id = ?").get(participantId) as any;
       if (!current) {
@@ -188,7 +188,8 @@ export async function PUT(req: Request) {
       }
 
       const stages = getStagesHelper();
-      const newIdx = targetStageIdx !== undefined ? Number(targetStageIdx) : Number(current.current_stage_idx || 0) + 1;
+      const currentIdx = Number(current.current_stage_idx || 0);
+      const newIdx = targetStageIdx !== undefined ? Number(targetStageIdx) : currentIdx + 1;
       const isLastStage = newIdx >= stages.length - 1;
       const newStatus = status || (isLastStage ? "Finalis" : "Aktif");
 
@@ -201,10 +202,13 @@ export async function PUT(req: Request) {
       const targetStageName = stages[newIdx]?.name || `Babak ${newIdx + 1}`;
       const nowIso = new Date().toISOString();
       const uniqueLogId = `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const logLabel = newIdx < currentIdx
+        ? `Batal Lolos — Kembali ke ${targetStageName}`
+        : `Lolos ke ${targetStageName}`;
       db.prepare(`
         INSERT INTO point_logs (id, participant_id, participant_name, category, delta, stage_label, timestamp)
         VALUES (?, ?, ?, ?, 0, ?, ?)
-      `).run(uniqueLogId, participantId, current.name, current.category, `Lolos ke ${targetStageName}`, nowIso);
+      `).run(uniqueLogId, participantId, current.name, current.category, logLabel, nowIso);
 
       return NextResponse.json({ success: true, data: getAllArenaData() });
     }

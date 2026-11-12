@@ -875,9 +875,9 @@ export default function NextArenaDashboard() {
   };
 
   // Handler Lanjut ke Babak Selanjutnya
-  const handleAdvanceStage = async (p: Participant) => {
+  const handleAdvanceStage = async (p: Participant, customTargetIdx?: number) => {
     const currentIdx = p.currentStageIdx ?? 0;
-    const nextIdx = currentIdx + 1;
+    const nextIdx = customTargetIdx !== undefined ? customTargetIdx : currentIdx + 1;
     if (nextIdx >= tournamentStages.length) return;
 
     const nextStage = tournamentStages[nextIdx];
@@ -911,6 +911,44 @@ export default function NextArenaDashboard() {
       }
     } catch (err) {
       console.error("Gagal advance babak:", err);
+    }
+  };
+
+  // Handler Batal Lanjut (Kembali ke Babak Sebelumnya)
+  const handleRevertStage = async (p: Participant, targetIdx: number) => {
+    if (targetIdx < 0 || targetIdx >= tournamentStages.length) return;
+
+    const targetStage = tournamentStages[targetIdx];
+    const isLast = targetIdx >= tournamentStages.length - 1;
+    const newStatus: ParticipantStatus = isLast ? "Finalis" : "Aktif";
+
+    setParticipants((prev) =>
+      prev.map((item) =>
+        item.id === p.id ? { ...item, currentStageIdx: targetIdx, status: newStatus } : item
+      )
+    );
+
+    showPointToast(`Batal Lanjut: ${p.name} kembali ke ${targetStage?.name || "Babak Sebelumnya"}`, true);
+
+    try {
+      const res = await fetch("/api/participants", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "revert_stage",
+          participantId: p.id,
+          targetStageIdx: targetIdx,
+          status: newStatus,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data?.participants) setParticipants(json.data.participants);
+        if (json.data?.pointLogs) setPointLogs(json.data.pointLogs);
+        broadcastSync("DATA_REFRESH");
+      }
+    } catch (err) {
+      console.error("Gagal revert babak:", err);
     }
   };
 
@@ -2472,20 +2510,102 @@ export default function NextArenaDashboard() {
                                     </button>
                                   )}
 
-                                  {/* Tombol Lanjut ke Babak Selanjutnya (Hilang jika sudah di babak terakhir atau status Gugur) */}
+                                   {/* Tombol Lanjut ke Babak Selanjutnya / Batal Lanjut */}
                                   {(() => {
                                     if (p.status === "Gugur") return null;
-                                    const currentIdx = p.currentStageIdx ?? 0;
-                                    const isLastStage =
-                                      tournamentStages.length === 0 ||
-                                      currentIdx >= tournamentStages.length - 1;
-                                    if (isLastStage) return null; // Sudah di babak terakhir -> tombol hilang
+                                    if (tournamentStages.length <= 1) return null;
 
-                                    const nextStage = tournamentStages[currentIdx + 1];
+                                    const currentIdx = p.currentStageIdx ?? 0;
+                                    const isSpecificTab = targetLeaderboardStageIdx !== null;
+                                    const tabIdx = isSpecificTab ? targetLeaderboardStageIdx : currentIdx;
+
+                                    // Jika sedang di tab babak tertentu (misal Babak 1, Babak 2, dst)
+                                    if (isSpecificTab) {
+                                      // Jika peserta sudah lolos melewati babak ini -> Tampilkan tombol BATAL LANJUT
+                                      if (currentIdx > tabIdx) {
+                                        return (
+                                          <button
+                                            type="button"
+                                            onClick={() => handleRevertStage(p, tabIdx)}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 hover:text-amber-200 border border-amber-500/40 hover:border-amber-500/60 shadow-sm transition-all cursor-pointer"
+                                            title={`Batalkan kelolosan (Kembali ke ${tournamentStages[tabIdx]?.name || "Babak Ini"})`}
+                                          >
+                                            <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                                            <span>Batal Lanjut</span>
+                                          </button>
+                                        );
+                                      }
+
+                                      // Jika peserta sedang di babak tab ini
+                                      if (currentIdx === tabIdx) {
+                                        const nextIdx = tabIdx + 1;
+                                        const hasNextStage = nextIdx < tournamentStages.length;
+                                        
+                                        // Jika ada babak berikutnya -> Tampilkan tombol Lanjut ke Babak Selanjutnya
+                                        if (hasNextStage) {
+                                          const nextStage = tournamentStages[nextIdx];
+                                          return (
+                                            <button
+                                              type="button"
+                                              onClick={() => handleAdvanceStage(p, nextIdx)}
+                                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 hover:text-emerald-200 border border-emerald-500/40 hover:border-emerald-500/60 shadow-sm transition-all cursor-pointer"
+                                              title={`Loloskan ke ${nextStage?.name || "Babak Selanjutnya"}`}
+                                            >
+                                              <ArrowRight className="w-3.5 h-3.5 text-emerald-400" />
+                                              <span>
+                                                Lanjut {nextStage?.name ? nextStage.name : "ke Babak Selanjutnya"}
+                                              </span>
+                                            </button>
+                                          );
+                                        }
+
+                                        // Jika sudah di babak terakhir dan bukan babak pertama -> bisa Batal Lanjut ke babak sebelumnya
+                                        if (tabIdx > 0) {
+                                          return (
+                                            <button
+                                              type="button"
+                                              onClick={() => handleRevertStage(p, tabIdx - 1)}
+                                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 hover:text-amber-200 border border-amber-500/40 hover:border-amber-500/60 shadow-sm transition-all cursor-pointer"
+                                              title={`Batalkan kelolosan Final (Kembali ke ${tournamentStages[tabIdx - 1]?.name || "Babak Sebelumnya"})`}
+                                            >
+                                              <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                                              <span>Batal Lanjut</span>
+                                            </button>
+                                          );
+                                        }
+
+                                        return null;
+                                      }
+
+                                      // Peserta belum sampai babak tab ini
+                                      return null;
+                                    }
+
+                                    // Tab "Semua Babak":
+                                    // Jika peserta sudah lolos ke babak > 0 -> Batal Lanjut (mundur 1 babak)
+                                    // Untuk lanjut ke babak selanjutnya lagi, buka tab babak terkait
+                                    if (currentIdx > 0) {
+                                      const prevIdx = currentIdx - 1;
+                                      return (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRevertStage(p, prevIdx)}
+                                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 hover:text-amber-200 border border-amber-500/40 hover:border-amber-500/60 shadow-sm transition-all cursor-pointer"
+                                          title={`Batalkan kelolosan ke ${tournamentStages[currentIdx]?.name} (Kembali ke ${tournamentStages[prevIdx]?.name || "Babak Sebelumnya"})`}
+                                        >
+                                          <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                                          <span>Batal Lanjut</span>
+                                        </button>
+                                      );
+                                    }
+
+                                    // Jika masih di Babak 1 (currentIdx === 0)
+                                    const nextStage = tournamentStages[1];
+                                    if (!nextStage) return null;
                                     return (
                                       <button
                                         type="button"
-                                        onClick={() => handleAdvanceStage(p)}
+                                        onClick={() => handleAdvanceStage(p, 1)}
                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 hover:text-emerald-200 border border-emerald-500/40 hover:border-emerald-500/60 shadow-sm transition-all cursor-pointer"
                                         title={`Loloskan ke ${nextStage?.name || "Babak Selanjutnya"}`}
                                       >
