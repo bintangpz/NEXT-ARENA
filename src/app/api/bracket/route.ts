@@ -419,11 +419,82 @@ export async function POST(req: Request) {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
-    if (requestedRound.includes("8 Besar")) {
+    const stages = getStagesHelper();
+    const stageIdx = stages.findIndex((s) => s.name === requestedRound);
+
+    // Cek apakah ada tim yang diloloskan secara spesifik ke babak ini (current_stage_idx >= stageIdx)
+    let qualifiedForRound: any[] = [];
+    if (stageIdx > 0) {
+      qualifiedForRound = db
+        .prepare(`
+          SELECT * FROM participants
+          WHERE (current_stage_idx >= ? OR (current_stage_idx IS NULL AND ? = 0))
+            AND (status IS NULL OR status != 'Gugur')
+          ORDER BY total_points DESC, rowid ASC
+        `)
+        .all(stageIdx, stageIdx) as any[];
+    }
+
+    if (stageIdx > 0 && qualifiedForRound.length >= 2) {
+      // Prioritaskan peserta yang telah diloloskan oleh operator melalui tombol Lanjut Babak!
+      const participants = qualifiedForRound;
+
+      // Hapus laga babak ini sebelumnya
+      db.prepare("DELETE FROM bracket_matches WHERE round = ?").run(requestedRound);
+
+      // Acak urutan tim untuk duel tanding
+      const shuffled = shuffleArray(participants);
+      const category = participants[0]?.category || "Transporter SMP";
+      const roundSlug = requestedRound
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      for (let i = 0; i < shuffled.length; i += 2) {
+        const teamA = shuffled[i];
+        const teamB = shuffled[i + 1];
+        const matchNum = Math.floor(i / 2) + 1;
+        const matchId = `m-${roundSlug}-${matchNum}`;
+        const matchLabel = `Laga ${String(matchNum).padStart(2, "0")}`;
+
+        if (teamB) {
+          insertMatch.run(
+            matchId,
+            requestedRound,
+            matchLabel,
+            category,
+            teamA.name,
+            teamA.code || teamA.id,
+            0,
+            teamB.name,
+            teamB.code || teamB.id,
+            0,
+            "Siap Tanding",
+            null
+          );
+        } else {
+          insertMatch.run(
+            matchId,
+            requestedRound,
+            matchLabel,
+            category,
+            teamA.name,
+            teamA.code || teamA.id,
+            0,
+            "- (Tanding Tunggal)",
+            "-",
+            0,
+            "Siap Tanding",
+            null
+          );
+        }
+      }
+    } else if (requestedRound.includes("8 Besar")) {
       const ok = generate8BesarMatches();
       if (!ok) {
         return NextResponse.json(
-          { error: "Dibutuhkan minimal 2 tim dengan skor ranking untuk membuat Babak 8 Besar" },
+          { error: `Dibutuhkan minimal 2 tim yang lolos ke ${requestedRound} untuk membuat jadwal tanding` },
           { status: 400 }
         );
       }
@@ -431,7 +502,7 @@ export async function POST(req: Request) {
       const ok = generateSemifinalMatches();
       if (!ok) {
         return NextResponse.json(
-          { error: "Dibutuhkan minimal 2 tim untuk membuat Babak Semifinal" },
+          { error: `Dibutuhkan minimal 2 tim yang lolos ke ${requestedRound} untuk membuat jadwal tanding` },
           { status: 400 }
         );
       }
@@ -439,14 +510,25 @@ export async function POST(req: Request) {
       const ok = generateFinalMatches();
       if (!ok) {
         return NextResponse.json(
-          { error: "Dibutuhkan minimal 2 tim untuk membuat Babak Final" },
+          { error: `Dibutuhkan minimal 2 tim yang lolos ke ${requestedRound} untuk membuat jadwal tanding` },
           { status: 400 }
         );
       }
     } else {
-      // Babak Penyisihan atau Babak Kustom Baru yang ditambahkan manual
+      // Babak 1 atau babak penyisihan
+      if (stageIdx > 0) {
+        return NextResponse.json(
+          { error: `Dibutuhkan minimal 2 tim yang dinyatakan lolos ke ${requestedRound} (Saat ini baru ${qualifiedForRound.length} tim). Buka tab Daftar Peserta & Klasemen untuk meloloskan tim.` },
+          { status: 400 }
+        );
+      }
+
       let participants = db
-        .prepare("SELECT * FROM participants ORDER BY total_points DESC, rowid ASC")
+        .prepare(`
+          SELECT * FROM participants
+          WHERE (status IS NULL OR status != 'Gugur')
+          ORDER BY total_points DESC, rowid ASC
+        `)
         .all() as any[];
 
       if (participants.length < 2) {

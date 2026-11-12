@@ -89,7 +89,7 @@ export default function NextArenaDashboard() {
   const [categories, setCategories] = useState<CompetitionCategory[]>(DEFAULT_CATEGORIES);
   const [pointLogs, setPointLogs] = useState<PointLog[]>([]);
   const [bracketMatches, setBracketMatches] = useState<BracketMatch[]>([]);
-  const [selectedBracketRound, setSelectedBracketRound] = useState<string>("Babak Penyisihan");
+  const [selectedBracketRound, setSelectedBracketRound] = useState<string>(() => DEFAULT_TOURNAMENT_STAGES[0]?.name || "Babak 1");
   const [shutterMatch, setShutterMatch] = useState<BracketMatch | null>(null);
   const [announcement, setAnnouncement] = useState<string>(
     "🔥 LIVE ARENA: Babak 3 Grand Final sedang berlangsung! Selamat bertanding seluruh tim finalis."
@@ -156,6 +156,20 @@ export default function NextArenaDashboard() {
     if (target.includes("Final")) return roundMatchTurns["Babak Final"] || roundMatchTurns["Babak Semifinal"] || "1x";
     return matchTurns || "1x";
   };
+
+  const currentBracketStageIdx = useMemo(() => {
+    const idx = tournamentStages.findIndex((s) => s.name === selectedBracketRound);
+    return idx >= 0 ? idx : 0;
+  }, [tournamentStages, selectedBracketRound]);
+
+  const qualifiedBracketParticipants = useMemo(() => {
+    if (currentBracketStageIdx === 0) {
+      return participants.filter((p) => p.status !== "Gugur");
+    }
+    return participants.filter(
+      (p) => (p.currentStageIdx ?? 0) >= currentBracketStageIdx && p.status !== "Gugur"
+    );
+  }, [participants, currentBracketStageIdx]);
   const [timerMode, setTimerMode] = useState<string>("stopwatch");
   const [timerPhase, setTimerPhase] = useState<"idle" | "preparation" | "prep_ended" | "countdown" | "match" | "paused" | "finished">("idle");
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
@@ -349,11 +363,14 @@ export default function NextArenaDashboard() {
     if (s.tournament_stages) {
       try {
         const parsed = typeof s.tournament_stages === "string" ? JSON.parse(s.tournament_stages) : s.tournament_stages;
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           setTournamentStages(parsed);
-          if (parsed.length > 0 && !parsed.some((st: any) => st.name === selectedBracketRound)) {
-            setSelectedBracketRound(parsed[0].name);
-          }
+          setSelectedBracketRound((prev) => {
+            if (prev && parsed.some((st: any) => st.name === prev)) {
+              return prev;
+            }
+            return parsed[0]?.name || prev;
+          });
         }
       } catch (e) {}
     }
@@ -2755,29 +2772,89 @@ export default function NextArenaDashboard() {
 
               if (currentMatches.length === 0) {
                 return (
-                  <div className="py-16 text-center rounded-2xl bg-[#121216]/95 border border-zinc-800/90 p-8 space-y-4 shadow-xl">
+                  <div className="py-12 text-center rounded-2xl bg-[#121216]/95 border border-zinc-800/90 p-6 sm:p-8 space-y-6 shadow-xl">
                     <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 mx-auto">
                       <GitBranch className="w-8 h-8" />
                     </div>
                     <div className="space-y-1">
                       <p className="text-lg font-bold text-white">Belum Ada Jadwal Laga ({selectedBracketRound})</p>
                       <p className="text-xs text-zinc-400 max-w-md mx-auto">
-                        Jadwal dan bagan pertandingan dikelola melalui menu Pengaturan Turnamen.
+                        Jadwal pertandingan diacak dan dikelola melalui menu Pengaturan Turnamen.
                       </p>
                     </div>
-                    <Link
-                      href="/pengaturan"
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
-                    >
-                      <Settings className="w-4 h-4 text-orange-400" />
-                      <span>Buka Pengaturan Bagan</span>
-                    </Link>
+
+                    {/* Daftar Tim Lolos ke Babak Ini */}
+                    {qualifiedBracketParticipants.length > 0 ? (
+                      <div className="max-w-4xl mx-auto pt-2 text-left">
+                        <div className="flex items-center justify-between pb-2 border-b border-zinc-800 text-xs font-mono">
+                          <span className="text-orange-400 font-bold uppercase tracking-wider">
+                            Daftar Tim Lolos ke {selectedBracketRound} ({qualifiedBracketParticipants.length} Tim):
+                          </span>
+                          <span className="text-zinc-500 text-[11px]">
+                            Menunggu Jadwal Diacak di Pengaturan
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-3">
+                          {qualifiedBracketParticipants.map((p, idx) => (
+                            <div
+                              key={p.id}
+                              className="p-3.5 rounded-xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-between shadow-sm"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <span className="w-6 h-6 rounded-lg bg-orange-500/15 text-orange-400 font-mono text-xs font-bold flex items-center justify-center shrink-0">
+                                  {idx + 1}
+                                </span>
+                                <div className="truncate">
+                                  <p className="font-bold text-white text-xs truncate">{p.name}</p>
+                                  <p className="text-[10px] text-zinc-400 truncate">{p.institution}</p>
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">
+                                Lolos
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800/80 max-w-md mx-auto">
+                        <p className="text-xs text-zinc-400">
+                          Belum ada peserta yang dinyatakan lolos ke {selectedBracketRound}. Buka tab <strong>Daftar Peserta &amp; Klasemen</strong> untuk meloloskan tim.
+                        </p>
+                      </div>
+                    )}
+
+                    <div>
+                      <Link
+                        href="/pengaturan"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+                      >
+                        <Settings className="w-4 h-4 text-orange-400" />
+                        <span>Buka Pengaturan Bagan</span>
+                      </Link>
+                    </div>
                   </div>
                 );
               }
 
               return (
                 <div className="space-y-4">
+                  {/* Summary Header Pill */}
+                  <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800/80 text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="font-bold text-white">
+                        {selectedBracketRound}:
+                      </span>
+                      <span className="text-zinc-400">
+                        {qualifiedBracketParticipants.length} Tim Lolos
+                      </span>
+                    </div>
+                    <span className="font-mono text-orange-400 font-bold">
+                      {currentMatches.length} Laga Terjadwal
+                    </span>
+                  </div>
+
                   {currentMatches.map((match) => {
                     const instA = participants.find((p) => p.name === match.teamA)?.institution;
                     const instB = participants.find((p) => p.name === match.teamB)?.institution;

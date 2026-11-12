@@ -212,4 +212,40 @@ describe("Bracket Tab Refinements & Round Synchronization Test Suite", () => {
       assert.strictEqual(homeContent.includes("Belum Ada Babak Perlombaan"), true);
     });
   });
+
+  describe("Requirement 6: Round Tab Isolation & Qualified Participants in Subsequent Rounds", () => {
+    it("Home and Pengaturan use functional state updater to prevent tab bounce-back", () => {
+      assert.strictEqual(
+        homeContent.includes("setSelectedBracketRound((prev) =>"),
+        true,
+        "Home must use functional updater for selectedBracketRound"
+      );
+      assert.strictEqual(
+        pengaturanContent.includes("setSelectedBracketRound((prev) =>"),
+        true,
+        "Pengaturan must use functional updater for selectedBracketRound"
+      );
+    });
+
+    it("Home and Pengaturan compute qualified participants for the selected round", () => {
+      assert.strictEqual(
+        homeContent.includes("qualifiedBracketParticipants"),
+        true,
+        "Home must compute qualifiedBracketParticipants"
+      );
+      assert.strictEqual(
+        pengaturanContent.includes("qualifiedBracketParticipants"),
+        true,
+        "Pengaturan must compute qualifiedBracketParticipants"
+      );
+    });
+
+    it("API route filters participants by current_stage_idx when generating subsequent round matches", () => {
+      assert.strictEqual(
+        apiRouteContent.includes("current_stage_idx >= ?"),
+        true,
+        "API must query participants with current_stage_idx >= stageIdx"
+      );
+    });
+  });
 });
