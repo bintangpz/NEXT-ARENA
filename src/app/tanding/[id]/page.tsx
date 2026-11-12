@@ -2012,49 +2012,27 @@ export default function ArenaBattleMatchPage() {
             )}
 
             {timerPhase === "preparation" && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleMainAction}
-                  className="px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-sm sm:text-base flex items-center gap-2.5 transition-all shadow-xl shadow-amber-500/25 cursor-pointer"
-                  title="Jeda Waktu Persiapan"
-                >
-                  <Pause className="w-5 h-5 fill-current" />
-                  <span>⏸️ Jeda Persiapan</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handlePrepCompleted}
-                  className="px-5 py-3.5 rounded-2xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 text-cyan-200 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer"
-                  title="Akhiri Waktu Persiapan & Masuk ke Sesi Kembali ke Tempat"
-                >
-                  <FastForward className="w-4 h-4 text-cyan-300" />
-                  <span>Selesai Persiapan (Kembali ke Tempat)</span>
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={handleMainAction}
+                className="px-8 py-3.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-sm sm:text-base flex items-center gap-2.5 transition-all shadow-xl shadow-amber-500/25 cursor-pointer"
+                title="Jeda Waktu Persiapan"
+              >
+                <Pause className="w-5 h-5 fill-current" />
+                <span>Jeda Persiapan</span>
+              </button>
             )}
 
             {timerPhase === "prep_paused" && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleMainAction}
-                  className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-zinc-950 hover:brightness-110 font-black text-sm sm:text-base flex items-center gap-2.5 transition-all shadow-xl shadow-amber-500/25 cursor-pointer"
-                  title="Lanjutkan Waktu Persiapan"
-                >
-                  <Play className="w-5 h-5 fill-current" />
-                  <span>▶️ Lanjutkan Persiapan</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handlePrepCompleted}
-                  className="px-5 py-3.5 rounded-2xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/50 text-cyan-200 font-bold text-xs sm:text-sm flex items-center gap-2 transition-all cursor-pointer"
-                  title="Akhiri Waktu Persiapan & Masuk ke Sesi Kembali ke Tempat"
-                >
-                  <FastForward className="w-4 h-4 text-cyan-300" />
-                  <span>Selesai Persiapan (Kembali ke Tempat)</span>
-                </button>
-              </>
+              <button
+                type="button"
+                onClick={handleMainAction}
+                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-zinc-950 hover:brightness-110 font-black text-sm sm:text-base flex items-center gap-2.5 transition-all shadow-xl shadow-amber-500/25 cursor-pointer"
+                title="Lanjutkan Waktu Persiapan"
+              >
+                <Play className="w-5 h-5 fill-current" />
+                <span>Lanjutkan Persiapan</span>
+              </button>
             )}
 
             {timerPhase === "prep_ended" && (
@@ -2065,7 +2043,7 @@ export default function ArenaBattleMatchPage() {
                 title="Klik setelah peserta kembali ke tempat untuk memulai Hitung Mundur 3-2-1"
               >
                 <Play className="w-5 h-5 fill-current" />
-                <span>⏱️ Peserta Sudah di Tempat — Mulai Hitung Mundur (3-2-1) ➔</span>
+                <span>Peserta Sudah di Tempat — Mulai Hitung Mundur (3-2-1) ➔</span>
               </button>
             )}
 
@@ -2076,7 +2054,7 @@ export default function ArenaBattleMatchPage() {
                 className="px-8 py-3.5 rounded-2xl bg-orange-500/25 border border-orange-500/50 text-orange-300 font-black text-sm sm:text-base flex items-center gap-2.5 shadow-lg opacity-90 cursor-not-allowed animate-pulse"
               >
                 <FastForward className="w-5 h-5 text-orange-400" />
-                <span>⏱️ Bersiap! Pertandingan Segera Mulai...</span>
+                <span>Bersiap! Pertandingan Segera Mulai...</span>
               </button>
             )}
 
@@ -2088,7 +2066,7 @@ export default function ArenaBattleMatchPage() {
                 title="Jeda Pertandingan"
               >
                 <Pause className="w-5 h-5 fill-current" />
-                <span>⏸️ Jeda Pertandingan</span>
+                <span>Jeda Pertandingan</span>
               </button>
             )}
 
@@ -2100,7 +2078,7 @@ export default function ArenaBattleMatchPage() {
                 title="Lanjutkan Pertandingan"
               >
                 <Play className="w-5 h-5 fill-current" />
-                <span>▶️ Lanjutkan Pertandingan</span>
+                <span>Lanjutkan Pertandingan</span>
               </button>
             )}
 

@@ -125,5 +125,59 @@ describe("Arena Battle Screen Refinements Test Suite", () => {
       );
     });
   });
+
+  describe("Requirement 5: Preparation Controls Clean-up (No Skip & No Double Icons)", () => {
+    it("Does NOT contain 'Selesai Persiapan (Kembali ke Tempat)' button", () => {
+      assert.strictEqual(
+        tandingContent.includes("Selesai Persiapan (Kembali ke Tempat)"),
+        false,
+        "Preparation time cannot be skipped"
+      );
+    });
+
+    it("Jeda Persiapan does NOT contain duplicate ⏸️ emoji", () => {
+      assert.strictEqual(
+        tandingContent.includes("<span>Jeda Persiapan</span>"),
+        true,
+        "Must contain clean 'Jeda Persiapan' label"
+      );
+      assert.strictEqual(
+        tandingContent.includes("⏸️ Jeda Persiapan"),
+        false,
+        "Must not contain duplicate ⏸️ emoji"
+      );
+    });
+
+    it("Lanjutkan Persiapan does NOT contain duplicate ▶️ emoji", () => {
+      assert.strictEqual(
+        tandingContent.includes("<span>Lanjutkan Persiapan</span>"),
+        true,
+        "Must contain clean 'Lanjutkan Persiapan' label"
+      );
+      assert.strictEqual(
+        tandingContent.includes("▶️ Lanjutkan Persiapan"),
+        false,
+        "Must not contain duplicate ▶️ emoji"
+      );
+    });
+
+    it("Preparation notifications and emojis are completely removed", () => {
+      assert.strictEqual(
+        tandingContent.includes("Waktu persiapan habis! Pastikan seluruh peserta"),
+        false,
+        "Blue preparation ended banner must be removed"
+      );
+      assert.strictEqual(
+        tandingContent.includes("🚀"),
+        false,
+        "Rocket emoji must be removed"
+      );
+      assert.strictEqual(
+        tandingContent.includes("🚶"),
+        false,
+        "Walking person emoji must be removed"
+      );
+    });
+  });
 });
 
