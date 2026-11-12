@@ -179,5 +179,28 @@ describe("Arena Battle Screen Refinements Test Suite", () => {
       );
     });
   });
+
+  describe("Requirement 6: Start Match Button Replacement (Replaces Peserta Sudah di Tempat)", () => {
+    it("Does NOT contain 'Peserta Sudah di Tempat' button label", () => {
+      assert.strictEqual(
+        tandingContent.includes("Peserta Sudah di Tempat"),
+        false,
+        "'Peserta Sudah di Tempat' button must be replaced"
+      );
+    });
+
+    it("Replaced with 'Mulai Pertandingan' button that triggers countdown", () => {
+      assert.strictEqual(
+        tandingContent.includes("<span>Mulai Pertandingan</span>"),
+        true,
+        "Must contain 'Mulai Pertandingan' button label"
+      );
+      assert.strictEqual(
+        tandingContent.includes('title="Mulai Pertandingan (Langsung Hitung Mundur 3-2-1)"'),
+        true,
+        "Button title must reflect direct countdown action"
+      );
+    });
+  });
 });
 

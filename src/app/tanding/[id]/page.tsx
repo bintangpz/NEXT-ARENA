@@ -452,7 +452,7 @@ export default function ArenaBattleMatchPage() {
         timeFormatted: "00:00",
         corner: "system",
         teamName: "ARENA SYSTEM",
-        actionLabel: `Waktu Persiapan Selesai — Sesi Peserta Kembali ke Tempat (Sesi ${activeLeg})`,
+        actionLabel: `Waktu Persiapan Selesai — Siap Mulai Pertandingan (Sesi ${activeLeg})`,
         delta: 0,
         leg: activeLeg,
       },
@@ -1965,7 +1965,7 @@ export default function ArenaBattleMatchPage() {
                   : timerPhase === "prep_paused"
                   ? "WAKTU PERSIAPAN (JEDA)"
                   : timerPhase === "prep_ended"
-                  ? "SESI KEMBALI KE TEMPAT • PERSIAPAN SELESAI (00:00)"
+                  ? "PERSIAPAN SELESAI • SIAP MULAI PERTANDINGAN"
                   : timerPhase === "countdown"
                   ? "HITUNG MUNDUR (3-2-1)"
                   : timerPhase === "match"
@@ -2039,11 +2039,11 @@ export default function ArenaBattleMatchPage() {
               <button
                 type="button"
                 onClick={handleMainAction}
-                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-400 text-zinc-950 hover:brightness-110 font-black text-sm sm:text-base flex items-center gap-2.5 transition-all shadow-2xl shadow-cyan-500/30 cursor-pointer transform hover:scale-[1.03] active:scale-[0.98] ring-2 ring-cyan-300/60"
-                title="Klik setelah peserta kembali ke tempat untuk memulai Hitung Mundur 3-2-1"
+                className="px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 text-zinc-950 hover:brightness-110 font-black text-sm sm:text-base flex items-center gap-2.5 transition-all shadow-2xl shadow-emerald-500/30 cursor-pointer transform hover:scale-[1.03] active:scale-[0.98] ring-2 ring-emerald-300/60"
+                title="Mulai Pertandingan (Langsung Hitung Mundur 3-2-1)"
               >
                 <Play className="w-5 h-5 fill-current" />
-                <span>Peserta Sudah di Tempat — Mulai Hitung Mundur (3-2-1) ➔</span>
+                <span>Mulai Pertandingan</span>
               </button>
             )}
 
