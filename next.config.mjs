@@ -9,6 +9,7 @@ if (nodeMajor < 22) {
 }
 
 const nextConfig = {
+  turbopack: {},
   serverExternalPackages: ["better-sqlite3"],
   webpack: (config, { isServer }) => {
     if (isServer) {
