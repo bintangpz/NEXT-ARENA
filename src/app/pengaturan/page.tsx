@@ -89,6 +89,7 @@ export default function PengaturanPage() {
   const [selectedBracketRound, setSelectedBracketRound] = useState<string>(() => DEFAULT_TOURNAMENT_STAGES[0]?.name || "Babak 1");
   const [isGeneratingBracket, setIsGeneratingBracket] = useState<boolean>(false);
   const [showResetBracketModal, setShowResetBracketModal] = useState<boolean>(false);
+  const [showResetRoundModal, setShowResetRoundModal] = useState<boolean>(false);
   const [shutterMatch, setShutterMatch] = useState<BracketMatch | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string>("");
@@ -780,7 +781,7 @@ export default function PengaturanPage() {
       }
 
       // Check if modal is open
-      if (isPointRuleModalOpen || showResetBracketModal) return;
+      if (isPointRuleModalOpen || showResetBracketModal || showResetRoundModal) return;
 
       const pressedKey = e.key.toUpperCase();
 
@@ -844,7 +845,7 @@ export default function PengaturanPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [bracketMatches, customPointRules, selectedBracketRound, isPointRuleModalOpen, showResetBracketModal, matchTurns, roundMatchTurns]);
+  }, [bracketMatches, customPointRules, selectedBracketRound, isPointRuleModalOpen, showResetBracketModal, showResetRoundModal, matchTurns, roundMatchTurns]);
 
   // Save Settings to SQLite
   const saveSettings = async (customPayload?: Record<string, any>) => {
@@ -1253,6 +1254,31 @@ export default function PengaturanPage() {
       showNotification("Gagal me-reset poin");
     } finally {
       setShowResetBracketModal(false);
+    }
+  };
+
+  const handleResetRound = async () => {
+    try {
+      const res = await fetch("/api/bracket?action=reset_babak", { method: "DELETE" });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data?.bracketMatches) setBracketMatches(json.data.bracketMatches);
+        if (json.data?.participants) setParticipants(json.data.participants);
+        if (json.data?.pointLogs) setPointLogs(json.data.pointLogs);
+        if (tournamentStages.length > 0) {
+          setSelectedBracketRound(tournamentStages[0].name);
+        }
+        broadcastSync("DATA_REFRESH");
+        showNotification("Seluruh peserta telah dikembalikan ke babak pertama dan laga babak lanjutan telah dikosongkan!");
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        showNotification(errJson.error || "Gagal me-reset babak");
+      }
+    } catch (err) {
+      console.error("Gagal reset babak:", err);
+      showNotification("Gagal me-reset babak");
+    } finally {
+      setShowResetRoundModal(false);
     }
   };
 
@@ -2575,8 +2601,18 @@ export default function PengaturanPage() {
                   </p>
                 </div>
 
-                {/* Right Action: Reset Poin */}
+                {/* Right Action: Reset Babak & Reset Poin */}
                 <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowResetRoundModal(true)}
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-white text-xs font-bold transition-all cursor-pointer shadow-sm"
+                    title="Kembalikan semua peserta ke babak pertama dan kosongkan laga babak 2 dan seterusnya"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Reset Babak</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => setShowResetBracketModal(true)}
@@ -5074,6 +5110,19 @@ export default function PengaturanPage() {
           confirmText="Ya, Reset Poin ke 0"
           cancelText="Batal"
           variant="danger"
+        />
+
+        {/* MODAL KONFIRMASI RESET BABAK TURNAMEN */}
+        <ConfirmModal
+          isOpen={showResetRoundModal}
+          onClose={() => setShowResetRoundModal(false)}
+          onConfirm={handleResetRound}
+          title="Reset Babak ke Babak Pertama?"
+          message="Seluruh peserta akan dikembalikan ke babak pertama (Babak 1), dan jadwal laga di Babak 2 serta seterusnya akan dikosongkan."
+          subMessage="Peserta yang sebelumnya gugur akan diaktifkan kembali di Babak 1. Jadwal tanding Babak 1 tetap tersimpan."
+          confirmText="Ya, Reset ke Babak 1"
+          cancelText="Batal"
+          variant="warning"
         />
 
         {/* MODAL TAMBAH / EDIT BABAK */}

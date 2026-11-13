@@ -640,6 +640,50 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ success: true, data: getAllArenaData() });
     }
 
+    // Reset babak turnamen:
+    // - Kembalikan seluruh peserta ke babak pertama (current_stage_idx = 0, status = 'Aktif')
+    // - Hapus seluruh jadwal laga babak 2, babak 3, dst (babak 2 dst jadi kosong lagi)
+    if (action === "reset_babak" || action === "reset_stages" || action === "reset_round") {
+      const stages = getStagesHelper();
+      const firstStageName = stages[0]?.name || "Babak 1";
+      const firstStageId = stages[0]?.id || "babak1";
+
+      // 1. Cari dan bersihkan log poin laga babak 2 dst yang akan dihapus
+      const matchesToDelete = db
+        .prepare(`
+          SELECT id, match_label FROM bracket_matches
+          WHERE round != ? AND round != ?
+        `)
+        .all(firstStageName, firstStageId) as any[];
+
+      for (const m of matchesToDelete) {
+        db.prepare(`
+          DELETE FROM point_logs
+          WHERE stage_label LIKE '%' || ? || '%' OR stage_label LIKE '%' || ? || '%'
+        `).run(m.match_label, m.id);
+      }
+
+      // Hapus seluruh laga babak 2 dst
+      db.prepare(`
+        DELETE FROM bracket_matches
+        WHERE round != ? AND round != ?
+      `).run(firstStageName, firstStageId);
+
+      // 2. Kembalikan seluruh peserta ke babak pertama (current_stage_idx = 0, status = 'Aktif')
+      // Bersihkan perolehan babak 2 & babak 3 dan sesuaikan total_points ke babak 1
+      db.prepare(`
+        UPDATE participants
+        SET current_stage_idx = 0,
+            status = 'Aktif',
+            babak2 = 0,
+            babak3 = 0,
+            total_points = COALESCE(babak1, 0),
+            last_updated = 'Baru saja'
+      `).run();
+
+      return NextResponse.json({ success: true, data: getAllArenaData() });
+    }
+
     if (matchId) {
       const match = db.prepare("SELECT * FROM bracket_matches WHERE id = ?").get(matchId) as any;
       if (match) {

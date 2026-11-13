@@ -248,4 +248,144 @@ describe("Bracket Tab Refinements & Round Synchronization Test Suite", () => {
       );
     });
   });
+
+  describe("Requirement 7: Reset Babak (Semua Kembali ke Babak Pertama & Babak 2 dst Kosong)", () => {
+    it("Pengaturan page has 'Reset Babak' button and confirmation modal", () => {
+      assert.strictEqual(
+        pengaturanContent.includes("Reset Babak"),
+        true,
+        "Pengaturan must contain 'Reset Babak' button"
+      );
+      assert.strictEqual(
+        pengaturanContent.includes("showResetRoundModal"),
+        true,
+        "Pengaturan must have showResetRoundModal state"
+      );
+      assert.strictEqual(
+        pengaturanContent.includes("handleResetRound"),
+        true,
+        "Pengaturan must define handleResetRound handler"
+      );
+    });
+
+    it("Home page (Dashboard monitoring) does not contain 'Reset Babak' button (only in Pengaturan)", () => {
+      assert.strictEqual(
+        homeContent.includes("<span>Reset Babak</span>"),
+        false,
+        "Dashboard monitoring should not have Reset Babak button"
+      );
+    });
+
+    it("API route handles action=reset_babak and deletes subsequent round matches while returning participants to stage 0", () => {
+      assert.strictEqual(
+        apiRouteContent.includes('action === "reset_babak"'),
+        true,
+        "API must check for action === 'reset_babak'"
+      );
+      assert.strictEqual(
+        apiRouteContent.includes("DELETE FROM bracket_matches"),
+        true,
+        "API must delete bracket matches for subsequent rounds"
+      );
+      assert.strictEqual(
+        apiRouteContent.includes("current_stage_idx = 0"),
+        true,
+        "API must set participants' current_stage_idx to 0"
+      );
+      assert.strictEqual(
+        apiRouteContent.includes("status = 'Aktif'"),
+        true,
+        "API must reset participants' status to 'Aktif'"
+      );
+    });
+
+    it("Database reset_babak logic executes correctly against mock database", () => {
+      const memDb = new Database(":memory:");
+      memDb.exec(`
+        CREATE TABLE participants (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          status TEXT DEFAULT 'Aktif',
+          current_stage_idx INTEGER DEFAULT 0,
+          babak1 REAL DEFAULT 0,
+          babak2 REAL DEFAULT 0,
+          babak3 REAL DEFAULT 0,
+          total_points REAL DEFAULT 0
+        );
+        CREATE TABLE bracket_matches (
+          id TEXT PRIMARY KEY,
+          round TEXT,
+          match_label TEXT,
+          score_a REAL DEFAULT 0,
+          score_b REAL DEFAULT 0,
+          status TEXT DEFAULT 'Siap Tanding'
+        );
+        CREATE TABLE point_logs (
+          id TEXT PRIMARY KEY,
+          stage_label TEXT
+        );
+
+        INSERT INTO participants (id, name, status, current_stage_idx, babak1, babak2, babak3, total_points)
+        VALUES
+          ('p1', 'Tim Alpha', 'Aktif', 1, 100, 80, 0, 180),
+          ('p2', 'Tim Beta', 'Gugur', 0, 50, 0, 0, 50),
+          ('p3', 'Tim Gamma', 'Aktif', 2, 90, 85, 95, 270);
+
+        INSERT INTO bracket_matches (id, round, match_label)
+        VALUES
+          ('m1', 'Babak 1', 'Laga 01'),
+          ('m2', 'Babak 1', 'Laga 02'),
+          ('m3', 'Babak 2', 'Laga 01'),
+          ('m4', 'Babak 3', 'Laga 01');
+
+        INSERT INTO point_logs (id, stage_label)
+        VALUES
+          ('l1', '+10 Poin (Laga 01 P1)'),
+          ('l2', '+15 Poin (m3 P1)');
+      `);
+
+      const firstStageName = "Babak 1";
+      const firstStageId = "babak1";
+
+      // 1. Delete matches not in first round
+      const matchesToDelete = memDb
+        .prepare("SELECT id, match_label FROM bracket_matches WHERE round != ? AND round != ?")
+        .all(firstStageName, firstStageId);
+
+      for (const m of matchesToDelete) {
+        memDb.prepare(`
+          DELETE FROM point_logs
+          WHERE stage_label LIKE '%' || ? || '%' OR stage_label LIKE '%' || ? || '%'
+        `).run(m.match_label, m.id);
+      }
+
+      memDb.prepare("DELETE FROM bracket_matches WHERE round != ? AND round != ?").run(firstStageName, firstStageId);
+
+      // 2. Reset participants to stage 0
+      memDb.prepare(`
+        UPDATE participants
+        SET current_stage_idx = 0,
+            status = 'Aktif',
+            babak2 = 0,
+            babak3 = 0,
+            total_points = COALESCE(babak1, 0)
+      `).run();
+
+      // Assertions
+      const remainingMatches = memDb.prepare("SELECT * FROM bracket_matches").all();
+      assert.strictEqual(remainingMatches.length, 2, "Only Babak 1 matches should remain");
+      assert.strictEqual(remainingMatches.every((m) => m.round === "Babak 1"), true);
+
+      const allParticipants = memDb.prepare("SELECT * FROM participants").all();
+      for (const p of allParticipants) {
+        assert.strictEqual(p.current_stage_idx, 0, `Participant ${p.name} must be in stage 0`);
+        assert.strictEqual(p.status, "Aktif", `Participant ${p.name} status must be Aktif`);
+        assert.strictEqual(p.babak2, 0, `Participant ${p.name} babak2 score must be 0`);
+        assert.strictEqual(p.babak3, 0, `Participant ${p.name} babak3 score must be 0`);
+        assert.strictEqual(p.total_points, p.babak1, `Participant ${p.name} total_points must equal babak1`);
+      }
+
+      memDb.close();
+    });
+  });
 });
