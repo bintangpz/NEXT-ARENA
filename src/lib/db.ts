@@ -20,16 +20,56 @@ import {
 
 const dbDir = path.join(process.cwd(), "data");
 if (!fs.existsSync(dbDir)) {
-  fs.mkdirSync(dbDir, { recursive: true });
+  try {
+    fs.mkdirSync(dbDir, { recursive: true });
+  } catch (err) {
+    console.error("[NextArena DB] Gagal membuat direktori data:", err);
+  }
 }
 
 const dbPath = path.join(dbDir, "next_arena.db");
-const db = new Database(dbPath);
 
-// Enable WAL mode for better concurrency and performance
-db.pragma("journal_mode = WAL");
+// Singleton connection on globalThis to prevent multiple native C++ connections
+// during Next.js dev hot-reloads (which causes STATUS_ACCESS_VIOLATION / segfault crashes on Windows)
+declare global {
+  var _nextArenaDb: Database.Database | undefined;
+  var _nextArenaDbInitialized: boolean | undefined;
+}
+
+function getDatabase(): Database.Database {
+  if (globalThis._nextArenaDb) {
+    return globalThis._nextArenaDb;
+  }
+
+  const database = new Database(dbPath, {
+    timeout: 10000, // Tunggu hingga 10 detik jika file sedang terkunci di Windows
+  });
+
+  // Enable WAL mode with graceful fallback to DELETE mode if file mapping is blocked
+  try {
+    database.pragma("journal_mode = WAL");
+  } catch (err) {
+    console.warn("[NextArena DB] WAL mode tidak dapat diaktifkan, beralih ke DELETE mode:", err);
+    try {
+      database.pragma("journal_mode = DELETE");
+    } catch {}
+  }
+
+  try {
+    database.pragma("busy_timeout = 10000");
+    database.pragma("synchronous = NORMAL");
+  } catch {}
+
+  globalThis._nextArenaDb = database;
+  return database;
+}
+
+const db = getDatabase();
 
 export function initDatabase() {
+  if (globalThis._nextArenaDbInitialized) {
+    return;
+  }
   // Create tables
   db.exec(`
     CREATE TABLE IF NOT EXISTS categories (
@@ -207,10 +247,16 @@ export function initDatabase() {
       WHERE category NOT IN (SELECT name FROM categories)
     `).run();
   } catch (e) {}
+
+  globalThis._nextArenaDbInitialized = true;
 }
 
-// Ensure DB is initialized
-initDatabase();
+// Ensure DB is initialized safely
+try {
+  initDatabase();
+} catch (err) {
+  console.error("[NextArena DB Init Error]:", err);
+}
 
 export function getAllArenaData() {
   const categoriesRows = db.prepare("SELECT name FROM categories ORDER BY id ASC").all() as { name: string }[];
