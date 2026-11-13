@@ -388,4 +388,169 @@ describe("Bracket Tab Refinements & Round Synchronization Test Suite", () => {
       memDb.close();
     });
   });
+
+  describe("Requirement 8: Input Manual Bagan Turnamen (Acak Otomatis vs Susun Manual)", () => {
+    it("Pengaturan page includes 'Input / Susun Manual' button in header and empty state", () => {
+      assert.strictEqual(
+        pengaturanContent.includes("Input / Susun Manual"),
+        true,
+        "Pengaturan must contain 'Input / Susun Manual' button"
+      );
+      assert.strictEqual(
+        pengaturanContent.includes("handleOpenManualBracketModal"),
+        true,
+        "Pengaturan must have handleOpenManualBracketModal handler"
+      );
+    });
+
+    it("Pengaturan page includes 'Edit Pasangan' button on match cards and inline editor", () => {
+      assert.strictEqual(
+        pengaturanContent.includes("Edit Pasangan"),
+        true,
+        "Pengaturan must contain 'Edit Pasangan' button on match cards"
+      );
+      assert.strictEqual(
+        pengaturanContent.includes("editingMatchCardId"),
+        true,
+        "Pengaturan must track editingMatchCardId"
+      );
+      assert.strictEqual(
+        pengaturanContent.includes("handleSaveMatchCard"),
+        true,
+        "Pengaturan must define handleSaveMatchCard"
+      );
+    });
+
+    it("Pengaturan page defines showManualBracketModal modal with pair list and participant options", () => {
+      assert.strictEqual(
+        pengaturanContent.includes("showManualBracketModal"),
+        true,
+        "Pengaturan must have showManualBracketModal state"
+      );
+      assert.strictEqual(
+        pengaturanContent.includes("Susun Jadwal Laga Manual"),
+        true,
+        "Pengaturan modal must display 'Susun Jadwal Laga Manual'"
+      );
+      assert.strictEqual(
+        pengaturanContent.includes("handleSaveManualBracket"),
+        true,
+        "Pengaturan must define handleSaveManualBracket"
+      );
+    });
+
+    it("API route POST /api/bracket accepts manual matches array and stores pairings", () => {
+      assert.strictEqual(
+        apiRouteContent.includes("manualMatches"),
+        true,
+        "API must check for manualMatches"
+      );
+      assert.strictEqual(
+        apiRouteContent.includes("Array.isArray(manualMatches)"),
+        true,
+        "API must validate Array.isArray(manualMatches)"
+      );
+      assert.strictEqual(
+        apiRouteContent.includes("- (Tanding Tunggal)"),
+        true,
+        "API must handle single team / bye matches"
+      );
+    });
+
+    it("API route PUT /api/bracket resolves team_a_code and team_b_code when teams are updated", () => {
+      assert.strictEqual(
+        apiRouteContent.includes("teamACode"),
+        true,
+        "PUT must resolve teamACode"
+      );
+      assert.strictEqual(
+        apiRouteContent.includes("teamBCode"),
+        true,
+        "PUT must resolve teamBCode"
+      );
+    });
+
+    it("Database manual match insertion handles custom pairings and single teams correctly", () => {
+      const memDb = new Database(":memory:");
+      memDb.exec(`
+        CREATE TABLE participants (
+          id TEXT PRIMARY KEY,
+          name TEXT,
+          code TEXT,
+          category TEXT
+        );
+        CREATE TABLE bracket_matches (
+          id TEXT PRIMARY KEY,
+          round TEXT,
+          match_label TEXT,
+          category TEXT,
+          team_a TEXT,
+          team_a_code TEXT,
+          score_a REAL DEFAULT 0,
+          team_b TEXT,
+          team_b_code TEXT,
+          score_b REAL DEFAULT 0,
+          status TEXT DEFAULT 'Siap Tanding',
+          winner TEXT
+        );
+
+        INSERT INTO participants (id, name, code, category) VALUES
+          ('p1', 'Tim Merpati', 'MP01', 'Transporter SMP'),
+          ('p2', 'Tim Garuda', 'GD02', 'Transporter SMP'),
+          ('p3', 'Tim Elang', 'EL03', 'Transporter SMP');
+      `);
+
+      const manualMatches = [
+        { teamA: "Tim Merpati", teamB: "Tim Garuda", matchLabel: "Laga 01" },
+        { teamA: "Tim Elang", teamB: "- (Tanding Tunggal)", matchLabel: "Laga 02" }
+      ];
+
+      const requestedRound = "Babak 2";
+      const insertMatch = memDb.prepare(`
+        INSERT INTO bracket_matches (
+          id, round, match_label, category,
+          team_a, team_a_code, score_a,
+          team_b, team_b_code, score_b,
+          status, winner
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      const allParticipants = memDb.prepare("SELECT * FROM participants").all();
+
+      for (let i = 0; i < manualMatches.length; i++) {
+        const item = manualMatches[i];
+        const pA = allParticipants.find((p) => p.name === item.teamA);
+        const pB = item.teamB !== "- (Tanding Tunggal)" ? allParticipants.find((p) => p.name === item.teamB) : null;
+
+        insertMatch.run(
+          `m-b2-${i + 1}`,
+          requestedRound,
+          item.matchLabel,
+          pA?.category || "Transporter SMP",
+          item.teamA,
+          pA?.code || "-",
+          0,
+          item.teamB,
+          pB ? pB.code : "-",
+          0,
+          "Siap Tanding",
+          null
+        );
+      }
+
+      const rows = memDb.prepare("SELECT * FROM bracket_matches WHERE round = 'Babak 2'").all();
+      assert.strictEqual(rows.length, 2);
+      assert.strictEqual(rows[0].team_a, "Tim Merpati");
+      assert.strictEqual(rows[0].team_a_code, "MP01");
+      assert.strictEqual(rows[0].team_b, "Tim Garuda");
+      assert.strictEqual(rows[0].team_b_code, "GD02");
+
+      assert.strictEqual(rows[1].team_a, "Tim Elang");
+      assert.strictEqual(rows[1].team_a_code, "EL03");
+      assert.strictEqual(rows[1].team_b, "- (Tanding Tunggal)");
+      assert.strictEqual(rows[1].team_b_code, "-");
+
+      memDb.close();
+    });
+  });
 });

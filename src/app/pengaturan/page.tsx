@@ -55,6 +55,10 @@ import {
   Swords,
   ScrollText,
   X,
+  Shuffle,
+  Users,
+  UserCheck,
+  Edit3,
 } from "lucide-react";
 import { ArenaLogo } from "@/components/ArenaLogo";
 import { ConfirmModal } from "@/components/modals";
@@ -90,6 +94,18 @@ export default function PengaturanPage() {
   const [isGeneratingBracket, setIsGeneratingBracket] = useState<boolean>(false);
   const [showResetBracketModal, setShowResetBracketModal] = useState<boolean>(false);
   const [showResetRoundModal, setShowResetRoundModal] = useState<boolean>(false);
+
+  // Manual Bracket Matchmaking & Quick Editing State
+  const [showManualBracketModal, setShowManualBracketModal] = useState<boolean>(false);
+  const [manualMatchPairs, setManualMatchPairs] = useState<
+    Array<{ id: string; teamA: string; teamB: string; label?: string }>
+  >([]);
+  const [isSavingManualBracket, setIsSavingManualBracket] = useState<boolean>(false);
+
+  const [editingMatchCardId, setEditingMatchCardId] = useState<string | null>(null);
+  const [editTeamA, setEditTeamA] = useState<string>("");
+  const [editTeamB, setEditTeamB] = useState<string>("");
+  const [isSavingMatchCard, setIsSavingMatchCard] = useState<boolean>(false);
   const [shutterMatch, setShutterMatch] = useState<BracketMatch | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string>("");
@@ -781,7 +797,7 @@ export default function PengaturanPage() {
       }
 
       // Check if modal is open
-      if (isPointRuleModalOpen || showResetBracketModal || showResetRoundModal) return;
+      if (isPointRuleModalOpen || showResetBracketModal || showResetRoundModal || showManualBracketModal) return;
 
       const pressedKey = e.key.toUpperCase();
 
@@ -845,7 +861,7 @@ export default function PengaturanPage() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [bracketMatches, customPointRules, selectedBracketRound, isPointRuleModalOpen, showResetBracketModal, showResetRoundModal, matchTurns, roundMatchTurns]);
+  }, [bracketMatches, customPointRules, selectedBracketRound, isPointRuleModalOpen, showResetBracketModal, showResetRoundModal, showManualBracketModal, matchTurns, roundMatchTurns]);
 
   // Save Settings to SQLite
   const saveSettings = async (customPayload?: Record<string, any>) => {
@@ -1235,6 +1251,180 @@ export default function PengaturanPage() {
     } finally {
       setIsGeneratingBracket(false);
       setShowResetBracketModal(false);
+    }
+  };
+
+  // Manual Bracket Matchmaking & Editing Handlers
+  const handleOpenManualBracketModal = () => {
+    const currentRoundMatches = bracketMatches.filter((m) => m.round === selectedBracketRound);
+    if (currentRoundMatches.length > 0) {
+      setManualMatchPairs(
+        currentRoundMatches.map((m, idx) => ({
+          id: m.id || `manual-${idx}-${Date.now()}`,
+          teamA: m.teamA || "",
+          teamB: m.teamB || "",
+          label: m.matchLabel || `Laga ${String(idx + 1).padStart(2, "0")}`,
+        }))
+      );
+    } else {
+      const pairs: Array<{ id: string; teamA: string; teamB: string; label?: string }> = [];
+      const qTeams = [...qualifiedBracketParticipants];
+      if (qTeams.length >= 2) {
+        for (let i = 0; i < qTeams.length; i += 2) {
+          const matchNum = Math.floor(i / 2) + 1;
+          pairs.push({
+            id: `manual-new-${matchNum}-${Date.now()}-${i}`,
+            teamA: qTeams[i]?.name || "",
+            teamB: qTeams[i + 1]?.name || "- (Tanding Tunggal)",
+            label: `Laga ${String(matchNum).padStart(2, "0")}`,
+          });
+        }
+      } else if (qTeams.length === 1) {
+        pairs.push({
+          id: `manual-new-1-${Date.now()}`,
+          teamA: qTeams[0]?.name || "",
+          teamB: "- (Tanding Tunggal)",
+          label: "Laga 01",
+        });
+      } else {
+        pairs.push({
+          id: `manual-new-1-${Date.now()}`,
+          teamA: "",
+          teamB: "",
+          label: "Laga 01",
+        });
+      }
+      setManualMatchPairs(pairs);
+    }
+    setShowManualBracketModal(true);
+  };
+
+  const handleAddManualPairRow = () => {
+    const nextNum = manualMatchPairs.length + 1;
+    setManualMatchPairs((prev) => [
+      ...prev,
+      {
+        id: `manual-${nextNum}-${Date.now()}`,
+        teamA: "",
+        teamB: "",
+        label: `Laga ${String(nextNum).padStart(2, "0")}`,
+      },
+    ]);
+  };
+
+  const handleRemoveManualPairRow = (index: number) => {
+    setManualMatchPairs((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      return updated.map((item, i) => ({
+        ...item,
+        label: item.label || `Laga ${String(i + 1).padStart(2, "0")}`,
+      }));
+    });
+  };
+
+  const handleUpdateManualPair = (
+    index: number,
+    field: "teamA" | "teamB" | "label",
+    value: string
+  ) => {
+    setManualMatchPairs((prev) => {
+      const copy = [...prev];
+      copy[index] = { ...copy[index], [field]: value };
+      return copy;
+    });
+  };
+
+  const handleSaveManualBracket = async () => {
+    const validMatches = manualMatchPairs.filter((p) => p.teamA && p.teamA.trim() !== "");
+    if (validMatches.length === 0) {
+      alert("Harap tentukan minimal satu laga dengan Tim Sudut Merah.");
+      return;
+    }
+
+    setIsSavingManualBracket(true);
+    try {
+      const res = await fetch("/api/bracket", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          round: selectedBracketRound,
+          matches: validMatches.map((m, idx) => ({
+            teamA: m.teamA,
+            teamB: m.teamB || "- (Tanding Tunggal)",
+            matchLabel: m.label || `Laga ${String(idx + 1).padStart(2, "0")}`,
+          })),
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data?.bracketMatches) {
+          setBracketMatches(json.data.bracketMatches);
+        }
+        if (json.data?.participants) {
+          setParticipants(json.data.participants);
+        }
+        broadcastSync("DATA_REFRESH");
+        setShowManualBracketModal(false);
+        showNotification(`Jadwal susunan manual untuk ${selectedBracketRound} berhasil disimpan!`);
+      } else {
+        const errJson = await res.json();
+        alert(errJson.error || "Gagal menyimpan susunan laga manual.");
+      }
+    } catch (err) {
+      console.error("Gagal simpan susunan manual:", err);
+      alert("Terjadi kesalahan jaringan saat menyimpan susunan manual.");
+    } finally {
+      setIsSavingManualBracket(false);
+    }
+  };
+
+  const handleStartEditMatchCard = (match: BracketMatch) => {
+    setEditingMatchCardId(match.id);
+    setEditTeamA(match.teamA || "");
+    setEditTeamB(match.teamB || "");
+  };
+
+  const handleCancelEditMatchCard = () => {
+    setEditingMatchCardId(null);
+    setEditTeamA("");
+    setEditTeamB("");
+  };
+
+  const handleSaveMatchCard = async (matchId: string) => {
+    if (!editTeamA.trim()) {
+      alert("Tim Sudut Merah tidak boleh kosong!");
+      return;
+    }
+    setIsSavingMatchCard(true);
+    try {
+      const res = await fetch("/api/bracket", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          matchId,
+          teamA: editTeamA.trim(),
+          teamB: editTeamB.trim() || "- (Tanding Tunggal)",
+        }),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data?.bracketMatches) {
+          setBracketMatches(json.data.bracketMatches);
+        }
+        broadcastSync("DATA_REFRESH");
+        setEditingMatchCardId(null);
+        showNotification("Pasangan laga berhasil diperbarui!");
+      } else {
+        const errJson = await res.json();
+        alert(errJson.error || "Gagal memperbarui pasangan laga.");
+      }
+    } catch (err) {
+      console.error("Gagal edit pasangan laga:", err);
+      alert("Terjadi kesalahan saat memperbarui pasangan laga.");
+    } finally {
+      setIsSavingMatchCard(false);
     }
   };
 
@@ -2650,18 +2840,30 @@ export default function PengaturanPage() {
                     <div className="space-y-1">
                       <span className="text-xs font-bold text-white block">Pilih Babak Pertandingan:</span>
                       <span className="text-[11px] text-zinc-400">
-                        Pilih babak di bawah untuk melihat dan mengacak jadwal laga pertandingan.
+                        Pilih babak di bawah untuk melihat dan mengacak atau menyusun manual jadwal laga pertandingan.
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleGenerateBracket(selectedBracketRound)}
-                      disabled={isGeneratingBracket}
-                      className="inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs sm:text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-md shrink-0 cursor-pointer"
-                    >
-                      <span>Acak & Generate Jadwal ({selectedBracketRound})</span>
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleOpenManualBracketModal}
+                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs sm:text-sm font-bold border border-zinc-700 hover:border-zinc-600 transition-all shadow-md shrink-0 cursor-pointer"
+                        title="Tentukan pasangan tanding secara manual"
+                      >
+                        <Users className="w-4 h-4 text-orange-400" />
+                        <span>Input / Susun Manual ({selectedBracketRound})</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateBracket(selectedBracketRound)}
+                        disabled={isGeneratingBracket}
+                        className="inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs sm:text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-md shrink-0 cursor-pointer"
+                      >
+                        <span>Acak & Generate Jadwal ({selectedBracketRound})</span>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Round Navigation Pills */}
@@ -2759,7 +2961,16 @@ export default function PengaturanPage() {
                       </div>
                     )}
 
-                    <div className="pt-2">
+                    <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={handleOpenManualBracketModal}
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs sm:text-sm font-bold border border-zinc-700 hover:border-zinc-600 shadow-lg transition-all cursor-pointer"
+                      >
+                        <Users className="w-4 h-4 text-orange-400" />
+                        <span>Input / Susun Manual ({selectedBracketRound})</span>
+                      </button>
+
                       {qualifiedBracketParticipants.length >= 2 ? (
                         <button
                           type="button"
@@ -2838,6 +3049,27 @@ export default function PengaturanPage() {
                           </div>
 
                           <div className="flex flex-wrap items-center gap-2">
+                            {/* Tombol Edit Pasangan Laga */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (editingMatchCardId === match.id) {
+                                  handleCancelEditMatchCard();
+                                } else {
+                                  handleStartEditMatchCard(match);
+                                }
+                              }}
+                              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all shadow-sm cursor-pointer ${
+                                editingMatchCardId === match.id
+                                  ? "bg-amber-500/20 border-amber-500 text-amber-300"
+                                  : "bg-zinc-900 hover:bg-zinc-800 border-zinc-800 text-zinc-300"
+                              }`}
+                              title="Ganti tim yang bertanding pada laga ini"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              <span>{editingMatchCardId === match.id ? "Batal Edit" : "Edit Pasangan"}</span>
+                            </button>
+
                             {/* Tombol Reset Laga & Hapus Log */}
                             <button
                               type="button"
@@ -2892,6 +3124,85 @@ export default function PengaturanPage() {
                             </div>
                           </div>
                         </div>
+
+                        {/* INLINE EDIT PASANGAN LAGA */}
+                        {editingMatchCardId === match.id && (
+                          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="text-xs font-bold text-amber-300 flex items-center gap-2">
+                                <Pencil className="w-3.5 h-3.5" />
+                                Edit Tim Tanding: {match.matchLabel}
+                              </span>
+                              <span className="text-[11px] text-zinc-400">
+                                Pilih dari {qualifiedBracketParticipants.length} tim yang lolos ke {match.round}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div>
+                                <label className="text-[11px] font-mono text-rose-400 block mb-1 font-bold">
+                                  Sudut Merah:
+                                </label>
+                                <select
+                                  value={editTeamA}
+                                  onChange={(e) => setEditTeamA(e.target.value)}
+                                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-rose-500/40 text-white text-xs font-bold focus:border-rose-400 focus:outline-none"
+                                >
+                                  <option value="">-- Pilih Tim Sudut Merah --</option>
+                                  {qualifiedBracketParticipants.map((p) => (
+                                    <option key={p.id} value={p.name}>
+                                      {p.code ? `[${p.code}] ` : ""}{p.name} {p.institution ? `(${p.institution})` : ""}
+                                    </option>
+                                  ))}
+                                  {editTeamA && !qualifiedBracketParticipants.some((p) => p.name === editTeamA) && (
+                                    <option value={editTeamA}>{editTeamA}</option>
+                                  )}
+                                </select>
+                              </div>
+
+                              <div>
+                                <label className="text-[11px] font-mono text-blue-400 block mb-1 font-bold">
+                                  Sudut Biru:
+                                </label>
+                                <select
+                                  value={editTeamB}
+                                  onChange={(e) => setEditTeamB(e.target.value)}
+                                  className="w-full px-3 py-2 rounded-xl bg-zinc-950 border border-blue-500/40 text-white text-xs font-bold focus:border-blue-400 focus:outline-none"
+                                >
+                                  <option value="">-- Pilih Tim Sudut Biru --</option>
+                                  <option value="- (Tanding Tunggal)">- (Tanding Tunggal / Bye) -</option>
+                                  {qualifiedBracketParticipants.map((p) => (
+                                    <option key={p.id} value={p.name} disabled={p.name === editTeamA}>
+                                      {p.code ? `[${p.code}] ` : ""}{p.name} {p.institution ? `(${p.institution})` : ""}
+                                    </option>
+                                  ))}
+                                  {editTeamB && editTeamB !== "- (Tanding Tunggal)" && !qualifiedBracketParticipants.some((p) => p.name === editTeamB) && (
+                                    <option value={editTeamB}>{editTeamB}</option>
+                                  )}
+                                </select>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={handleCancelEditMatchCard}
+                                className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold transition-all cursor-pointer"
+                              >
+                                Batal
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isSavingMatchCard || !editTeamA.trim()}
+                                onClick={() => handleSaveMatchCard(match.id)}
+                                className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-zinc-950 text-xs font-black transition-all shadow-md flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Check className="w-3.5 h-3.5" />
+                                <span>{isSavingMatchCard ? "Menyimpan..." : "Simpan Pasangan"}</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
 
                         {/* BODY TAMPILAN LAGA */}
                         {is2x && !isSingle ? (
@@ -5356,6 +5667,227 @@ export default function PengaturanPage() {
             cancelText="Batal"
             variant="danger"
           />
+        )}
+
+        {/* MODAL SUSUN / INPUT JADWAL LAGA MANUAL */}
+        {showManualBracketModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-[#121216] border border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-4xl w-full space-y-6 shadow-2xl relative max-h-[92vh] flex flex-col">
+              {/* Header */}
+              <div className="flex items-start justify-between border-b border-zinc-800/80 pb-4 shrink-0">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-md bg-orange-500/20 text-orange-300 font-mono text-[11px] font-bold uppercase tracking-wider border border-orange-500/30">
+                      Input Manual Bagan
+                    </span>
+                    <span className="text-zinc-500 text-xs">•</span>
+                    <span className="text-white text-xs font-bold">{selectedBracketRound}</span>
+                  </div>
+                  <h3 className="text-xl font-black text-white mt-1">
+                    Susun Jadwal Laga Manual
+                  </h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Tentukan sendiri pasangan tanding (Sudut Merah vs Sudut Biru) untuk {selectedBracketRound}.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowManualBracketModal(false)}
+                  className="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Status Tim Berhak / Lolos */}
+              <div className="shrink-0 p-4 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2 font-mono">
+                    <Users className="w-4 h-4 text-orange-400" />
+                    <span className="text-zinc-300 font-bold">
+                      Daftar Tim Lolos ke {selectedBracketRound} ({qualifiedBracketParticipants.length} Tim):
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[11px] font-mono">
+                    {(() => {
+                      const assignedNames = new Set(
+                        manualMatchPairs
+                          .flatMap((p) => [p.teamA, p.teamB])
+                          .filter((n) => n && n !== "- (Tanding Tunggal)")
+                      );
+                      const assignedCount = qualifiedBracketParticipants.filter((p) => assignedNames.has(p.name)).length;
+                      return (
+                        <>
+                          <span className="text-emerald-400 font-bold">
+                            {assignedCount} Terpasang
+                          </span>
+                          <span className="text-zinc-500">•</span>
+                          <span className="text-amber-400 font-bold">
+                            {qualifiedBracketParticipants.length - assignedCount} Belum Terpasang
+                          </span>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                {/* Chips tim */}
+                <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                  {qualifiedBracketParticipants.map((p) => {
+                    const isAssigned = manualMatchPairs.some(
+                      (m) => m.teamA === p.name || m.teamB === p.name
+                    );
+                    return (
+                      <span
+                        key={p.id}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono font-medium border transition-all ${
+                          isAssigned
+                            ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                            : "bg-zinc-900 text-zinc-300 border-zinc-700/80"
+                        }`}
+                      >
+                        {isAssigned ? (
+                          <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                        )}
+                        <span className="truncate max-w-[140px] font-semibold">{p.name}</span>
+                        {p.code && <span className="text-zinc-500 text-[10px]">[{p.code}]</span>}
+                      </span>
+                    );
+                  })}
+                  {qualifiedBracketParticipants.length === 0 && (
+                    <span className="text-xs text-zinc-500 italic">
+                      Belum ada tim yang lolos ke babak ini. Anda tetap dapat memasukkan jadwal jika diinginkan.
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* List of Match Pairs */}
+              <div className="flex-1 overflow-y-auto space-y-3 pr-2 min-h-[200px]">
+                {manualMatchPairs.map((pair, idx) => (
+                  <div
+                    key={pair.id || idx}
+                    className="p-4 rounded-2xl bg-zinc-950/90 border border-zinc-800 hover:border-zinc-700/80 transition-all space-y-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-orange-500/15 text-orange-400 font-mono text-xs font-black flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <input
+                          type="text"
+                          value={pair.label || `Laga ${String(idx + 1).padStart(2, "0")}`}
+                          onChange={(e) => handleUpdateManualPair(idx, "label", e.target.value)}
+                          placeholder={`Laga ${String(idx + 1).padStart(2, "0")}`}
+                          className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-white font-mono text-xs font-bold w-28 focus:outline-none focus:border-orange-500"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveManualPairRow(idx)}
+                        disabled={manualMatchPairs.length <= 1}
+                        className="p-1.5 rounded-lg bg-zinc-900 hover:bg-rose-950/40 border border-zinc-800 hover:border-rose-500/50 text-zinc-500 hover:text-rose-400 disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                        title="Hapus baris laga ini"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-[1fr,auto,1fr] items-center gap-3">
+                      {/* Sudut Merah (Team A) */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono uppercase tracking-wider text-rose-400 font-bold flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-rose-500" />
+                          Sudut Merah
+                        </label>
+                        <select
+                          value={pair.teamA}
+                          onChange={(e) => handleUpdateManualPair(idx, "teamA", e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-rose-500/30 text-white text-xs font-bold focus:border-rose-400 focus:outline-none"
+                        >
+                          <option value="">-- Pilih Tim Sudut Merah --</option>
+                          {qualifiedBracketParticipants.map((p) => (
+                            <option key={p.id} value={p.name}>
+                              {p.code ? `[${p.code}] ` : ""}{p.name} {p.institution ? `(${p.institution})` : ""}
+                            </option>
+                          ))}
+                          {pair.teamA && !qualifiedBracketParticipants.some((p) => p.name === pair.teamA) && (
+                            <option value={pair.teamA}>{pair.teamA}</option>
+                          )}
+                        </select>
+                      </div>
+
+                      {/* VS Divider */}
+                      <div className="text-center font-black text-xs font-mono text-zinc-500 pt-3 md:pt-4">
+                        <span className="px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-orange-400">
+                          VS
+                        </span>
+                      </div>
+
+                      {/* Sudut Biru (Team B) */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-mono uppercase tracking-wider text-blue-400 font-bold flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-blue-500" />
+                          Sudut Biru
+                        </label>
+                        <select
+                          value={pair.teamB}
+                          onChange={(e) => handleUpdateManualPair(idx, "teamB", e.target.value)}
+                          className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-blue-500/30 text-white text-xs font-bold focus:border-blue-400 focus:outline-none"
+                        >
+                          <option value="">-- Pilih Tim Sudut Biru --</option>
+                          <option value="- (Tanding Tunggal)">- (Tanding Tunggal / Bye) -</option>
+                          {qualifiedBracketParticipants.map((p) => (
+                            <option key={p.id} value={p.name} disabled={p.name === pair.teamA}>
+                              {p.code ? `[${p.code}] ` : ""}{p.name} {p.institution ? `(${p.institution})` : ""}
+                            </option>
+                          ))}
+                          {pair.teamB && pair.teamB !== "- (Tanding Tunggal)" && !qualifiedBracketParticipants.some((p) => p.name === pair.teamB) && (
+                            <option value={pair.teamB}>{pair.teamB}</option>
+                          )}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Footer Controls */}
+              <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-800/80">
+                <button
+                  type="button"
+                  onClick={handleAddManualPairRow}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 text-xs font-bold transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 text-orange-400" />
+                  <span>Tambah Baris Laga</span>
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowManualBracketModal(false)}
+                    className="px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Batal
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveManualBracket}
+                    disabled={isSavingManualBracket}
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs sm:text-sm font-black hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-orange-500/20 cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{isSavingManualBracket ? "Menyimpan..." : "Simpan & Terapkan Jadwal"}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ANIMASI SHUTTER TRANSISI MULAI PERTANDINGAN */}

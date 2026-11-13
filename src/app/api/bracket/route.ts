@@ -102,11 +102,28 @@ export async function PUT(req: Request) {
           : "Berlangsung"
         : "Siap Tanding");
 
+    let teamACode = null;
+    let teamBCode = null;
+    if (teamA) {
+      const pA = db.prepare("SELECT code, id FROM participants WHERE name = ?").get(teamA) as any;
+      teamACode = pA?.code || pA?.id || null;
+    }
+    if (teamB) {
+      if (teamB === "- (Tanding Tunggal)" || teamB === "-") {
+        teamBCode = "-";
+      } else {
+        const pB = db.prepare("SELECT code, id FROM participants WHERE name = ?").get(teamB) as any;
+        teamBCode = pB?.code || pB?.id || "-";
+      }
+    }
+
     db.prepare(`
       UPDATE bracket_matches
       SET score_a = ?, score_b = ?, winner = ?, status = ?,
           team_a = COALESCE(?, team_a),
+          team_a_code = COALESCE(?, team_a_code),
           team_b = COALESCE(?, team_b),
+          team_b_code = COALESCE(?, team_b_code),
           current_leg = ?,
           score_a_leg1 = ?,
           score_b_leg1 = ?,
@@ -119,7 +136,9 @@ export async function PUT(req: Request) {
       resolvedWinner,
       status,
       teamA || null,
+      teamACode || null,
       teamB || null,
+      teamBCode || null,
       resolvedLeg,
       resolvedScoreALeg1,
       resolvedScoreBLeg1,
@@ -409,6 +428,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
     const requestedRound: string = body?.round || "Babak Penyisihan";
+    const manualMatches = body?.matches;
 
     const insertMatch = db.prepare(`
       INSERT INTO bracket_matches (
@@ -418,6 +438,65 @@ export async function POST(req: Request) {
         status, winner
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
+
+    // MODE INPUT MANUAL: Disusun langsung oleh operator (pasangan laga telah ditentukan)
+    if (Array.isArray(manualMatches) && manualMatches.length > 0) {
+      db.prepare("DELETE FROM bracket_matches WHERE round = ?").run(requestedRound);
+
+      const allParticipants = db.prepare("SELECT * FROM participants").all() as any[];
+      const roundSlug = requestedRound
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      let validCount = 0;
+      for (let i = 0; i < manualMatches.length; i++) {
+        const item = manualMatches[i];
+        const teamAName = item.teamA ? String(item.teamA).trim() : "";
+        let teamBName = item.teamB ? String(item.teamB).trim() : "- (Tanding Tunggal)";
+        if (!teamBName || teamBName === "" || teamBName === "-") {
+          teamBName = "- (Tanding Tunggal)";
+        }
+
+        if (!teamAName) continue;
+
+        const pA = allParticipants.find((p) => p.name === teamAName);
+        const pB = teamBName !== "- (Tanding Tunggal)" ? allParticipants.find((p) => p.name === teamBName) : null;
+
+        const matchNum = i + 1;
+        const matchId = `m-${roundSlug}-${matchNum}-${Date.now()}`;
+        const matchLabel = item.matchLabel || `Laga ${String(matchNum).padStart(2, "0")}`;
+        const category = pA?.category || pB?.category || "Transporter SMP";
+        const teamACode = pA?.code || pA?.id || "-";
+        const teamBCode = pB ? (pB.code || pB.id || "-") : "-";
+
+        insertMatch.run(
+          matchId,
+          requestedRound,
+          matchLabel,
+          category,
+          teamAName,
+          teamACode,
+          0,
+          teamBName,
+          teamBCode,
+          0,
+          "Siap Tanding",
+          null
+        );
+        validCount++;
+      }
+
+      if (validCount === 0) {
+        return NextResponse.json(
+          { error: "Minimal harus ada 1 laga pertandingan dengan Tim Sudut Merah yang dipilih." },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json({ success: true, data: getAllArenaData() });
+    }
 
     const stages = getStagesHelper();
     const stageIdx = stages.findIndex((s) => s.name === requestedRound);
