@@ -23,21 +23,43 @@ if (majorVersion >= 22) {
   console.log(`       Atau jalankan: winget install OpenJS.NodeJS.LTS`);
 }
 
-// 3. Cek Modul SQLite (better-sqlite3)
+// 3. Cek Modul SQLite Engine
+let sqliteEngineName = "";
+let createTestDb = null;
+
+// Prioritas 1: node:sqlite (Bawaan resmi Node.js >= 22, 100% bebas crash C++ di Windows)
 try {
-  const { default: Database } = await import("better-sqlite3");
-  const memDb = new Database(":memory:");
-  const result = memDb.prepare("SELECT 1 AS status").get();
-  if (result && result.status === 1) {
-    console.log(`[3] better-sqlite3 : ✅ Berhasil dimuat & berfungsi normal`);
-  } else {
-    throw new Error("Query memori SQLite tidak menghasilkan output yang valid.");
+  const { DatabaseSync } = await import("node:sqlite");
+  if (DatabaseSync) {
+    const memDb = new DatabaseSync(":memory:");
+    const result = memDb.prepare("SELECT 1 AS status").get();
+    if (result && result.status === 1) {
+      sqliteEngineName = "node:sqlite (Bawaan Node 22, Bebas Crash C++)";
+      createTestDb = (filePath) => new DatabaseSync(filePath);
+      console.log(`[3] SQLite Engine  : ✅ ${sqliteEngineName}`);
+    }
   }
-} catch (err) {
-  hasErrors = true;
-  console.log(`[3] better-sqlite3 : ❌ Gagal dimuat!`);
-  console.log(`    Detail Error   : ${err.message}`);
-  console.log(`    👉 Solusi      : Jalankan perintah: npm rebuild better-sqlite3`);
+} catch (e) {
+  // node:sqlite tidak tersedia
+}
+
+// Prioritas 2: better-sqlite3 jika node:sqlite belum terdeteksi
+if (!sqliteEngineName) {
+  try {
+    const { default: Database } = await import("better-sqlite3");
+    const memDb = new Database(":memory:");
+    const result = memDb.prepare("SELECT 1 AS status").get();
+    if (result && result.status === 1) {
+      sqliteEngineName = "better-sqlite3";
+      createTestDb = (filePath) => new Database(filePath);
+      console.log(`[3] SQLite Engine  : ✅ ${sqliteEngineName}`);
+    }
+  } catch (err) {
+    hasErrors = true;
+    console.log(`[3] SQLite Engine  : ❌ Gagal memuat driver SQLite!`);
+    console.log(`    Detail Error   : ${err.message}`);
+    console.log(`    👉 Solusi      : Jalankan perintah: npm rebuild better-sqlite3`);
+  }
 }
 
 // 4. Cek Izin Tulis Direktori Data (data/next_arena.db)
@@ -47,17 +69,20 @@ try {
     fs.mkdirSync(dataDir, { recursive: true });
   }
 
-  const { default: Database } = await import("better-sqlite3");
-  const testDbPath = path.join(dataDir, "doctor_test.db");
-  const testDb = new Database(testDbPath);
-  testDb.exec("CREATE TABLE IF NOT EXISTS test (id INT); INSERT INTO test VALUES (1);");
-  const count = testDb.prepare("SELECT COUNT(*) as c FROM test").get();
-  testDb.close();
-  try {
-    if (fs.existsSync(testDbPath)) fs.unlinkSync(testDbPath);
-  } catch {}
+  if (createTestDb) {
+    const testDbPath = path.join(dataDir, "doctor_test.db");
+    const testDb = createTestDb(testDbPath);
+    testDb.exec("CREATE TABLE IF NOT EXISTS test (id INT); INSERT INTO test VALUES (1);");
+    const count = testDb.prepare("SELECT COUNT(*) as c FROM test").get();
+    if (testDb.close) testDb.close();
+    try {
+      if (fs.existsSync(testDbPath)) fs.unlinkSync(testDbPath);
+    } catch {}
 
-  console.log(`[4] Storage Disk   : ✅ Direktori 'data/' dapat dibaca & ditulisi (${count.c} row test)`);
+    console.log(`[4] Storage Disk   : ✅ Direktori 'data/' dapat dibaca & ditulisi (${count.c} row test)`);
+  } else {
+    console.log(`[4] Storage Disk   : ⚠️ Dilewati karena engine SQLite belum siap`);
+  }
 } catch (err) {
   hasErrors = true;
   console.log(`[4] Storage Disk   : ❌ Gagal menulis database di folder 'data/'`);
@@ -101,3 +126,4 @@ if (hasErrors) {
   console.log("Silakan jalankan: npm run dev");
 }
 console.log("--------------------------------------------------------\n");
+

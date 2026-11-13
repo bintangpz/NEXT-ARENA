@@ -1,4 +1,4 @@
-import Database from "better-sqlite3";
+import type Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 import {
@@ -18,14 +18,46 @@ import {
   calculateParticipantScoreInStage,
 } from "@/data/mockCompetition";
 
-// Lazy singleton connection on globalThis to prevent multiple native C++ connections
-// during Next.js dev hot-reloads and parallel build workers (which causes STATUS_ACCESS_VIOLATION 3221225477 on Windows)
+// Global singleton declaration to prevent connection leaks during Fast-Refresh
 declare global {
-  var _nextArenaDb: Database.Database | undefined;
+  var _nextArenaDb: any;
   var _nextArenaDbInitialized: boolean | undefined;
 }
 
-export function getDatabase(): Database.Database {
+function createSqliteConnection(dbPath: string): any {
+  // 1. Coba gunakan modul native node:sqlite bawaan Node.js v22 (100% stabil di Windows, bebas crash C++)
+  try {
+    const { DatabaseSync } = require("node:sqlite");
+    if (DatabaseSync) {
+      const dbInstance = new DatabaseSync(dbPath);
+      // Adapter helper pragma untuk kompatibilitas
+      dbInstance.pragma = function (sql: string) {
+        try {
+          return dbInstance.exec(`PRAGMA ${sql};`);
+        } catch {
+          return null;
+        }
+      };
+      return dbInstance;
+    }
+  } catch (e) {
+    // node:sqlite tidak tersedia di versi Node lama
+  }
+
+  // 2. Fallback ke better-sqlite3 jika node:sqlite tidak tersedia
+  try {
+    const BetterSqlite = require("better-sqlite3");
+    const dbInstance = new BetterSqlite(dbPath, {
+      timeout: 10000,
+    });
+    return dbInstance;
+  } catch (err) {
+    console.error("[NextArena DB] Gagal membuka database SQLite:", err);
+    throw err;
+  }
+}
+
+export function getDatabase(): any {
   if (globalThis._nextArenaDb) {
     return globalThis._nextArenaDb;
   }
@@ -40,9 +72,7 @@ export function getDatabase(): Database.Database {
   }
 
   const dbPath = path.join(dbDir, "next_arena.db");
-  const database = new Database(dbPath, {
-    timeout: 10000, // Tunggu hingga 10 detik jika file sedang terkunci di Windows
-  });
+  const database = createSqliteConnection(dbPath);
 
   // Enable WAL mode with graceful fallback to DELETE mode if file mapping is blocked
   try {
@@ -87,7 +117,7 @@ export const db: Database.Database = new Proxy({} as Database.Database, {
   },
 });
 
-export function initDatabase(targetDb?: Database.Database) {
+export function initDatabase(targetDb?: any) {
   if (globalThis._nextArenaDbInitialized) {
     return;
   }
