@@ -501,7 +501,7 @@ export default function NextArenaDashboard() {
         }
       }
     } catch (err) {
-      console.error("Gagal memuat data dari database:", err);
+      console.warn("Koneksi ke backend belum siap atau terputus:", err);
     } finally {
       setIsLoading(false);
       setIsSyncing(false);

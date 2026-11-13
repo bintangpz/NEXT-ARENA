@@ -369,7 +369,7 @@ export default function ArenaBattleMatchPage() {
         }
       }
     } catch (err) {
-      console.error("Gagal memuat data tanding:", err);
+      console.warn("Koneksi ke backend belum siap atau terputus:", err);
     } finally {
       setIsLoading(false);
     }
