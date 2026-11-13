@@ -43,22 +43,25 @@ try {
   // node:sqlite tidak tersedia
 }
 
-// Prioritas 2: better-sqlite3 jika node:sqlite belum terdeteksi
+// Prioritas 2: better-sqlite3, dites di proses terpisah supaya crash native tidak mematikan doctor
 if (!sqliteEngineName) {
-  try {
+  console.log(`[3] SQLite Engine  : ⚠️ node:sqlite TIDAK tersedia di ${process.version} (butuh Node >= 22.13)`);
+  const { spawnSync } = await import("node:child_process");
+  const child = spawnSync(
+    process.execPath,
+    ["-e", "const D=require('better-sqlite3');const d=new D(':memory:');console.log(d.prepare('SELECT 1 AS s').get().s)"],
+    { encoding: "utf8" }
+  );
+  if (child.status === 0 && child.stdout.trim() === "1") {
+    console.log(`    better-sqlite3 : ✅ berfungsi (fallback)`);
+    sqliteEngineName = "better-sqlite3";
     const { default: Database } = await import("better-sqlite3");
-    const memDb = new Database(":memory:");
-    const result = memDb.prepare("SELECT 1 AS status").get();
-    if (result && result.status === 1) {
-      sqliteEngineName = "better-sqlite3";
-      createTestDb = (filePath) => new Database(filePath);
-      console.log(`[3] SQLite Engine  : ✅ ${sqliteEngineName}`);
-    }
-  } catch (err) {
+    createTestDb = (filePath) => new Database(filePath);
+  } else {
     hasErrors = true;
-    console.log(`[3] SQLite Engine  : ❌ Gagal memuat driver SQLite!`);
-    console.log(`    Detail Error   : ${err.message}`);
-    console.log(`    👉 Solusi      : Jalankan perintah: npm rebuild better-sqlite3`);
+    console.log(`    better-sqlite3 : ❌ CRASH (exit code ${child.status}) -> inilah penyebab server mati mendadak`);
+    console.log(`    👉 Solusi      : Update Node.js ke versi LTS terbaru (>= 22.13, mis. v24 LTS) dari https://nodejs.org`);
+    console.log(`       lalu: Remove-Item -Recurse -Force node_modules, .next ; npm install`);
   }
 }
 

@@ -45,6 +45,10 @@ function createSqliteConnection(dbPath: string): any {
   }
 
   // 2. Fallback ke better-sqlite3 jika node:sqlite tidak tersedia
+  console.warn(
+    `[NextArena DB] node:sqlite tidak tersedia di Node ${process.version} (butuh >= 22.13). ` +
+      `Memakai better-sqlite3 (native). Jika proses mati mendadak setelah baris ini, update Node.js ke versi LTS terbaru.`
+  );
   try {
     const BetterSqlite = require("better-sqlite3");
     const dbInstance = new BetterSqlite(dbPath, {
