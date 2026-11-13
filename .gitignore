@@ -22,6 +22,7 @@ dist/
 *.sqlite
 *.sqlite3
 !data/.gitkeep
+!data/next_arena.db
 
 # Environment variables
 .env
