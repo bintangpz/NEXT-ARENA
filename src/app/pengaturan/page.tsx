@@ -351,6 +351,7 @@ export default function PengaturanPage() {
   const [timerMode, setTimerMode] = useState<"stopwatch" | "countdown">("stopwatch");
   const [timerPhase, setTimerPhase] = useState<"idle" | "preparation" | "prep_ended" | "countdown" | "match" | "paused" | "finished">("idle");
   const [timerSeconds, setTimerSeconds] = useState<number>(0);
+  const [timerElapsedMs, setTimerElapsedMs] = useState<number>(0);
   const [timerStartedAt, setTimerStartedAt] = useState<number>(0);
   const [timerBaseSeconds, setTimerBaseSeconds] = useState<number>(0);
   const [prepDuration, setPrepDuration] = useState<number>(60); // 60 detik default
@@ -445,6 +446,20 @@ export default function PengaturanPage() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
+  const getStopwatchParts = (totalMs: number) => {
+    const validMs = Math.max(0, Math.floor(totalMs || 0));
+    const totalSec = Math.floor(validMs / 1000);
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    const cs = Math.floor((validMs % 1000) / 10);
+    return {
+      minutes: String(m).padStart(2, "0"),
+      seconds: String(s).padStart(2, "0"),
+      centiseconds: String(cs).padStart(2, "0"),
+      formatted: `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(cs).padStart(2, "0")}`,
+    };
+  };
+
   // Helper function to broadcast synchronization messages
   const broadcastSync = (type: "SETTINGS_SYNC" | "DATA_REFRESH", payload?: any) => {
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
@@ -509,7 +524,9 @@ export default function PengaturanPage() {
             });
           }
         } else if (timerPhase === "match") {
-          const current = timerBaseSeconds + elapsed;
+          const elapsedMs = Math.max(0, (Date.now() - timerStartedAt) + (timerBaseSeconds * 1000));
+          setTimerElapsedMs(elapsedMs);
+          const current = Math.floor(elapsedMs / 1000);
           setTimerSeconds(current);
           if (matchLimit > 0 && current >= matchLimit) {
             // Waktu habis / batas limit tercapai!
@@ -601,7 +618,7 @@ export default function PengaturanPage() {
           return prev;
         });
       }
-    }, 1000);
+    }, timerPhase === "match" ? 30 : 1000);
     return () => clearInterval(interval);
   }, [
     isTimerRunning,
@@ -3755,9 +3772,18 @@ export default function PengaturanPage() {
                   <div className="font-mono text-7xl sm:text-8xl font-black text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)] tracking-tight animate-bounce">
                     {timerSeconds}
                   </div>
-                ) : (
+                ) : timerPhase === "preparation" ? (
                   <div className="font-mono text-6xl sm:text-7xl font-black bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(249,115,22,0.35)] tracking-tight">
                     {formatTimerDisplay(timerSeconds)}
+                  </div>
+                ) : (
+                  <div className="font-mono font-black select-none flex items-baseline justify-center tracking-tight">
+                    <span className="text-6xl sm:text-7xl bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(249,115,22,0.35)]">
+                      {getStopwatchParts(timerElapsedMs).minutes}:{getStopwatchParts(timerElapsedMs).seconds}
+                    </span>
+                    <span className="text-3xl sm:text-4xl text-amber-400 font-extrabold ml-1.5 drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+                      .{getStopwatchParts(timerElapsedMs).centiseconds}
+                    </span>
                   </div>
                 )}
 
@@ -3798,7 +3824,7 @@ export default function PengaturanPage() {
                     </div>
                   ) : timerPhase === "finished" ? (
                     <p className="text-emerald-400 font-bold text-sm">
-                      Catatan Waktu Resmi Pertandingan: {formatTimerDisplay(timerSeconds)}
+                      Catatan Waktu Resmi Pertandingan: {getStopwatchParts(timerElapsedMs).formatted}
                     </p>
                   ) : (
                     <p className="text-zinc-500">

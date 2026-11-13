@@ -62,6 +62,9 @@ export default function ArenaBattleMatchPage() {
 
   // Timer & Audio States
   const [timerSeconds, setTimerSeconds] = useState<number>(10);
+  const [matchElapsedMs, setMatchElapsedMs] = useState<number>(0);
+  const matchStartTimeRef = useRef<number>(0);
+  const matchElapsedBaseRef = useRef<number>(0);
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
   const [timerPhase, setTimerPhase] = useState<"idle" | "preparation" | "prep_paused" | "prep_ended" | "countdown" | "match" | "match_paused" | "finished">("idle");
   const [prepDuration, setPrepDuration] = useState<number>(10);
@@ -262,10 +265,10 @@ export default function ArenaBattleMatchPage() {
 
             const parsed = relatedLogs.map((l: any) => {
               const sl = l.stageLabel || "";
-              const timeMatch = sl.match(/@(\d{2}:\d{2})/);
+              const timeMatch = sl.match(/@(\d{2}:\d{2}(?:\.\d{1,2})?)/);
               const legMatch = sl.match(/\bP([12])\b/i) || sl.match(/Putaran\s*([12])/i) || sl.match(/Sesi\s*([12])/i);
               const leg: 1 | 2 = legMatch && legMatch[1] === "2" ? 2 : 1;
-              const timeFormatted = timeMatch ? timeMatch[1] : "00:00";
+              const timeFormatted = timeMatch ? timeMatch[1] : "00:00.00";
               const actionLabel = sl.replace(/\s*\((?:Laga\s*)?.*?\)\s*$/i, "").trim() || "Poin";
               const isTeamA = (l.participantName || "").toLowerCase() === teamALow;
               const corner: "red" | "blue" =
@@ -335,13 +338,13 @@ export default function ArenaBattleMatchPage() {
             parsed.forEach((item: any) => {
               if (item.actionLabel && item.actionLabel.toUpperCase().includes("FINISH")) {
                 if (item.leg === 1 && item.corner === "red" && !restoredFinishes.p1Red) {
-                  restoredFinishes.p1Red = item.timeFormatted || "00:00";
+                  restoredFinishes.p1Red = item.timeFormatted || "00:00.00";
                 } else if (item.leg === 1 && item.corner === "blue" && !restoredFinishes.p1Blue) {
-                  restoredFinishes.p1Blue = item.timeFormatted || "00:00";
+                  restoredFinishes.p1Blue = item.timeFormatted || "00:00.00";
                 } else if (item.leg === 2 && item.corner === "red" && !restoredFinishes.p2Red) {
-                  restoredFinishes.p2Red = item.timeFormatted || "00:00";
+                  restoredFinishes.p2Red = item.timeFormatted || "00:00.00";
                 } else if (item.leg === 2 && item.corner === "blue" && !restoredFinishes.p2Blue) {
-                  restoredFinishes.p2Blue = item.timeFormatted || "00:00";
+                  restoredFinishes.p2Blue = item.timeFormatted || "00:00.00";
                 }
               }
             });
@@ -351,6 +354,17 @@ export default function ArenaBattleMatchPage() {
               p2Red: prev.p2Red || restoredFinishes.p2Red,
               p2Blue: prev.p2Blue || restoredFinishes.p2Blue,
             }));
+
+            const anyFinish = restoredFinishes.p2Red || restoredFinishes.p2Blue || restoredFinishes.p1Red || restoredFinishes.p1Blue;
+            if (anyFinish) {
+              const msMatch = anyFinish.match(/(\d{1,2}):(\d{2})(?:\.(\d{1,2}))?/);
+              if (msMatch) {
+                const m = parseInt(msMatch[1], 10) || 0;
+                const s = parseInt(msMatch[2], 10) || 0;
+                const cs = msMatch[3] ? parseInt(msMatch[3].padEnd(2, "0").slice(0, 2), 10) : 0;
+                setMatchElapsedMs((m * 60 + s) * 1000 + cs * 10);
+              }
+            }
           }
         }
       }
@@ -497,12 +511,15 @@ export default function ArenaBattleMatchPage() {
 
   };
 
-  // Hitung Mundur Selesai -> Transisi Otomatis ke Pertandingan Berjalan (Stopwatch Hitung Maju dari 00:00)
+  // Hitung Mundur Selesai -> Transisi Otomatis ke Pertandingan Berjalan (Stopwatch Hitung Maju dari 00:00.00)
   const handleCountdownCompleted = () => {
     // Guard agar tidak pernah dieksekusi dobel (misal oleh React Strict Mode)
     if (hasTriggeredMatchStartRef.current) return;
     hasTriggeredMatchStartRef.current = true;
 
+    matchStartTimeRef.current = Date.now();
+    matchElapsedBaseRef.current = 0;
+    setMatchElapsedMs(0);
     setTimerPhase("match");
     setTimerSeconds(0);
     if (soundEnabled) {
@@ -524,7 +541,7 @@ export default function ArenaBattleMatchPage() {
       {
         id: uniqueHistId,
         timestamp: startClock,
-        timeFormatted: "00:00",
+        timeFormatted: "00:00.00",
         corner: "system",
         teamName: "ARENA SYSTEM",
         actionLabel: `⏱️ Pertandingan Dimulai (Putaran ${activeLeg})`,
@@ -536,7 +553,7 @@ export default function ArenaBattleMatchPage() {
 
   };
 
-  // Timer Tick Effect (Supports Preparation Countdown, 3-2-1 Countdown, and Match Forward Stopwatch)
+  // Timer Tick Effect (Supports Preparation Countdown, 3-2-1 Countdown, and Match Forward Stopwatch with Centisecond Precision)
   useEffect(() => {
     let interval: any = null;
     if (isTimerRunning) {
@@ -564,9 +581,18 @@ export default function ArenaBattleMatchPage() {
         }, 1000);
       } else if (timerPhase === "match") {
         interval = setInterval(() => {
-          setTimerSeconds((prev) => {
-            const next = prev + 1;
-            if (matchLimit > 0 && next >= matchLimit) {
+          if (matchStartTimeRef.current > 0) {
+            const elapsed = matchElapsedBaseRef.current + (Date.now() - matchStartTimeRef.current);
+            setMatchElapsedMs(elapsed);
+            const totalSec = Math.floor(elapsed / 1000);
+            setTimerSeconds(totalSec);
+
+            if (matchLimit > 0 && totalSec >= matchLimit) {
+              const finalMs = matchLimit * 1000;
+              setMatchElapsedMs(finalMs);
+              setTimerSeconds(matchLimit);
+              matchStartTimeRef.current = 0;
+              matchElapsedBaseRef.current = finalMs;
               stopAllSounds();
               setIsTimerRunning(false);
               setTimerPhase("finished");
@@ -578,11 +604,9 @@ export default function ArenaBattleMatchPage() {
                   handleCompleteLeg1(false);
                 }, 800);
               }
-              return next;
             }
-            return next;
-          });
-        }, 1000);
+          }
+        }, 30);
       }
     }
     return () => {
@@ -597,6 +621,8 @@ export default function ArenaBattleMatchPage() {
     soundFinishLoop,
     soundVolume,
     matchLimit,
+    is2x,
+    activeLeg,
   ]);
 
   // Phase Transition Effect (Dipicu bersih saat timer mencapai 0)
@@ -610,11 +636,23 @@ export default function ArenaBattleMatchPage() {
     }
   }, [timerSeconds, timerPhase, isTimerRunning]);
 
-  // Format seconds to MM:SS
-  const formatTime = (totalSec: number) => {
+  // Helper memformat milidetik ke menit, detik, dan seperseratus detik (centiseconds / hitungan stopwatch cepat 00..99)
+  const getStopwatchParts = (totalMs: number) => {
+    const validMs = Math.max(0, Math.floor(totalMs || 0));
+    const totalSec = Math.floor(validMs / 1000);
     const m = Math.floor(totalSec / 60);
     const s = totalSec % 60;
-    return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+    const cs = Math.floor((validMs % 1000) / 10);
+    return {
+      minutes: String(m).padStart(2, "0"),
+      seconds: String(s).padStart(2, "0"),
+      centiseconds: String(cs).padStart(2, "0"),
+      formatted: `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(cs).padStart(2, "0")}`,
+    };
+  };
+
+  const formatTime = (totalMs: number) => {
+    return getStopwatchParts(totalMs).formatted;
   };
 
   // Timer Handlers (Single Sequential Arena Flow: Persiapan -> Hitung Mundur -> Pertandingan)
@@ -663,9 +701,14 @@ export default function ArenaBattleMatchPage() {
     setIsTimerRunning(false);
     setTimerPhase("match_paused");
     stopAllSounds();
+    if (matchStartTimeRef.current > 0) {
+      matchElapsedBaseRef.current += Date.now() - matchStartTimeRef.current;
+      matchStartTimeRef.current = 0;
+    }
   };
 
   const handleResumeMatch = () => {
+    matchStartTimeRef.current = Date.now();
     setIsTimerRunning(true);
     setTimerPhase("match");
     if (soundEnabled) {
@@ -698,7 +741,11 @@ export default function ArenaBattleMatchPage() {
     hasTriggeredMatchStartRef.current = false;
     setIsTimerRunning(false);
     setTimerPhase("idle");
-    setTimerSeconds(prepDuration > 0 ? prepDuration : 10);
+    const sec = prepDuration > 0 ? prepDuration : 10;
+    setTimerSeconds(sec);
+    setMatchElapsedMs(0);
+    matchStartTimeRef.current = 0;
+    matchElapsedBaseRef.current = 0;
     setFinishedCorners((prev) =>
       activeLeg === 2
         ? { ...prev, p2Red: "", p2Blue: "" }
@@ -709,7 +756,7 @@ export default function ArenaBattleMatchPage() {
       {
         id: `hist-reset-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         timestamp: nowClock,
-        timeFormatted: "00:00",
+        timeFormatted: "00:00.00",
         corner: "system",
         teamName: "ARENA SYSTEM",
         actionLabel: `🔄 Timer Sesi ${activeLeg} Di-reset ke Standby Persiapan`,
@@ -819,7 +866,7 @@ export default function ArenaBattleMatchPage() {
       return;
     }
 
-    const currentSwTime = formatTime(timerSeconds);
+    const currentSwTime = formatTime(matchElapsedMs);
     const nowClock = new Date().toLocaleTimeString("id-ID", {
       hour: "2-digit",
       minute: "2-digit",
@@ -1087,8 +1134,8 @@ export default function ArenaBattleMatchPage() {
     }
     const currentSwTime =
       timerPhase === "match" || timerPhase === "match_paused" || timerPhase === "finished"
-        ? formatTime(timerSeconds)
-        : "00:00";
+        ? formatTime(matchElapsedMs)
+        : "00:00.00";
     const nowClock = new Date().toLocaleTimeString("id-ID", {
       hour: "2-digit",
       minute: "2-digit",
@@ -1183,6 +1230,9 @@ export default function ArenaBattleMatchPage() {
     hasTriggeredMatchStartRef.current = false;
     const sec = prepDuration > 0 ? prepDuration : 10;
     setTimerSeconds(sec);
+    setMatchElapsedMs(0);
+    matchStartTimeRef.current = 0;
+    matchElapsedBaseRef.current = 0;
     setIsTimerRunning(false);
     setTimerPhase("idle");
 
@@ -1259,6 +1309,10 @@ export default function ArenaBattleMatchPage() {
     }
     setIsTimerRunning(false);
     hasTriggeredMatchStartRef.current = false;
+    if (matchStartTimeRef.current > 0) {
+      matchElapsedBaseRef.current += Date.now() - matchStartTimeRef.current;
+      matchStartTimeRef.current = 0;
+    }
 
     const sAL1 = overrideScores ? overrideScores.scoreALeg1 : (match.scoreALeg1 || 0);
     const sBL1 = overrideScores ? overrideScores.scoreBLeg1 : (match.scoreBLeg1 || 0);
@@ -1279,7 +1333,7 @@ export default function ArenaBattleMatchPage() {
       {
         id: `hist-comp-p1-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         timestamp: nowClock,
-        timeFormatted: formatTime(timerSeconds),
+        timeFormatted: formatTime(matchElapsedMs),
         corner: "system",
         teamName: "ARENA SYSTEM",
         actionLabel: `🏁 Sesi 1 (Putaran 1) Selesai! (${match.teamA}: ${sAL1} PTS | ${match.teamB}: ${sBL1} PTS) • Menunggu Tinjauan & ACC Log`,
@@ -1324,6 +1378,9 @@ export default function ArenaBattleMatchPage() {
     hasTriggeredMatchStartRef.current = false;
     const sec = prepDuration > 0 ? prepDuration : 10;
     setTimerSeconds(sec);
+    setMatchElapsedMs(0);
+    matchStartTimeRef.current = 0;
+    matchElapsedBaseRef.current = 0;
     setIsTimerRunning(false);
     setTimerPhase("idle");
     setShowLeg1Modal(false);
@@ -1396,6 +1453,10 @@ export default function ArenaBattleMatchPage() {
       }
     }
     setIsTimerRunning(false);
+    if (matchStartTimeRef.current > 0) {
+      matchElapsedBaseRef.current += Date.now() - matchStartTimeRef.current;
+      matchStartTimeRef.current = 0;
+    }
     setTimerPhase("finished");
 
     const sAL1 = overrideScores ? overrideScores.scoreALeg1 : (match.scoreALeg1 || 0);
@@ -1440,7 +1501,7 @@ export default function ArenaBattleMatchPage() {
       {
         id: `hist-finish-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         timestamp: nowClock,
-        timeFormatted: formatTime(timerSeconds),
+        timeFormatted: formatTime(matchElapsedMs),
         corner: "system",
         teamName: "ARENA SYSTEM",
         actionLabel: `🏆 Pertandingan Selesai Resmi! ${winner === "A" ? match.teamA : winner === "B" ? match.teamB : "Hasil Seri"} (${finalScoreA} - ${finalScoreB})`,
@@ -2055,9 +2116,18 @@ export default function ArenaBattleMatchPage() {
             <div className="font-mono text-8xl sm:text-9xl md:text-[10rem] font-black tracking-tight text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)] select-none animate-bounce">
               {timerSeconds}
             </div>
-          ) : (
+          ) : timerPhase === "preparation" || timerPhase === "prep_paused" ? (
             <div className="font-mono text-7xl sm:text-8xl md:text-9xl font-black tracking-tight text-white drop-shadow-[0_0_35px_rgba(249,115,22,0.35)] select-none">
-              {formatTime(timerSeconds)}
+              {`${String(Math.floor(timerSeconds / 60)).padStart(2, "0")}:${String(timerSeconds % 60).padStart(2, "0")}`}
+            </div>
+          ) : (
+            <div className="font-mono font-black tracking-tight text-white select-none flex items-baseline justify-center">
+              <span className="text-7xl sm:text-8xl md:text-9xl drop-shadow-[0_0_35px_rgba(249,115,22,0.35)]">
+                {getStopwatchParts(matchElapsedMs).minutes}:{getStopwatchParts(matchElapsedMs).seconds}
+              </span>
+              <span className="text-4xl sm:text-5xl md:text-6xl text-amber-400 font-extrabold ml-1.5 sm:ml-2.5 drop-shadow-[0_0_25px_rgba(245,158,11,0.5)]">
+                .{getStopwatchParts(matchElapsedMs).centiseconds}
+              </span>
             </div>
           )}
 
