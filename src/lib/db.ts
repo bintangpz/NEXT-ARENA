@@ -18,29 +18,28 @@ import {
   calculateParticipantScoreInStage,
 } from "@/data/mockCompetition";
 
-const dbDir = path.join(process.cwd(), "data");
-if (!fs.existsSync(dbDir)) {
-  try {
-    fs.mkdirSync(dbDir, { recursive: true });
-  } catch (err) {
-    console.error("[NextArena DB] Gagal membuat direktori data:", err);
-  }
-}
-
-const dbPath = path.join(dbDir, "next_arena.db");
-
-// Singleton connection on globalThis to prevent multiple native C++ connections
-// during Next.js dev hot-reloads (which causes STATUS_ACCESS_VIOLATION / segfault crashes on Windows)
+// Lazy singleton connection on globalThis to prevent multiple native C++ connections
+// during Next.js dev hot-reloads and parallel build workers (which causes STATUS_ACCESS_VIOLATION 3221225477 on Windows)
 declare global {
   var _nextArenaDb: Database.Database | undefined;
   var _nextArenaDbInitialized: boolean | undefined;
 }
 
-function getDatabase(): Database.Database {
+export function getDatabase(): Database.Database {
   if (globalThis._nextArenaDb) {
     return globalThis._nextArenaDb;
   }
 
+  const dbDir = path.join(process.cwd(), "data");
+  if (!fs.existsSync(dbDir)) {
+    try {
+      fs.mkdirSync(dbDir, { recursive: true });
+    } catch (err) {
+      console.error("[NextArena DB] Gagal membuat direktori data:", err);
+    }
+  }
+
+  const dbPath = path.join(dbDir, "next_arena.db");
   const database = new Database(dbPath, {
     timeout: 10000, // Tunggu hingga 10 detik jika file sedang terkunci di Windows
   });
@@ -61,17 +60,41 @@ function getDatabase(): Database.Database {
   } catch {}
 
   globalThis._nextArenaDb = database;
+
+  // Initialize schema lazily on first connect
+  if (!globalThis._nextArenaDbInitialized) {
+    try {
+      initDatabase(database);
+    } catch (err) {
+      console.error("[NextArena DB Init Error]:", err);
+    }
+  }
+
   return database;
 }
 
-const db = getDatabase();
+// Transparent Lazy Proxy:
+// Accessing db.prepare / db.exec will only instantiate the SQLite connection on demand at runtime.
+// This prevents Next.js static build workers from opening C++ handles during build-time page data collection.
+export const db: Database.Database = new Proxy({} as Database.Database, {
+  get(_target, prop) {
+    const database = getDatabase();
+    const val = (database as any)[prop];
+    if (typeof val === "function") {
+      return val.bind(database);
+    }
+    return val;
+  },
+});
 
-export function initDatabase() {
+export function initDatabase(targetDb?: Database.Database) {
   if (globalThis._nextArenaDbInitialized) {
     return;
   }
+
+  const activeDb = targetDb || (globalThis._nextArenaDb ?? getDatabase());
   // Create tables
-  db.exec(`
+  activeDb.exec(`
     CREATE TABLE IF NOT EXISTS categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT UNIQUE NOT NULL
@@ -137,7 +160,7 @@ export function initDatabase() {
   `);
 
   try {
-    db.exec(`
+    activeDb.exec(`
       ALTER TABLE bracket_matches ADD COLUMN current_leg INTEGER DEFAULT 1;
       ALTER TABLE bracket_matches ADD COLUMN score_a_leg1 REAL DEFAULT 0;
       ALTER TABLE bracket_matches ADD COLUMN score_b_leg1 REAL DEFAULT 0;
@@ -149,24 +172,24 @@ export function initDatabase() {
   }
 
   try {
-    db.prepare("ALTER TABLE participants ADD COLUMN current_stage_idx INTEGER DEFAULT 0").run();
+    activeDb.prepare("ALTER TABLE participants ADD COLUMN current_stage_idx INTEGER DEFAULT 0").run();
   } catch {
     // column exists
   }
 
   // Seed default categories if empty
-  const categoryCount = (db.prepare("SELECT COUNT(*) as count FROM categories").get() as { count: number }).count;
+  const categoryCount = (activeDb.prepare("SELECT COUNT(*) as count FROM categories").get() as { count: number }).count;
   if (categoryCount === 0) {
-    const insertCat = db.prepare("INSERT INTO categories (name) VALUES (?)");
+    const insertCat = activeDb.prepare("INSERT INTO categories (name) VALUES (?)");
     for (const cat of DEFAULT_CATEGORIES) {
       insertCat.run(cat);
     }
   }
 
   // Seed default settings if empty
-  const defaultAnnouncement = (db.prepare("SELECT value FROM settings WHERE key = 'announcement'").get() as { value: string } | undefined);
+  const defaultAnnouncement = (activeDb.prepare("SELECT value FROM settings WHERE key = 'announcement'").get() as { value: string } | undefined);
   if (!defaultAnnouncement) {
-    const insertSetting = db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)");
+    const insertSetting = activeDb.prepare("INSERT INTO settings (key, value) VALUES (?, ?)");
     insertSetting.run("announcement", "🔥 LIVE ARENA: Babak 3 Grand Final sedang berlangsung! Selamat bertanding seluruh tim finalis.");
     insertSetting.run("round_title", "BABAK 3 • GRAND FINAL");
     insertSetting.run("stage_model", "klasemen");
@@ -197,7 +220,7 @@ export function initDatabase() {
     );
   } else {
     // Ensure new timer & stage settings exist for existing database
-    const ensureSetting = db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)");
+    const ensureSetting = activeDb.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)");
     ensureSetting.run("timer_mode", "stopwatch");
     ensureSetting.run("timer_phase", "idle");
     ensureSetting.run("timer_started_at", "0");
@@ -234,14 +257,14 @@ export function initDatabase() {
   }
 
   // Check if database has been seeded once
-  const seededOnce = (db.prepare("SELECT value FROM settings WHERE key = 'seeded_once'").get() as { value: string } | undefined)?.value === "true";
+  const seededOnce = (activeDb.prepare("SELECT value FROM settings WHERE key = 'seeded_once'").get() as { value: string } | undefined)?.value === "true";
   if (!seededOnce) {
-    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('seeded_once', 'true')").run();
+    activeDb.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('seeded_once', 'true')").run();
   }
 
   // Auto-heal participants that have an invalid/deleted category
   try {
-    db.prepare(`
+    activeDb.prepare(`
       UPDATE participants 
       SET category = (SELECT name FROM categories ORDER BY id ASC LIMIT 1) 
       WHERE category NOT IN (SELECT name FROM categories)
@@ -249,13 +272,6 @@ export function initDatabase() {
   } catch (e) {}
 
   globalThis._nextArenaDbInitialized = true;
-}
-
-// Ensure DB is initialized safely
-try {
-  initDatabase();
-} catch (err) {
-  console.error("[NextArena DB Init Error]:", err);
 }
 
 export function getAllArenaData() {
@@ -389,5 +405,3 @@ export function resetArenaData() {
   `);
   return getAllArenaData();
 }
-
-export { db };
