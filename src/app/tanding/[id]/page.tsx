@@ -27,6 +27,9 @@ import {
   AlertTriangle,
   History,
   Trash2,
+  ClipboardCheck,
+  X,
+  FileText,
 } from "lucide-react";
 import { ArenaLogo } from "@/components/ArenaLogo";
 import {
@@ -132,6 +135,9 @@ export default function ArenaBattleMatchPage() {
   // Winner Celebration & Leg 1 Transition Modal
   const [showWinnerModal, setShowWinnerModal] = useState<boolean>(false);
   const [showLeg1Modal, setShowLeg1Modal] = useState<boolean>(false);
+  const [revisedLeg1ScoreA, setRevisedLeg1ScoreA] = useState<number>(0);
+  const [revisedLeg1ScoreB, setRevisedLeg1ScoreB] = useState<number>(0);
+  const [leg1LogFilter, setLeg1LogFilter] = useState<"all" | "A" | "B">("all");
   const [shutterToNext, setShutterToNext] = useState<BracketMatch | null>(null);
   const [showResetMatchModal, setShowResetMatchModal] = useState<boolean>(false);
   const [resetWithLogs, setResetWithLogs] = useState<boolean>(true);
@@ -566,6 +572,11 @@ export default function ArenaBattleMatchPage() {
               setTimerPhase("finished");
               if (soundEnabled) {
                 playSound("finish", soundFinishUrl, soundVolume, soundFinishLoop);
+              }
+              if (is2x && activeLeg === 1) {
+                setTimeout(() => {
+                  handleCompleteLeg1(false);
+                }, 800);
               }
               return next;
             }
@@ -1226,7 +1237,7 @@ export default function ArenaBattleMatchPage() {
     } catch (e) {}
   };
 
-  // Handler Selesai Putaran 1 (Untuk 2x Main: simpan skor P1, tukar sisi ke P2, timer ke idle persiapan, tetap di laga yang sama!)
+  // Handler Selesai Putaran 1 (Untuk 2x Main: buka modal tinjau & revisi log P1, timer ke idle/stop)
   const handleCompleteLeg1 = async (
     stopSounds: boolean = true,
     overrideScores?: {
@@ -1251,8 +1262,43 @@ export default function ArenaBattleMatchPage() {
 
     const sAL1 = overrideScores ? overrideScores.scoreALeg1 : (match.scoreALeg1 || 0);
     const sBL1 = overrideScores ? overrideScores.scoreBLeg1 : (match.scoreBLeg1 || 0);
-    const sAL2 = overrideScores ? overrideScores.scoreALeg2 : (match.scoreALeg2 || 0);
-    const sBL2 = overrideScores ? overrideScores.scoreBLeg2 : (match.scoreBLeg2 || 0);
+
+    // Inisialisasi skor untuk revisi di modal tinjau log
+    setRevisedLeg1ScoreA(sAL1);
+    setRevisedLeg1ScoreB(sBL1);
+    setLeg1LogFilter("all");
+
+    // Timer diset ke idle & stop (sama seperti kondisi awal)
+    const sec = prepDuration > 0 ? prepDuration : 10;
+    setTimerSeconds(sec);
+    setTimerPhase("idle");
+    setShowLeg1Modal(true);
+
+    const nowClock = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    setMatchHistory((prev) => [
+      {
+        id: `hist-comp-p1-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        timestamp: nowClock,
+        timeFormatted: formatTime(timerSeconds),
+        corner: "system",
+        teamName: "ARENA SYSTEM",
+        actionLabel: `🏁 Sesi 1 (Putaran 1) Selesai! (${match.teamA}: ${sAL1} PTS | ${match.teamB}: ${sBL1} PTS) • Menunggu Tinjauan & ACC Log`,
+        delta: 0,
+        leg: 1,
+      },
+      ...prev,
+    ]);
+  };
+
+  // Konfirmasi ACC Putaran 1 -> Simpan skor (termasuk hasil revisi) & beralih ke Putaran 2 (Tukar Sisi)
+  // Kondisi Putaran 2: STANDBY / STOP (TIDAK LANGSUNG MULAI!)
+  const handleConfirmAccLeg1 = async () => {
+    if (!match) return;
+
+    const sAL1 = revisedLeg1ScoreA;
+    const sBL1 = revisedLeg1ScoreB;
+    const sAL2 = match.scoreALeg2 || 0;
+    const sBL2 = match.scoreBLeg2 || 0;
 
     const avgA = Number(((sAL1 + sAL2) / 2).toFixed(2));
     const avgB = Number(((sBL1 + sBL2) / 2).toFixed(2));
@@ -1273,25 +1319,39 @@ export default function ArenaBattleMatchPage() {
         : null
     );
 
+    // KONDISI AWAL: Timer STOP / IDLE, TIDAK LANGSUNG JALAN
+    stopAllSounds();
+    hasTriggeredMatchStartRef.current = false;
     const sec = prepDuration > 0 ? prepDuration : 10;
     setTimerSeconds(sec);
+    setIsTimerRunning(false);
     setTimerPhase("idle");
-    setShowLeg1Modal(true);
+    setShowLeg1Modal(false);
 
     const nowClock = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     setMatchHistory((prev) => [
       {
-        id: `hist-comp-p1-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+        id: `hist-acc-p1-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         timestamp: nowClock,
-        timeFormatted: formatTime(timerSeconds),
+        timeFormatted: "00:00",
         corner: "system",
         teamName: "ARENA SYSTEM",
-        actionLabel: `🏁 Sesi 1 (Putaran 1) Selesai! (${match.teamA}: ${sAL1} PTS | ${match.teamB}: ${sBL1} PTS) • Tukar Sisi ke Sesi 2`,
+        actionLabel: `✅ Putaran 1 di-ACC (${match.teamA}: ${sAL1} PTS | ${match.teamB}: ${sBL1} PTS) • Beralih ke Putaran 2 (Tukar Sisi)`,
         delta: 0,
         leg: 1,
       },
       ...prev,
     ]);
+
+    showArenaToast({
+      kind: "switch_leg",
+      leg: 2,
+      title: "TUKAR SISI ARENA • PUTARAN 2",
+      text: `Putaran 2 Standby (Stop). Sudut Merah: ${match.teamB} • Sudut Biru: ${match.teamA}. Tekan Mulai Pertandingan bila siap.`,
+      teamA: match.teamB,
+      teamB: match.teamA,
+      isPositive: true,
+    }, 4500);
 
     try {
       await fetch("/api/bracket", {
@@ -2123,9 +2183,19 @@ export default function ArenaBattleMatchPage() {
             {/* Tombol Selesai Laga & Kunci Skor */}
             <button
               type="button"
-              onClick={() => handleFinishMatch(true)}
+              onClick={() => {
+                if (is2x && activeLeg === 1) {
+                  handleCompleteLeg1(true);
+                } else {
+                  handleFinishMatch(true);
+                }
+              }}
               className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-zinc-950 font-black text-sm flex items-center gap-2 hover:brightness-110 shadow-lg shadow-emerald-500/20 transition-all cursor-pointer"
-              title="Selesaikan Pertandingan dan kunci skor akhir"
+              title={
+                is2x && activeLeg === 1
+                  ? "Selesaikan Putaran 1 & Buka Tinjauan Log"
+                  : "Selesaikan Pertandingan dan kunci skor akhir"
+              }
             >
               <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
               <span>Selesai Laga & Kunci Skor</span>
@@ -2186,6 +2256,22 @@ export default function ArenaBattleMatchPage() {
                   </span>
                 </button>
               </div>
+
+              {/* Tombol Tinjau & ACC Log Putaran 1 */}
+              <button
+                type="button"
+                onClick={() => {
+                  setRevisedLeg1ScoreA(match.scoreALeg1 || 0);
+                  setRevisedLeg1ScoreB(match.scoreBLeg1 || 0);
+                  setLeg1LogFilter("all");
+                  setShowLeg1Modal(true);
+                }}
+                className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                title="Buka panel tinjau log dan revisi skor Putaran 1"
+              >
+                <ClipboardCheck className="w-3.5 h-3.5 text-amber-400" />
+                <span>Tinjau Log Putaran 1</span>
+              </button>
             </div>
 
             {/* Rata-Rata Skor Preview */}
@@ -2856,71 +2942,322 @@ export default function ArenaBattleMatchPage() {
         </div>
       </footer>
 
-      {/* MODAL TRANSISI PUTARAN 1 KE PUTARAN 2 (TUKAR SISI) */}
+      {/* MODAL TRANSISI PUTARAN 1 KE PUTARAN 2 (TINJAU & REVISI LOG SEBELUM ACC) */}
       {showLeg1Modal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4">
-          <div className="bg-[#121216] border-2 border-orange-500/80 rounded-3xl p-8 max-w-lg w-full text-center space-y-6 shadow-[0_0_80px_rgba(249,115,22,0.4)] animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-amber-400 via-orange-500 to-red-500 mx-auto flex items-center justify-center text-zinc-950 shadow-xl shadow-orange-500/30">
-              <ArrowLeftRight className="w-10 h-10 stroke-[2.5]" />
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+          <div className="bg-[#121216] border-2 border-orange-500/80 rounded-3xl p-6 sm:p-8 max-w-3xl w-full text-center space-y-5 shadow-[0_0_80px_rgba(249,115,22,0.35)] animate-in fade-in zoom-in-95 duration-200 my-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 text-left">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 via-orange-500 to-red-500 flex items-center justify-center text-zinc-950 shadow-lg shadow-orange-500/25 shrink-0">
+                  <ClipboardCheck className="w-6 h-6 stroke-[2.5]" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono font-black uppercase tracking-widest text-orange-400 block">
+                    SESI TINJAUAN RESMI • 2X MAIN (TUKAR SISI)
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-black text-white">
+                    Rekap &amp; Verifikasi Log Putaran 1
+                  </h2>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowLeg1Modal(false)}
+                className="p-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                title="Tutup (Belum ACC)"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="space-y-2">
-              <span className="text-xs font-mono font-black uppercase tracking-widest text-orange-400">
-                PUTARAN 1 SELESAI • TUKAR SISI ARENA
+            <p className="text-xs text-zinc-400 text-left -mt-2">
+              Periksa riwayat poin dan lakukan revisi skor di bawah jika ada kesalahan penilaian sebelum melanjutkan ke Putaran 2.
+            </p>
+
+            {/* Rekap & Revisi Skor Putaran 1 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+              {/* TIM A (SUDUT MERAH DI PUTARAN 1) */}
+              <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 space-y-3 font-mono">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-rose-400 font-bold uppercase tracking-wider">
+                    🔴 SUDUT MERAH (PUTARAN 1)
+                  </span>
+                  {finishedCorners.p1Red ? (
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                      Finish: {finishedCorners.p1Red}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                      Waktu Habis
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-0.5">
+                  <h4 className="text-base font-black text-white truncate">{match.teamA}</h4>
+                  <p className="text-xs text-zinc-400 truncate">{instA || "Tim A"}</p>
+                </div>
+
+                {/* Score Controls */}
+                <div className="pt-2 border-t border-rose-500/20 flex flex-col gap-2">
+                  <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                    Revisi Skor Putaran 1:
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setRevisedLeg1ScoreA((prev) => Math.max(0, Number((prev - 5).toFixed(2))))}
+                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                    >
+                      -5
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRevisedLeg1ScoreA((prev) => Math.max(0, Number((prev - 1).toFixed(2))))}
+                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                    >
+                      -1
+                    </button>
+                    <input
+                      type="number"
+                      step="0.5"
+                      value={revisedLeg1ScoreA}
+                      onChange={(e) => setRevisedLeg1ScoreA(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="w-24 px-2 py-1.5 text-center font-mono text-xl font-black rounded-xl bg-zinc-950 border border-rose-500/50 text-amber-400 focus:outline-none focus:border-rose-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRevisedLeg1ScoreA((prev) => Number((prev + 1).toFixed(2)))}
+                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                    >
+                      +1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRevisedLeg1ScoreA((prev) => Number((prev + 5).toFixed(2)))}
+                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                    >
+                      +5
+                    </button>
+                  </div>
+                  {revisedLeg1ScoreA !== (match.scoreALeg1 || 0) && (
+                    <span className="text-[10px] text-amber-400">
+                      *Skor direvisi dari {match.scoreALeg1 || 0} PTS
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* TIM B (SUDUT BIRU DI PUTARAN 1) */}
+              <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-3 font-mono">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-blue-400 font-bold uppercase tracking-wider">
+                    🔵 SUDUT BIRU (PUTARAN 1)
+                  </span>
+                  {finishedCorners.p1Blue ? (
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                      Finish: {finishedCorners.p1Blue}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                      Waktu Habis
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-0.5">
+                  <h4 className="text-base font-black text-white truncate">{match.teamB}</h4>
+                  <p className="text-xs text-zinc-400 truncate">{instB || "Tim B"}</p>
+                </div>
+
+                {/* Score Controls */}
+                <div className="pt-2 border-t border-blue-500/20 flex flex-col gap-2">
+                  <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                    Revisi Skor Putaran 1:
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setRevisedLeg1ScoreB((prev) => Math.max(0, Number((prev - 5).toFixed(2))))}
+                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                    >
+                      -5
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRevisedLeg1ScoreB((prev) => Math.max(0, Number((prev - 1).toFixed(2))))}
+                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                    >
+                      -1
+                    </button>
+                    <input
+                      type="number"
+                      step="0.5"
+                      value={revisedLeg1ScoreB}
+                      onChange={(e) => setRevisedLeg1ScoreB(Math.max(0, parseFloat(e.target.value) || 0))}
+                      className="w-24 px-2 py-1.5 text-center font-mono text-xl font-black rounded-xl bg-zinc-950 border border-blue-500/50 text-amber-400 focus:outline-none focus:border-blue-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setRevisedLeg1ScoreB((prev) => Number((prev + 1).toFixed(2)))}
+                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                    >
+                      +1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRevisedLeg1ScoreB((prev) => Number((prev + 5).toFixed(2)))}
+                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                    >
+                      +5
+                    </button>
+                  </div>
+                  {revisedLeg1ScoreB !== (match.scoreBLeg1 || 0) && (
+                    <span className="text-[10px] text-amber-400">
+                      *Skor direvisi dari {match.scoreBLeg1 || 0} PTS
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Tab Log Riwayat Putaran 1 */}
+            <div className="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800 text-left space-y-3 font-mono">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/80 pb-2">
+                <div className="flex items-center gap-2">
+                  <History className="w-4 h-4 text-orange-400" />
+                  <span className="text-xs font-bold text-white uppercase tracking-wider">
+                    Log Aktivitas Putaran 1 ({p1History.length} Event):
+                  </span>
+                </div>
+                <div className="flex items-center gap-1 text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => setLeg1LogFilter("all")}
+                    className={`px-2 py-0.5 rounded-md cursor-pointer ${
+                      leg1LogFilter === "all" ? "bg-orange-500 text-zinc-950 font-bold" : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    Semua ({p1History.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLeg1LogFilter("A")}
+                    className={`px-2 py-0.5 rounded-md cursor-pointer ${
+                      leg1LogFilter === "A" ? "bg-rose-500 text-white font-bold" : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    {match.teamA} ({p1History.filter((i) => i.teamName === match.teamA || i.corner === "red").length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLeg1LogFilter("B")}
+                    className={`px-2 py-0.5 rounded-md cursor-pointer ${
+                      leg1LogFilter === "B" ? "bg-blue-500 text-white font-bold" : "text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    {match.teamB} ({p1History.filter((i) => i.teamName === match.teamB || i.corner === "blue").length})
+                  </button>
+                </div>
+              </div>
+
+              {/* Log List */}
+              <div className="max-h-44 overflow-y-auto space-y-1.5 pr-1 divide-y divide-zinc-900 text-xs">
+                {(() => {
+                  const filteredLogs = p1History.filter((item) => {
+                    if (leg1LogFilter === "A") return item.teamName === match.teamA || item.corner === "red";
+                    if (leg1LogFilter === "B") return item.teamName === match.teamB || item.corner === "blue";
+                    return true;
+                  });
+
+                  if (filteredLogs.length === 0) {
+                    return (
+                      <p className="text-xs text-zinc-500 py-4 text-center">
+                        Belum ada aktivitas poin pada Putaran 1
+                      </p>
+                    );
+                  }
+
+                  return filteredLogs.map((item) => (
+                    <div
+                      key={item.id}
+                      className="pt-1.5 first:pt-0 flex items-center justify-between gap-2 hover:bg-zinc-900/60 p-1.5 rounded-lg"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="px-1.5 py-0.5 rounded bg-zinc-900 text-amber-300 font-mono text-[10px] shrink-0">
+                          {item.timeFormatted}
+                        </span>
+                        <span
+                          className={`w-2 h-2 rounded-full shrink-0 ${
+                            item.corner === "red"
+                              ? "bg-rose-500"
+                              : item.corner === "blue"
+                              ? "bg-blue-500"
+                              : "bg-zinc-500"
+                          }`}
+                        />
+                        <span className="text-zinc-300 text-[11px] truncate">
+                          <strong className="text-white mr-1.5">{item.teamName}:</strong>
+                          {item.actionLabel}
+                        </span>
+                      </div>
+                      <span
+                        className={`font-mono text-xs font-bold shrink-0 ${
+                          item.delta > 0
+                            ? "text-emerald-400"
+                            : item.delta < 0
+                            ? "text-rose-400"
+                            : "text-zinc-400"
+                        }`}
+                      >
+                        {item.delta > 0 ? `+${item.delta}` : item.delta !== 0 ? item.delta : ""} PTS
+                      </span>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </div>
+
+            {/* Info Posisi Putaran 2 (Tukar Sisi Arena) */}
+            <div className="p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/30 text-left space-y-1.5 font-mono text-xs">
+              <span className="text-orange-400 font-black uppercase text-[11px] block">
+                🔁 Posisi Baru Setelah ACC (Putaran 2 Tukar Sisi):
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-white">
-                Siap Memulai Putaran 2!
-              </h2>
-              <p className="text-xs text-zinc-400">
-                Pertandingan ini memakai sistem <strong>2x Main (Tukar Sisi)</strong>. Skor resmi akhir adalah nilai rata-rata dari kedua putaran.
+              <div className="grid grid-cols-2 gap-2 text-zinc-300">
+                <div className="p-2 rounded-xl bg-zinc-950/60 border border-zinc-800">
+                  <span className="text-[10px] text-rose-400 block font-bold">🔴 SUDUT MERAH:</span>
+                  <strong className="text-white text-xs truncate block">{match.teamB}</strong>
+                </div>
+                <div className="p-2 rounded-xl bg-zinc-950/60 border border-zinc-800">
+                  <span className="text-[10px] text-blue-400 block font-bold">🔵 SUDUT BIRU:</span>
+                  <strong className="text-white text-xs truncate block">{match.teamA}</strong>
+                </div>
+              </div>
+              <p className="text-[11px] text-zinc-400 pt-1">
+                ⏱️ <em>Catatan:</em> Timer Putaran 2 akan dalam status <strong>STOP / IDLE</strong>. Pertandingan tidak langsung berjalan otomatis sampai Anda menekan tombol Mulai.
               </p>
             </div>
 
-            {/* Rekap Skor Putaran 1 */}
-            <div className="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-2 font-mono">
-              <span className="text-[11px] text-zinc-400 font-bold uppercase tracking-wider block">
-                Hasil Putaran 1:
-              </span>
-              <div className="flex items-center justify-around">
-                <div>
-                  <span className="text-[10px] text-rose-400 uppercase block font-bold">Sudut Merah</span>
-                  <span className="text-sm font-bold text-white block truncate max-w-[130px]">{match.teamA}</span>
-                  <span className="text-2xl font-black text-amber-400">{match.scoreALeg1 || 0} PTS</span>
-                </div>
-                <div className="text-zinc-600 font-black text-lg">VS</div>
-                <div>
-                  <span className="text-[10px] text-blue-400 uppercase block font-bold">Sudut Biru</span>
-                  <span className="text-sm font-bold text-white block truncate max-w-[130px]">{match.teamB}</span>
-                  <span className="text-2xl font-black text-amber-400">{match.scoreBLeg1 || 0} PTS</span>
-                </div>
-              </div>
-            </div>
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLeg1Modal(false)}
+                className="w-full sm:w-1/3 py-3.5 px-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white font-bold text-xs font-mono transition-all cursor-pointer"
+              >
+                Tutup (Belum ACC)
+              </button>
 
-            {/* Posisi Baru Putaran 2 */}
-            <div className="p-4 rounded-2xl bg-orange-500/10 border border-orange-500/30 text-left space-y-2 font-mono text-xs">
-              <span className="text-orange-400 font-black uppercase block">🔁 Posisi Baru Tim di Putaran 2:</span>
-              <div className="flex items-center justify-between text-zinc-300">
-                <span>Sudut Merah (Tukar):</span>
-                <strong className="text-rose-400 text-sm font-black">{match.teamB}</strong>
-              </div>
-              <div className="flex items-center justify-between text-zinc-300">
-                <span>Sudut Biru (Tukar):</span>
-                <strong className="text-blue-400 text-sm font-black">{match.teamA}</strong>
-              </div>
+              <button
+                type="button"
+                onClick={handleConfirmAccLeg1}
+                className="w-full sm:w-2/3 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-zinc-950 font-black text-sm hover:brightness-110 shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2.5 transition-all cursor-pointer transform hover:scale-[1.01] active:scale-[0.99]"
+              >
+                <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+                <span>ACC Skor &amp; Masuk ke Putaran 2 ➔</span>
+              </button>
             </div>
-
-            {/* Action to Start Preparation Putaran 2 */}
-            <button
-              type="button"
-              onClick={() => {
-                setShowLeg1Modal(false);
-                handleStartPrep();
-              }}
-              className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-yellow-400 via-orange-500 to-amber-600 text-zinc-950 font-black text-sm hover:brightness-110 shadow-xl shadow-orange-500/25 flex items-center justify-center gap-2.5 transition-all cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Play className="w-5 h-5 fill-current" />
-              <span>Mulai Waktu Persiapan Putaran 2 ({prepDuration}s) ➔</span>
-            </button>
           </div>
         </div>
       )}

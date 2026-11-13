@@ -228,5 +228,50 @@ describe("Arena Battle Screen Refinements Test Suite", () => {
       );
     });
   });
+
+  describe("Requirement 8: 2x Match Transition (Log Review, Score Revision & Standby Putaran 2)", () => {
+    it("Contains Putaran 1 Log Review and Revision Modal", () => {
+      assert.strictEqual(
+        tandingContent.includes("Rekap &amp; Verifikasi Log Putaran 1") ||
+          tandingContent.includes("Rekap & Verifikasi Log Putaran 1"),
+        true,
+        "Must contain Putaran 1 Log Verification & Revision header"
+      );
+      assert.strictEqual(
+        tandingContent.includes("revisedLeg1ScoreA") && tandingContent.includes("revisedLeg1ScoreB"),
+        true,
+        "Must support score revision for both teams in Putaran 1"
+      );
+    });
+
+    it("Requires ACC confirmation before proceeding to Putaran 2", () => {
+      assert.strictEqual(
+        tandingContent.includes("handleConfirmAccLeg1"),
+        true,
+        "Must define handleConfirmAccLeg1 handler"
+      );
+      assert.strictEqual(
+        tandingContent.includes("ACC Skor &amp; Masuk ke Putaran 2") ||
+          tandingContent.includes("ACC Skor & Masuk ke Putaran 2"),
+        true,
+        "Must require ACC confirmation button to proceed"
+      );
+    });
+
+    it("Putaran 2 is STOPPED / IDLE upon entry and does NOT automatically start", () => {
+      // In handleConfirmAccLeg1, timer is idle and stopped
+      assert.match(
+        tandingContent,
+        /setTimerPhase\("idle"\)[\s\S]*?setIsTimerRunning\(false\)/,
+        "Timer must be in idle stopped state when entering Putaran 2"
+      );
+      // Switcher bar has access to review Putaran 1 logs
+      assert.strictEqual(
+        tandingContent.includes("Tinjau Log Putaran 1"),
+        true,
+        "Must contain 'Tinjau Log Putaran 1' button in switcher bar"
+      );
+    });
+  });
 });
 
