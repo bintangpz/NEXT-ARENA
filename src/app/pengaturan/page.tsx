@@ -784,13 +784,8 @@ export default function PengaturanPage() {
 
       const pressedKey = e.key.toUpperCase();
 
-      // Find active match: either with status "Berlangsung" or the first match of the selected round
-      const activeMatch =
-        bracketMatches.find((m) => m.status === "Berlangsung") ||
-        bracketMatches.find((m) => m.round === selectedBracketRound && m.status === "Siap Tanding") ||
-        bracketMatches.find((m) => m.round === selectedBracketRound) ||
-        bracketMatches[0];
-
+      // Hotkey penilaian HANYA aktif jika ada pertandingan yang sedang berstatus "Berlangsung"
+      const activeMatch = bracketMatches.find((m) => m.status === "Berlangsung");
       if (!activeMatch) return;
 
       const is2x = getMatchTurnsForRound(activeMatch.round) === "2x";

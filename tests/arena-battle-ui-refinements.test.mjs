@@ -202,5 +202,31 @@ describe("Arena Battle Screen Refinements Test Suite", () => {
       );
     });
   });
+
+  describe("Requirement 7: Match Mode Hotkey Restriction", () => {
+    const homeContent = fs.readFileSync(path.join(rootDir, "src/app/page.tsx"), "utf-8");
+    const pengaturanContent = fs.readFileSync(path.join(rootDir, "src/app/pengaturan/page.tsx"), "utf-8");
+
+    it("Arena battle page only enables scoring hotkeys when in match mode", () => {
+      assert.strictEqual(
+        tandingContent.includes('if (timerPhase !== "match" && timerPhase !== "match_paused")'),
+        true,
+        "handleKeyDown in tanding page must guard against non-match timer phases"
+      );
+    });
+
+    it("Dashboard and Pengaturan only enable hotkeys if a match has status 'Berlangsung'", () => {
+      assert.strictEqual(
+        homeContent.includes('const activeMatch = bracketMatches.find((m) => m.status === "Berlangsung");'),
+        true,
+        "Dashboard hotkeys must require status 'Berlangsung'"
+      );
+      assert.strictEqual(
+        pengaturanContent.includes('const activeMatch = bracketMatches.find((m) => m.status === "Berlangsung");'),
+        true,
+        "Pengaturan hotkeys must require status 'Berlangsung'"
+      );
+    });
+  });
 });
 

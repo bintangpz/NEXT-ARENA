@@ -760,8 +760,8 @@ export default function ArenaBattleMatchPage() {
 
     const legToUse: 1 | 2 = explicitLeg || (activeLeg as 1 | 2) || 1;
 
-    // 1. Poin HANYA bisa ditambahkan saat Waktu Pertandingan sedang berjalan (timerPhase === "match")
-    if (timerPhase !== "match") {
+    // 1. Poin HANYA bisa ditambahkan saat Waktu Pertandingan sedang berjalan (timerPhase === "match" atau "match_paused")
+    if (timerPhase !== "match" && timerPhase !== "match_paused") {
       showPointToast(
         "🔒 Poin belum bisa ditambahkan! Poin hanya aktif saat Waktu Pertandingan dimulai.",
         false
@@ -1430,6 +1430,11 @@ export default function ArenaBattleMatchPage() {
         return;
       }
 
+      // Hotkey penilaian HANYA bisa dipencet saat sudah masuk ke mode mulai pertandingan
+      if (timerPhase !== "match" && timerPhase !== "match_paused") {
+        return;
+      }
+
       const pressedKey = e.key.toUpperCase();
 
       // Check Red rules
@@ -1569,7 +1574,7 @@ export default function ArenaBattleMatchPage() {
   }) => {
     const isCurrentActiveLeg = activeLeg === leg;
     const isRed = corner === "red";
-    const isMatchRunningForCard = timerPhase === "match" && (!is2x || isCurrentActiveLeg);
+    const isMatchRunningForCard = (timerPhase === "match" || timerPhase === "match_paused") && (!is2x || isCurrentActiveLeg);
     const isScoringLocked = !isMatchRunningForCard || Boolean(isFinished);
     const isWinner =
       match?.status === "Selesai" &&
