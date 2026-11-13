@@ -182,5 +182,49 @@ describe("View Ranking Feature & Auto-Scrolling Modal Test Suite", () => {
       "Modal should display score breakdown per stage"
     );
   });
+
+  test("Requirement 6: ViewRankingModal has round switcher tabs to view ranking per round and 'Semua Babak'", () => {
+    // Stage selector state
+    assert.match(
+      modalContent,
+      /const \[selectedStage, setSelectedStage\] = useState<number \| "all">/,
+      "Modal must have selectedStage state allowing individual round or 'all'"
+    );
+
+    // Round switcher tabs UI
+    assert.match(
+      modalContent,
+      /PILIH BABAK:/,
+      "Modal must have round tab selector label 'PILIH BABAK:'"
+    );
+
+    // Stages mapping for round buttons
+    assert.match(
+      modalContent,
+      /stages\.map\(\(st,\s*sIdx\)\s*=>/,
+      "Modal must render tab buttons for each stage in stages array"
+    );
+
+    // "Semua Babak (Total)" button
+    assert.match(
+      modalContent,
+      /onClick=\{\(\)\s*=>\s*setSelectedStage\("all"\)\}/,
+      "Modal must include a button to select 'Semua Babak (Total)'"
+    );
+
+    // Stage score calculation using calculateParticipantScoreInStage
+    assert.match(
+      modalContent,
+      /calculateParticipantScoreInStage/,
+      "Modal must compute stage-specific scores via calculateParticipantScoreInStage"
+    );
+
+    // Auto-scroll position resets upon round tab change
+    assert.match(
+      modalContent,
+      /\[isOpen,\s*selectedCategory,\s*selectedStage\]/,
+      "Scroll reset effect must depend on selectedStage so it resets scroll to top upon switching rounds"
+    );
+  });
 });
 

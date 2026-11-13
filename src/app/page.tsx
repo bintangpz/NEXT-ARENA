@@ -3669,6 +3669,7 @@ export default function NextArenaDashboard() {
         stages={tournamentStages}
         activeRound={activeRound}
         roundTitle={activeStage?.name || "Klasemen Poin"}
+        initialStage={selectedLeaderboardStage}
       />
 
       {/* MODULAR MODAL 4: KONFIRMASI HAPUS PESERTA */}
