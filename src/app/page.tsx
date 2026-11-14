@@ -2054,7 +2054,7 @@ export default function NextArenaDashboard() {
                     </h2>
                   </div>
                   <span className="text-xs text-zinc-400">
-                    Klik nama tim untuk melihat profil anggota & rincian kriteria penilaian juri
+                    Klik nama tim untuk melihat profil & rincian kriteria penilaian juri
                   </span>
                 </div>
 
@@ -2201,7 +2201,7 @@ export default function NextArenaDashboard() {
                         </span>
                       </h2>
                       <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-                        Klik nama peserta untuk detail anggota, atau ikon pensil untuk edit profil & skor.
+                        Klik nama peserta untuk detail tim, atau ikon pensil untuk edit profil & skor.
                       </p>
                     </div>
 
@@ -2688,7 +2688,7 @@ export default function NextArenaDashboard() {
                                     <button
                                       type="button"
                                       onClick={() => setEditingParticipant(p)}
-                                      title="Edit Profil, Anggota, Skor"
+                                      title="Edit Profil & Skor"
                                       className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-cyan-400 hover:text-cyan-300 border border-zinc-800 transition-colors cursor-pointer"
                                     >
                                       <Edit3 className="w-3.5 h-3.5" />
@@ -3696,7 +3696,7 @@ export default function NextArenaDashboard() {
         }}
       />
 
-      {/* MODULAR MODAL 2: FULL CRUD EDIT PROFIL TIM, ANGGOTA & SKOR */}
+      {/* MODULAR MODAL 2: FULL CRUD EDIT PROFIL TIM & SKOR */}
       <ParticipantEditModal
         isOpen={!!editingParticipant}
         participant={editingParticipant}
@@ -3735,7 +3735,7 @@ export default function NextArenaDashboard() {
         onConfirm={handleConfirmDeleteParticipant}
         title="Hapus Peserta"
         message={`Apakah Anda yakin ingin menghapus peserta "${deletingParticipant?.name}"?`}
-        subMessage="Data tim, riwayat skor, dan anggota akan dihapus secara permanen dari sistem."
+        subMessage="Data tim dan riwayat skor akan dihapus secara permanen dari sistem."
         confirmText="Ya, Hapus Tim"
         cancelText="Batal"
         variant="danger"

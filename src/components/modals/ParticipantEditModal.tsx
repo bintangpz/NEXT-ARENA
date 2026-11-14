@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { Modal } from "@/components/ui/Modal";
-import { Participant, ParticipantStatus, TeamMember } from "@/data/mockCompetition";
-import { Edit3, Trash2, UserPlus } from "lucide-react";
+import { Participant, ParticipantStatus } from "@/data/mockCompetition";
+import { Edit3, Trash2 } from "lucide-react";
 
 interface ParticipantEditModalProps {
   isOpen: boolean;
@@ -32,7 +32,6 @@ export function ParticipantEditModal({
     babak1: 0,
     babak2: 0,
     babak3: 0,
-    members: [] as TeamMember[],
     note: "Update Data & Skor Peserta",
   });
 
@@ -48,10 +47,6 @@ export function ParticipantEditModal({
         babak1: participant.scores.babak1,
         babak2: participant.scores.babak2,
         babak3: participant.scores.babak3,
-        members:
-          participant.members && participant.members.length > 0
-            ? [...participant.members]
-            : [{ name: "Ketua Tim", role: "Team Captain" }],
         note: "Update Data & Skor Peserta",
       });
     }
@@ -64,7 +59,6 @@ export function ParticipantEditModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanedMembers = formData.members.filter((m) => m.name.trim() !== "");
 
     const updated: Participant = {
       ...participant,
@@ -74,10 +68,6 @@ export function ParticipantEditModal({
       city: formData.city.trim() || participant.city,
       category: formData.category || participant.category,
       status: formData.status,
-      members:
-        cleanedMembers.length > 0
-          ? cleanedMembers
-          : [{ name: "Ketua Tim", role: "Team Captain" }],
       scores: {
         babak1: Number(formData.babak1),
         babak2: Number(formData.babak2),
@@ -98,7 +88,7 @@ export function ParticipantEditModal({
       size="xl"
       icon={<Edit3 className="w-5 h-5 text-cyan-400" />}
       title={`Kelola Data Tim: ${participant.name}`}
-      subtitle="Ubah profil tim, kategori lomba, anggota, dan skor babak 1-3"
+      subtitle="Ubah profil tim, kategori lomba, dan skor babak 1-3"
       footer={
         <div className="w-full flex items-center justify-between">
           <button
@@ -261,71 +251,6 @@ export function ParticipantEditModal({
           <span className="font-mono text-lg font-extrabold text-cyan-400">
             {totalPointsNew.toLocaleString("id-ID")} PTS
           </span>
-        </div>
-
-        {/* Kelola Anggota Tim */}
-        <div className="space-y-2 pt-1">
-          <div className="flex items-center justify-between">
-            <label className="text-xs font-semibold text-zinc-300">
-              Daftar Anggota Tim ({formData.members.length})
-            </label>
-            <button
-              type="button"
-              onClick={() =>
-                setFormData({
-                  ...formData,
-                  members: [...formData.members, { name: "", role: "Anggota Tim" }],
-                })
-              }
-              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold inline-flex items-center gap-1"
-            >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>+ Tambah Anggota</span>
-            </button>
-          </div>
-
-          <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-            {formData.members.map((member, mIdx) => (
-              <div key={mIdx} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={member.name}
-                  onChange={(e) => {
-                    const updated = [...formData.members];
-                    updated[mIdx] = { ...updated[mIdx], name: e.target.value };
-                    setFormData({ ...formData, members: updated });
-                  }}
-                  placeholder="Nama Anggota"
-                  className="flex-1 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white"
-                />
-                <input
-                  type="text"
-                  value={member.role}
-                  onChange={(e) => {
-                    const updated = [...formData.members];
-                    updated[mIdx] = { ...updated[mIdx], role: e.target.value };
-                    setFormData({ ...formData, members: updated });
-                  }}
-                  placeholder="Peran / Posisi"
-                  className="w-36 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300"
-                />
-                {formData.members.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData({
-                        ...formData,
-                        members: formData.members.filter((_, idx) => idx !== mIdx),
-                      })
-                    }
-                    className="p-1.5 rounded-lg bg-zinc-900 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
         </div>
       </form>
     </Modal>

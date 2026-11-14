@@ -3,7 +3,7 @@
 import React from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Participant } from "@/data/mockCompetition";
-import { UserCheck, ClipboardCheck, Trash2, Edit3, Building2, MapPin } from "lucide-react";
+import { ClipboardCheck, Trash2, Edit3, Building2, MapPin } from "lucide-react";
 
 interface ParticipantDetailModalProps {
   isOpen: boolean;
@@ -107,52 +107,32 @@ export function ParticipantDetailModal({
           </div>
         </div>
 
-        {/* Anggota Tim & Breakdown Kriteria Juri */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-              <UserCheck className="w-4 h-4 text-cyan-400" />
-              <span>Daftar Anggota Tim ({(participant.members || []).length})</span>
-            </h4>
-            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-              {(participant.members || []).map((m, i) => (
-                <div
-                  key={i}
-                  className="p-2.5 rounded-lg bg-zinc-950/80 border border-zinc-800/80 flex items-center justify-between text-xs"
-                >
-                  <span className="font-semibold text-white">{m.name}</span>
-                  <span className="text-zinc-400">{m.role}</span>
+        {/* Breakdown Kriteria Juri */}
+        <div className="p-4 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-3">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
+            <ClipboardCheck className="w-4 h-4 text-cyan-400" />
+            <span>Rincian Kriteria Juri (Babak 3)</span>
+          </h4>
+          <div className="space-y-2 text-xs">
+            {[
+              { label: "Eksekusi Teknis", val: participant.criteria?.teknis ?? 200 },
+              { label: "Inovasi & Solusi", val: participant.criteria?.inovasi ?? 200 },
+              { label: "Kecepatan & Akurasi", val: participant.criteria?.kecepatan ?? 200 },
+              { label: "Presentasi & Strategi", val: participant.criteria?.presentasi ?? 200 },
+            ].map((c) => (
+              <div key={c.label} className="space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-zinc-300">{c.label}</span>
+                  <span className="font-mono font-bold text-cyan-400">{c.val} / 250</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="p-4 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-              <ClipboardCheck className="w-4 h-4 text-cyan-400" />
-              <span>Rincian Kriteria Juri (Babak 3)</span>
-            </h4>
-            <div className="space-y-2 text-xs">
-              {[
-                { label: "Eksekusi Teknis", val: participant.criteria?.teknis ?? 200 },
-                { label: "Inovasi & Solusi", val: participant.criteria?.inovasi ?? 200 },
-                { label: "Kecepatan & Akurasi", val: participant.criteria?.kecepatan ?? 200 },
-                { label: "Presentasi & Strategi", val: participant.criteria?.presentasi ?? 200 },
-              ].map((c) => (
-                <div key={c.label} className="space-y-1">
-                  <div className="flex justify-between">
-                    <span className="text-zinc-300">{c.label}</span>
-                    <span className="font-mono font-bold text-cyan-400">{c.val} / 250</span>
-                  </div>
-                  <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-cyan-500 to-amber-400"
-                      style={{ width: `${Math.min(100, (c.val / 250) * 100)}%` }}
-                    />
-                  </div>
+                <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-cyan-500 to-amber-400"
+                    style={{ width: `${Math.min(100, (c.val / 250) * 100)}%` }}
+                  />
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

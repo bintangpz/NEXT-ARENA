@@ -70,7 +70,6 @@ import {
   CompetitionCategory,
   Participant,
   ParticipantStatus,
-  TeamMember,
   BracketMatch,
   PointLog,
   CustomPointRule,
@@ -431,10 +430,6 @@ export default function PengaturanPage() {
     institution: "",
     category: DEFAULT_CATEGORIES[0] || "Cyber Security & CTF",
     status: "Aktif" as ParticipantStatus,
-    members: [
-      { name: "", role: "Team Captain" },
-      { name: "", role: "Anggota" },
-    ] as TeamMember[],
   });
 
   const showNotification = (msg: string) => {
@@ -1958,7 +1953,6 @@ export default function PengaturanPage() {
     e.preventDefault();
     if (!newParticipant.name.trim() || !newParticipant.institution.trim()) return;
 
-    const cleanedMembers = newParticipant.members.filter((m) => m.name.trim() !== "");
     const code = `NXT-${100 + participants.length + 1}`;
 
     const created: Participant = {
@@ -1976,7 +1970,7 @@ export default function PengaturanPage() {
         kecepatan: 0,
         presentasi: 0,
       },
-      members: cleanedMembers.length > 0 ? cleanedMembers : [{ name: "Ketua Tim", role: "Team Captain" }],
+      members: [],
       totalPoints: 0,
       previousRank: participants.length + 1,
       lastUpdated: "Baru saja",
@@ -1999,10 +1993,6 @@ export default function PengaturanPage() {
           institution: "",
           category: categories[0] || "Cyber Security & CTF",
           status: "Aktif",
-          members: [
-            { name: "", role: "Team Captain" },
-            { name: "", role: "Anggota" },
-          ],
         });
       }
     } catch (err) {
@@ -2282,51 +2272,6 @@ export default function PengaturanPage() {
                       <option value="Gugur">Gugur</option>
                     </select>
                   </div>
-                </div>
-
-                {/* Anggota Tim Form */}
-                <div className="space-y-2 pt-1 border-t border-zinc-800/80">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-zinc-300">Daftar Anggota Tim</label>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setNewParticipant({
-                          ...newParticipant,
-                          members: [...newParticipant.members, { name: "", role: "Anggota" }],
-                        })
-                      }
-                      className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
-                    >
-                      + Tambah Anggota
-                    </button>
-                  </div>
-                  {newParticipant.members.map((m, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={m.name}
-                        onChange={(e) => {
-                          const updated = [...newParticipant.members];
-                          updated[idx] = { ...updated[idx], name: e.target.value };
-                          setNewParticipant({ ...newParticipant, members: updated });
-                        }}
-                        placeholder={`Nama Anggota #${idx + 1}`}
-                        className="flex-1 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-white"
-                      />
-                      <input
-                        type="text"
-                        value={m.role}
-                        onChange={(e) => {
-                          const updated = [...newParticipant.members];
-                          updated[idx] = { ...updated[idx], role: e.target.value };
-                          setNewParticipant({ ...newParticipant, members: updated });
-                        }}
-                        placeholder="Peran"
-                        className="w-32 px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300"
-                      />
-                    </div>
-                  ))}
                 </div>
 
                 <button
@@ -5121,7 +5066,7 @@ export default function PengaturanPage() {
           onConfirm={handleConfirmDeleteParticipant}
           title="Hapus Peserta"
           message={`Apakah Anda yakin ingin menghapus peserta "${deleteConfirmTarget?.name}"?`}
-          subMessage="Data tim, skor per babak, dan rincian anggota akan dihapus secara permanen dari sistem."
+          subMessage="Data tim dan skor per babak akan dihapus secara permanen dari sistem."
           confirmText="Ya, Hapus Tim"
           cancelText="Batal"
           variant="danger"
