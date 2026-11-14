@@ -39,6 +39,7 @@ export function ViewRankingModal({
   initialStage,
 }: ViewRankingModalProps) {
   const [isAutoScrollActive, setIsAutoScrollActive] = useState<boolean>(true);
+  const [isManualScrollPaused, setIsManualScrollPaused] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
 
@@ -60,9 +61,15 @@ export function ViewRankingModal({
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const scrollDirectionRef = useRef<"down" | "up">("down");
-  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isHoldingRef = useRef<boolean>(false);
+  const userScrollDirectionRef = useRef<"down" | "up">("down");
   const scrollPosRef = useRef<number>(0);
+  const edgePauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const userResumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isPausedAtEdgeRef = useRef<boolean>(false);
+  const isUserInteractingRef = useRef<boolean>(false);
+  const isMouseDownRef = useRef<boolean>(false);
+  const isProgrammaticScrollRef = useRef<boolean>(false);
+  const lastUserScrollTopRef = useRef<number>(0);
 
   // Extract unique categories
   const categories = React.useMemo(() => {
@@ -181,12 +188,19 @@ export function ViewRankingModal({
       }
       scrollPosRef.current = 0;
       scrollDirectionRef.current = "down";
-      isHoldingRef.current = false;
-      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+      userScrollDirectionRef.current = "down";
+      isPausedAtEdgeRef.current = false;
+      isUserInteractingRef.current = false;
+      setIsManualScrollPaused(false);
+      isMouseDownRef.current = false;
+      isProgrammaticScrollRef.current = false;
+      lastUserScrollTopRef.current = 0;
+      if (edgePauseTimeoutRef.current) clearTimeout(edgePauseTimeoutRef.current);
+      if (userResumeTimeoutRef.current) clearTimeout(userResumeTimeoutRef.current);
     }
   }, [isOpen, selectedCategory, selectedStage]);
 
-  // Auto-scroll loop with pause at top & bottom
+  // Auto-scroll loop with smooth pause at top & bottom
   useEffect(() => {
     if (!isOpen || !isAutoScrollActive) return;
 
@@ -198,19 +212,27 @@ export function ViewRankingModal({
 
     // Calibrate starting position
     scrollPosRef.current = container.scrollTop;
+    isPausedAtEdgeRef.current = false;
+    isUserInteractingRef.current = false;
 
     const scrollStep = (currentTimestamp: number) => {
       const elapsed = Math.min(Math.max(currentTimestamp - lastTimestamp, 0), 40);
       lastTimestamp = currentTimestamp;
 
-      // Only scroll if container has overflow and not temporarily paused
+      // Only scroll if container has overflow and not paused by user interaction or edge pause
       if (
         container &&
-        !isHoldingRef.current &&
+        !isUserInteractingRef.current &&
+        !isPausedAtEdgeRef.current &&
         container.scrollHeight > container.clientHeight
       ) {
         const speed = 0.75; // Consistent, smooth auto-scroll speed
-        const maxScroll = container.scrollHeight - container.clientHeight;
+        const maxScroll = Math.max(0, container.scrollHeight - container.clientHeight);
+
+        if (maxScroll <= 0) {
+          animationFrameId = requestAnimationFrame(scrollStep);
+          return;
+        }
 
         if (scrollDirectionRef.current === "down") {
           scrollPosRef.current += speed * (elapsed / 16);
@@ -218,33 +240,43 @@ export function ViewRankingModal({
           // Reached bottom
           if (scrollPosRef.current >= maxScroll - 1) {
             scrollPosRef.current = maxScroll;
+            isProgrammaticScrollRef.current = true;
             container.scrollTop = maxScroll;
-            isHoldingRef.current = true;
+            isPausedAtEdgeRef.current = true;
+
+            if (edgePauseTimeoutRef.current) clearTimeout(edgePauseTimeoutRef.current);
             // 3-second pause at bottom so viewers can inspect lower ranks
-            pauseTimeoutRef.current = setTimeout(() => {
+            edgePauseTimeoutRef.current = setTimeout(() => {
               scrollDirectionRef.current = "up";
-              isHoldingRef.current = false;
+              userScrollDirectionRef.current = "up";
+              isPausedAtEdgeRef.current = false;
               lastTimestamp = performance.now();
             }, 3000);
           } else {
+            isProgrammaticScrollRef.current = true;
             container.scrollTop = scrollPosRef.current;
           }
         } else {
           // Scrolling back up
-          scrollPosRef.current -= speed * 1.2 * (elapsed / 16);
+          scrollPosRef.current -= speed * 1.1 * (elapsed / 16);
 
           // Reached top
           if (scrollPosRef.current <= 1) {
             scrollPosRef.current = 0;
+            isProgrammaticScrollRef.current = true;
             container.scrollTop = 0;
-            isHoldingRef.current = true;
+            isPausedAtEdgeRef.current = true;
+
+            if (edgePauseTimeoutRef.current) clearTimeout(edgePauseTimeoutRef.current);
             // 3-second pause at top so viewers can inspect top 1-3
-            pauseTimeoutRef.current = setTimeout(() => {
+            edgePauseTimeoutRef.current = setTimeout(() => {
               scrollDirectionRef.current = "down";
-              isHoldingRef.current = false;
+              userScrollDirectionRef.current = "down";
+              isPausedAtEdgeRef.current = false;
               lastTimestamp = performance.now();
             }, 3000);
           } else {
+            isProgrammaticScrollRef.current = true;
             container.scrollTop = scrollPosRef.current;
           }
         }
@@ -257,52 +289,134 @@ export function ViewRankingModal({
 
     return () => {
       cancelAnimationFrame(animationFrameId);
-      if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+      if (edgePauseTimeoutRef.current) clearTimeout(edgePauseTimeoutRef.current);
+      if (userResumeTimeoutRef.current) clearTimeout(userResumeTimeoutRef.current);
     };
   }, [isOpen, isAutoScrollActive, rankedParticipants]);
 
-  // Pause momentarily on user manual scroll
-  const handleUserWheel = () => {
-    isHoldingRef.current = true;
-    if (scrollContainerRef.current) {
-      scrollPosRef.current = scrollContainerRef.current.scrollTop;
-    }
-    if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
-    pauseTimeoutRef.current = setTimeout(() => {
-      if (scrollContainerRef.current) {
-        scrollPosRef.current = scrollContainerRef.current.scrollTop;
+  // Global pointer/mouse up listener to resume auto-scroll when user finishes dragging scrollbar
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePointerUp = () => {
+      if (isMouseDownRef.current) {
+        isMouseDownRef.current = false;
+        handleUserInteraction();
       }
-      isHoldingRef.current = false;
-    }, 4000); // Resume auto-scroll 4 seconds after manual scroll
+    };
+
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("mouseup", handlePointerUp);
+    return () => {
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("mouseup", handlePointerUp);
+    };
+  }, [isOpen]);
+
+  // Handle user manual interaction (wheel, trackpad, touch, scrollbar drag, keyboard)
+  const handleUserInteraction = (delta?: number) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    isUserInteractingRef.current = true;
+    setIsManualScrollPaused(true);
+
+    // Cancel any active edge pause (so it won't reverse or trigger unexpectedly)
+    if (edgePauseTimeoutRef.current) {
+      clearTimeout(edgePauseTimeoutRef.current);
+      edgePauseTimeoutRef.current = null;
+    }
+    isPausedAtEdgeRef.current = false;
+
+    // Track user direction if delta is provided or can be determined
+    const currentScroll = container.scrollTop;
+    if (delta !== undefined && Math.abs(delta) > 0.5) {
+      userScrollDirectionRef.current = delta > 0 ? "down" : "up";
+    } else {
+      const scrollDiff = currentScroll - lastUserScrollTopRef.current;
+      if (Math.abs(scrollDiff) > 1) {
+        userScrollDirectionRef.current = scrollDiff > 0 ? "down" : "up";
+      }
+    }
+    lastUserScrollTopRef.current = currentScroll;
+    scrollPosRef.current = currentScroll;
+
+    // Clear previous resume timer and schedule smooth resume 1.5s after user stops
+    if (userResumeTimeoutRef.current) clearTimeout(userResumeTimeoutRef.current);
+    userResumeTimeoutRef.current = setTimeout(() => {
+      if (!scrollContainerRef.current) return;
+      const c = scrollContainerRef.current;
+      const maxScroll = Math.max(0, c.scrollHeight - c.clientHeight);
+      const pos = Math.max(0, Math.min(maxScroll, c.scrollTop));
+
+      scrollPosRef.current = pos;
+
+      // Intelligently decide direction upon resume
+      if (pos >= maxScroll - 10) {
+        scrollDirectionRef.current = "up";
+        userScrollDirectionRef.current = "up";
+      } else if (pos <= 10) {
+        scrollDirectionRef.current = "down";
+        userScrollDirectionRef.current = "down";
+      } else if (userScrollDirectionRef.current) {
+        scrollDirectionRef.current = userScrollDirectionRef.current;
+      }
+
+      isUserInteractingRef.current = false;
+      setIsManualScrollPaused(false);
+      isPausedAtEdgeRef.current = false;
+    }, 1500);
+  };
+
+  const handleScroll = () => {
+    // If the scroll event was triggered by our own auto-scroller, ignore it
+    if (isProgrammaticScrollRef.current) {
+      isProgrammaticScrollRef.current = false;
+      return;
+    }
+    // Genuine user-initiated scroll (scrollbar drag, keyboard, mouse wheel, or touch)
+    handleUserInteraction();
+  };
+
+  const handleUserWheel = (
+    e?: React.WheelEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
+  ) => {
+    const delta = e && "deltaY" in e ? e.deltaY : undefined;
+    handleUserInteraction(delta);
+  };
+
+  const handlePointerDown = () => {
+    isMouseDownRef.current = true;
+    handleUserInteraction();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#07070a] text-white flex flex-col overflow-hidden animate-in fade-in duration-300 font-sans">
+    <div className="fixed inset-0 z-50 bg-[#040813] text-white flex flex-col overflow-hidden animate-in fade-in duration-300 font-sans">
       {/* Top Ambient Glow */}
-      <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[350px] bg-gradient-to-b from-orange-500/20 via-red-600/10 to-transparent blur-3xl" />
+      <div className="pointer-events-none absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[350px] bg-gradient-to-b from-cyan-500/20 via-sky-600/10 to-transparent blur-3xl" />
 
       {/* HEADER SECTION (TV / BROADCAST STYLE) */}
-      <header className="relative z-10 shrink-0 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md px-6 py-3.5 shadow-2xl">
+      <header className="relative z-10 shrink-0 border-b border-cyan-900/40 bg-[#060e1c]/90 backdrop-blur-md px-6 py-3.5 shadow-2xl">
         <div className="max-w-[1700px] mx-auto space-y-3">
           {/* Top Row: Title, Subtitle, and Controls */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Left Title & Status */}
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 p-[2px] shadow-lg shadow-orange-500/25 shrink-0 flex items-center justify-center">
-                <div className="w-full h-full bg-zinc-950 rounded-[14px] flex items-center justify-center">
-                  <Trophy className="w-6 h-6 text-yellow-400" />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-400 via-sky-500 to-amber-400 p-[2px] shadow-lg shadow-cyan-500/25 shrink-0 flex items-center justify-center">
+                <div className="w-full h-full bg-[#060e1c] rounded-[14px] flex items-center justify-center">
+                  <Trophy className="w-6 h-6 text-amber-400" />
                 </div>
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 font-mono text-[10px] font-black uppercase tracking-widest">
-                    <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-[10px] font-black uppercase tracking-widest">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
                     SESI JEDA / BREAK MATCH
                   </span>
                   <span className="text-zinc-500 text-xs">•</span>
-                  <span className="text-zinc-400 font-mono text-xs font-semibold uppercase tracking-wider">
+                  <span className="text-cyan-200/80 font-mono text-xs font-semibold uppercase tracking-wider">
                     {selectedStage === "all"
                       ? "KLASEMEN KESELURUHAN"
                       : currentStageObj?.name || roundTitle}
@@ -310,7 +424,7 @@ export function ViewRankingModal({
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-0.5">
                   KLASEMEN{" "}
-                  <span className="bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 bg-clip-text text-transparent">
                     {selectedStage === "all"
                       ? "SEMUA BABAK"
                       : currentStageObj?.name?.toUpperCase() || "NEXT ARENA"}
@@ -324,19 +438,34 @@ export function ViewRankingModal({
               {/* Auto-Scroll Toggle Button */}
               <button
                 type="button"
-                onClick={() => setIsAutoScrollActive((prev) => !prev)}
+                onClick={() => {
+                  if (isManualScrollPaused) {
+                    setIsManualScrollPaused(false);
+                    isUserInteractingRef.current = false;
+                  }
+                  setIsAutoScrollActive((prev) => !prev);
+                }}
                 className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold font-mono transition-all border cursor-pointer ${
-                  isAutoScrollActive
-                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-sm"
-                    : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
+                  !isAutoScrollActive
+                    ? "bg-[#0a172c] border-cyan-900/40 text-zinc-400 hover:text-white"
+                    : isManualScrollPaused
+                    ? "bg-amber-500/20 border-amber-500/50 text-amber-300 shadow-sm animate-pulse"
+                    : "bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-sm"
                 }`}
                 title="Aktifkan atau jeda auto-scrolling otomatis (Spasi)"
               >
                 {isAutoScrollActive ? (
-                  <>
-                    <Pause className="w-3.5 h-3.5 text-emerald-400 fill-current" />
-                    <span>Auto-Scroll: ON</span>
-                  </>
+                  isManualScrollPaused ? (
+                    <>
+                      <Pause className="w-3.5 h-3.5 text-amber-400 fill-current" />
+                      <span>Auto-Scroll: Jeda Manual (1.5s)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="w-3.5 h-3.5 text-emerald-400 fill-current" />
+                      <span>Auto-Scroll: ON</span>
+                    </>
+                  )
                 ) : (
                   <>
                     <Play className="w-3.5 h-3.5 text-zinc-400 fill-current" />
@@ -373,10 +502,10 @@ export function ViewRankingModal({
           </div>
 
           {/* Bottom Row: Round Switcher Tabs & Category Filters */}
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2.5 border-t border-zinc-800/80">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pt-2.5 border-t border-cyan-900/30">
             {/* ROUND / STAGE TABS */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
-              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-orange-400 shrink-0 mr-1 hidden sm:inline-flex items-center gap-1">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400 shrink-0 mr-1 hidden sm:inline-flex items-center gap-1">
                 <Layers className="w-3.5 h-3.5" />
                 PILIH BABAK:
               </span>
@@ -394,20 +523,20 @@ export function ViewRankingModal({
                     onClick={() => setSelectedStage(sIdx)}
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer whitespace-nowrap ${
                       isSelected
-                        ? "bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500 text-zinc-950 border-orange-400 shadow-md shadow-orange-500/25 ring-1 ring-orange-300/40"
-                        : "bg-zinc-900/90 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                        ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-400 shadow-md shadow-cyan-500/25 ring-1 ring-cyan-300/40"
+                        : "bg-[#0a172c]/90 border-cyan-900/40 text-zinc-400 hover:text-white hover:border-cyan-700/60"
                     }`}
                   >
                     <span
                       className={`w-2 h-2 rounded-full ${
-                        isSelected ? "bg-zinc-950" : "bg-orange-500"
+                        isSelected ? "bg-white" : "bg-cyan-400"
                       }`}
                     />
                     <span>{displayName}</span>
                     <span
                       className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
                         isSelected
-                          ? "bg-black/20 text-zinc-950 font-black"
+                          ? "bg-black/30 text-white font-black"
                           : "bg-zinc-800 text-zinc-400"
                       }`}
                     >
@@ -423,8 +552,8 @@ export function ViewRankingModal({
                 onClick={() => setSelectedStage("all")}
                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer whitespace-nowrap ${
                   selectedStage === "all"
-                    ? "bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white border-orange-500/50 shadow-md shadow-orange-500/25 ring-1 ring-orange-400/40"
-                    : "bg-zinc-900/90 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                    ? "bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 text-white border-cyan-400/50 shadow-md shadow-cyan-500/25 ring-1 ring-cyan-400/40"
+                    : "bg-[#0a172c]/90 border-cyan-900/40 text-zinc-400 hover:text-white hover:border-cyan-700/60"
                 }`}
               >
                 <span>Semua Babak (Total)</span>
@@ -444,8 +573,8 @@ export function ViewRankingModal({
                     onClick={() => setSelectedCategory(cat)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                       selectedCategory === cat
-                        ? "bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-zinc-950 shadow-md"
-                        : "bg-zinc-900/80 border border-zinc-800 text-zinc-400 hover:text-white"
+                        ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/20"
+                        : "bg-[#0a172c]/80 border border-cyan-900/40 text-zinc-400 hover:text-white"
                     }`}
                   >
                     {cat}
@@ -482,10 +611,12 @@ export function ViewRankingModal({
         ref={scrollContainerRef}
         onWheel={handleUserWheel}
         onTouchMove={handleUserWheel}
-        className="flex-1 overflow-y-auto px-6 py-4 space-y-2.5 relative"
+        onScroll={handleScroll}
+        onPointerDown={handlePointerDown}
+        className="flex-1 overflow-y-auto px-6 py-4 space-y-2.5 relative select-none sm:select-auto"
         style={{
           scrollbarWidth: "thin",
-          scrollbarColor: "#27272a #09090b",
+          scrollbarColor: "#00a3ff44 #060d1a",
           scrollBehavior: "auto",
         }}
       >
@@ -517,12 +648,12 @@ export function ViewRankingModal({
                   key={p.id}
                   className={`grid grid-cols-12 gap-4 items-center px-4 py-3.5 rounded-2xl border transition-all duration-300 ${
                     isFirst
-                      ? "bg-gradient-to-r from-yellow-500/15 via-[#181512] to-[#121216] border-yellow-500/50 shadow-[0_0_25px_rgba(250,204,21,0.12)]"
+                      ? "bg-gradient-to-r from-amber-500/15 via-[#0c1a30] to-[#060e1c] border-amber-400/50 shadow-[0_0_25px_rgba(245,158,11,0.15)]"
                       : isSecond
-                      ? "bg-gradient-to-r from-orange-500/15 via-[#181412] to-[#121216] border-orange-500/40 shadow-[0_0_20px_rgba(249,115,22,0.10)]"
+                      ? "bg-gradient-to-r from-cyan-500/15 via-[#0c1a30] to-[#060e1c] border-cyan-400/40 shadow-[0_0_20px_rgba(0,163,255,0.15)]"
                       : isThird
-                      ? "bg-gradient-to-r from-red-500/15 via-[#181214] to-[#121216] border-red-500/35 shadow-[0_0_15px_rgba(239,68,68,0.08)]"
-                      : "bg-[#111116]/80 hover:bg-[#15151c] border-zinc-800/80"
+                      ? "bg-gradient-to-r from-sky-500/15 via-[#0c1a30] to-[#060e1c] border-sky-400/35"
+                      : "bg-[#0a172c]/70 hover:bg-[#0e213e] border-cyan-900/30"
                   }`}
                 >
                   {/* RANK BADGE */}
@@ -530,12 +661,12 @@ export function ViewRankingModal({
                     <div
                       className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl font-mono font-black text-sm sm:text-base flex items-center justify-center shadow-md ${
                         isFirst
-                          ? "bg-gradient-to-br from-yellow-300 via-yellow-400 to-orange-500 text-zinc-950 shadow-yellow-500/25 ring-2 ring-yellow-400/40"
+                          ? "bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-zinc-950 shadow-amber-500/25 ring-2 ring-amber-400/40"
                           : isSecond
-                          ? "bg-gradient-to-br from-zinc-200 via-orange-300 to-orange-500 text-zinc-950 ring-1 ring-orange-400/30"
+                          ? "bg-gradient-to-br from-cyan-300 via-cyan-400 to-blue-500 text-white ring-1 ring-cyan-400/30"
                           : isThird
-                          ? "bg-gradient-to-br from-amber-600 via-red-500 to-rose-700 text-white ring-1 ring-red-400/30"
-                          : "bg-zinc-900 border border-zinc-800 text-zinc-300"
+                          ? "bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 text-white ring-1 ring-sky-400/30"
+                          : "bg-[#060e1c] border border-cyan-900/40 text-cyan-200/80"
                       }`}
                     >
                       {isFirst ? (
@@ -622,7 +753,7 @@ export function ViewRankingModal({
                       <span
                         className={`font-mono text-xl sm:text-2xl font-black ${
                           isTop3
-                            ? "bg-gradient-to-r from-yellow-300 via-orange-400 to-red-400 bg-clip-text text-transparent"
+                            ? "bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 bg-clip-text text-transparent"
                             : "text-white"
                         }`}
                       >

@@ -1966,7 +1966,7 @@ export default function PengaturanPage() {
       totalPoints: 0,
       previousRank: participants.length + 1,
       lastUpdated: "Baru saja",
-      avatarColor: "from-orange-500 to-yellow-400",
+      avatarColor: "from-cyan-500 to-blue-600",
     };
 
     try {
@@ -2133,17 +2133,17 @@ export default function PengaturanPage() {
   return (
     <div className="min-h-screen flex flex-col text-zinc-100 bg-low-poly">
       {/* Top Gradient Accent */}
-      <div className="h-1 w-full bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400" />
+      <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-sky-400 to-amber-400" />
 
       {/* Header */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#09090b]/90 border-b border-zinc-800/80">
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#060e1c]/90 border-b border-cyan-900/40">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link
               href="/"
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs font-semibold transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 text-orange-400" />
+              <ArrowLeft className="w-4 h-4 text-cyan-400" />
               <span>Kembali ke Monitor Arena</span>
             </Link>
             <div className="h-6 w-[1px] bg-zinc-800 hidden sm:block" />
@@ -2192,7 +2192,7 @@ export default function PengaturanPage() {
                 onClick={() => setActiveTab(t.id as any)}
                 className={`flex items-center gap-2 px-4 py-3 rounded-t-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap border-b-2 ${
                   active
-                    ? "bg-zinc-900/80 text-orange-400 border-orange-500"
+                    ? "bg-zinc-900/80 text-cyan-400 border-cyan-500"
                     : "text-zinc-400 hover:text-zinc-200 border-transparent hover:bg-zinc-900/40"
                 }`}
               >
@@ -2207,9 +2207,9 @@ export default function PengaturanPage() {
         {activeTab === "peserta" && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Form Input Peserta Baru */}
-            <div className="lg:col-span-5 bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 shadow-xl space-y-5">
+            <div className="lg:col-span-5 bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 shadow-xl space-y-5">
               <div className="border-b border-zinc-800 pb-3">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                   REGISTRASI PESERTA / TIM
                 </span>
                 <h3 className="text-lg font-bold text-white mt-0.5">Tambah Peserta Baru</h3>
@@ -2225,7 +2225,7 @@ export default function PengaturanPage() {
                     value={newParticipant.name}
                     onChange={(e) => setNewParticipant({ ...newParticipant, name: e.target.value })}
                     placeholder="Contoh: Garuda Cyber Team"
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-orange-500"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
 
@@ -2237,7 +2237,7 @@ export default function PengaturanPage() {
                     value={newParticipant.institution}
                     onChange={(e) => setNewParticipant({ ...newParticipant, institution: e.target.value })}
                     placeholder="Contoh: Universitas Indonesia"
-                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-orange-500"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
 
@@ -2247,7 +2247,7 @@ export default function PengaturanPage() {
                     <select
                       value={newParticipant.category}
                       onChange={(e) => setNewParticipant({ ...newParticipant, category: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-orange-500"
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
                     >
                       {categories.map((cat) => (
                         <option key={cat} value={cat}>
@@ -2261,7 +2261,7 @@ export default function PengaturanPage() {
                     <select
                       value={newParticipant.status}
                       onChange={(e) => setNewParticipant({ ...newParticipant, status: e.target.value as ParticipantStatus })}
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-orange-500"
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
                     >
                       <option value="Aktif">Aktif</option>
                       <option value="Finalis">Finalis</option>
@@ -2282,7 +2282,7 @@ export default function PengaturanPage() {
                           members: [...newParticipant.members, { name: "", role: "Anggota" }],
                         })
                       }
-                      className="text-xs text-orange-400 hover:text-orange-300 font-semibold"
+                      className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold"
                     >
                       + Tambah Anggota
                     </button>
@@ -2317,7 +2317,7 @@ export default function PengaturanPage() {
 
                 <button
                   type="submit"
-                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs font-bold hover:brightness-110 transition-all shadow-md"
+                  className="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white text-xs font-bold hover:brightness-110 transition-all shadow-md"
                 >
                   Daftarkan Peserta
                 </button>
@@ -2325,7 +2325,7 @@ export default function PengaturanPage() {
             </div>
 
             {/* List Peserta yang Terdaftar */}
-            <div className="lg:col-span-7 bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="lg:col-span-7 bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 shadow-xl space-y-4">
               <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
                 <div>
                   <h3 className="text-lg font-bold text-white">Peserta Terdaftar ({participants.length})</h3>
@@ -2345,7 +2345,7 @@ export default function PengaturanPage() {
                     onClick={loadData}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs border border-zinc-800"
                   >
-                    <RefreshCw className="w-3.5 h-3.5 text-orange-400" />
+                    <RefreshCw className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Refresh</span>
                   </button>
                 </div>
@@ -2364,7 +2364,7 @@ export default function PengaturanPage() {
                     className="p-3.5 rounded-xl bg-zinc-900/70 border border-zinc-800/80 flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 font-mono text-xs font-bold flex items-center justify-center text-orange-400 shrink-0">
+                      <span className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700 font-mono text-xs font-bold flex items-center justify-center text-cyan-400 shrink-0">
                         #{idx + 1}
                       </span>
                       <div className="min-w-0">
@@ -2409,14 +2409,14 @@ export default function PengaturanPage() {
         {activeTab === "babak" && (
           <div className="space-y-6 w-full">
             {/* Bagian 1: Manajemen Babak Turnamen (Manual Add, Model Ranking vs Gugur, Format 1x vs 2x) */}
-            <div className="bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+            <div className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
               <div className="border-b border-zinc-800 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                       STRUKTUR TURNAMEN DINAMIS
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-300 font-mono text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-[10px] font-bold">
                       {tournamentStages.length} Babak Dikonfigurasi
                     </span>
                   </div>
@@ -2436,7 +2436,7 @@ export default function PengaturanPage() {
                     setNewStageResetPoints(true);
                     setIsAddStageModalOpen(true);
                   }}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-amber-500 text-zinc-950 font-bold text-xs sm:text-sm hover:brightness-110 shadow-lg shadow-orange-500/20 transition-all shrink-0 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-bold text-xs sm:text-sm hover:brightness-110 shadow-lg shadow-cyan-500/20 transition-all shrink-0 cursor-pointer"
                 >
                   <Plus className="w-4 h-4 stroke-[3]" />
                   <span>Tambah Babak Baru</span>
@@ -2464,7 +2464,7 @@ export default function PengaturanPage() {
                         setNewStageResetPoints(true);
                         setIsAddStageModalOpen(true);
                       }}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-amber-500 text-zinc-950 font-bold text-xs hover:brightness-110 shadow-md transition-all cursor-pointer"
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-bold text-xs hover:brightness-110 shadow-md transition-all cursor-pointer"
                     >
                       <Plus className="w-4 h-4 stroke-[3]" />
                       <span>Tambah Babak Baru</span>
@@ -2482,7 +2482,7 @@ export default function PengaturanPage() {
                         {/* Baris Atas: Nomor, Nama Babak & Tombol Aksi */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/80 pb-3">
                           <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
-                            <span className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700/80 text-orange-400 font-mono text-xs font-black flex items-center justify-center shrink-0">
+                            <span className="w-7 h-7 rounded-lg bg-zinc-800 border border-zinc-700/80 text-cyan-400 font-mono text-xs font-black flex items-center justify-center shrink-0">
                               #{index + 1}
                             </span>
 
@@ -2492,7 +2492,7 @@ export default function PengaturanPage() {
                                 value={stage.name}
                                 onChange={(e) => handleUpdateStage(stage.id, { name: e.target.value })}
                                 placeholder="Ketik Nama Babak..."
-                                className="w-full px-3 py-1.5 rounded-xl bg-zinc-950/80 border border-zinc-700/80 text-sm font-black text-white focus:outline-none focus:border-orange-500 transition-colors"
+                                className="w-full px-3 py-1.5 rounded-xl bg-zinc-950/80 border border-zinc-700/80 text-sm font-black text-white focus:outline-none focus:border-cyan-500 transition-colors"
                               />
                             </div>
 
@@ -2656,17 +2656,17 @@ export default function PengaturanPage() {
                               onClick={() => handleUpdateStage(stage.id, { turns: "2x" })}
                               className={`p-3 rounded-xl border text-left transition-all flex flex-col justify-between space-y-1 cursor-pointer ${
                                 stage.turns === "2x"
-                                  ? "bg-gradient-to-b from-orange-500/20 to-zinc-900 border-orange-500/80 shadow-sm ring-1 ring-orange-500/50"
+                                  ? "bg-gradient-to-b from-cyan-500/20 to-zinc-900 border-cyan-500/80 shadow-sm ring-1 ring-cyan-500/50"
                                   : "bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
                               }`}
                             >
                               <div className="flex items-center justify-between">
                                 <span className="font-bold text-xs flex items-center gap-1.5 text-white">
-                                  <ArrowLeftRight className="w-3.5 h-3.5 text-orange-400" />
+                                  <ArrowLeftRight className="w-3.5 h-3.5 text-cyan-400" />
                                   <span>2x Main</span>
                                 </span>
                                 {stage.turns === "2x" && (
-                                  <Check className="w-3.5 h-3.5 text-orange-400 stroke-[3]" />
+                                  <Check className="w-3.5 h-3.5 text-cyan-400 stroke-[3]" />
                                 )}
                               </div>
                               <span className="text-[10px] text-zinc-400 line-clamp-2 leading-tight">
@@ -2749,7 +2749,7 @@ export default function PengaturanPage() {
                           }}
                           className="px-3.5 py-1.5 rounded-xl bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700 text-zinc-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
                         >
-                          <GitBranch className="w-3.5 h-3.5 text-orange-400" />
+                          <GitBranch className="w-3.5 h-3.5 text-cyan-400" />
                           <span>Kelola Bagan & Jadwal Laga ➔</span>
                         </button>
                       </div>
@@ -2760,9 +2760,9 @@ export default function PengaturanPage() {
             </div>
 
             {/* Link Menuju Tab Bagan Turnamen */}
-            <div className="bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 sm:p-7 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 sm:p-7 shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                   <GitBranch className="w-5 h-5" />
                 </div>
                 <div>
@@ -2775,7 +2775,7 @@ export default function PengaturanPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab("bracket")}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500/15 hover:bg-orange-500/25 border border-orange-500/40 text-orange-300 text-xs font-bold transition-all shrink-0 cursor-pointer"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/40 text-cyan-300 text-xs font-bold transition-all shrink-0 cursor-pointer"
               >
                 <span>Buka Tab Bagan Turnamen</span>
                 <GitBranch className="w-4 h-4" />
@@ -2788,19 +2788,19 @@ export default function PengaturanPage() {
         {activeTab === "bracket" && (
           <div className="space-y-6 w-full">
             {/* Header & Quick Actions */}
-            <div className="bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 sm:p-8 shadow-xl space-y-5">
+            <div className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 sm:p-8 shadow-xl space-y-5">
               <div className="border-b border-zinc-800 pb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                       JADWAL LAGA DUEL (2 TIM SEKALI MAIN)
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-300 font-mono text-[10px] font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-[10px] font-bold">
                       {participants.length} Tim Terdaftar
                     </span>
                   </div>
                   <h3 className="text-xl sm:text-2xl font-black text-white mt-1 flex items-center gap-2.5">
-                    <GitBranch className="w-6 h-6 text-orange-400" />
+                    <GitBranch className="w-6 h-6 text-cyan-400" />
                     <span>Konsol Kontrol Bagan & Jadwal Laga</span>
                   </h3>
                   <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
@@ -2844,7 +2844,7 @@ export default function PengaturanPage() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("babak")}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-amber-500 text-zinc-950 font-bold text-xs hover:brightness-110 shadow-md transition-all cursor-pointer"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-bold text-xs hover:brightness-110 shadow-md transition-all cursor-pointer"
                   >
                     <Layers className="w-4 h-4" />
                     <span>Buka Setting Babak & Model</span>
@@ -2868,7 +2868,7 @@ export default function PengaturanPage() {
                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs sm:text-sm font-bold border border-zinc-700 hover:border-zinc-600 transition-all shadow-md shrink-0 cursor-pointer"
                         title="Tentukan pasangan tanding secara manual"
                       >
-                        <Users className="w-4 h-4 text-orange-400" />
+                        <Users className="w-4 h-4 text-cyan-400" />
                         <span>Input / Susun Manual ({selectedBracketRound})</span>
                       </button>
 
@@ -2876,7 +2876,7 @@ export default function PengaturanPage() {
                         type="button"
                         onClick={() => handleGenerateBracket(selectedBracketRound)}
                         disabled={isGeneratingBracket}
-                        className="inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs sm:text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-md shrink-0 cursor-pointer"
+                        className="inline-flex items-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-md shrink-0 cursor-pointer"
                       >
                         <span>Acak & Generate Jadwal ({selectedBracketRound})</span>
                       </button>
@@ -2895,7 +2895,7 @@ export default function PengaturanPage() {
                           onClick={() => setSelectedBracketRound(stage.name)}
                           className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
                             isActive
-                              ? "bg-orange-500/15 border-orange-500 text-orange-300 shadow-sm"
+                              ? "bg-cyan-500/15 border-cyan-500 text-cyan-300 shadow-sm"
                               : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
                           }`}
                         >
@@ -2905,7 +2905,7 @@ export default function PengaturanPage() {
                           </span>
                           <span
                             className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
-                              isActive ? "bg-orange-500/30 text-orange-200" : "bg-zinc-800 text-zinc-400"
+                              isActive ? "bg-cyan-500/30 text-cyan-200" : "bg-zinc-800 text-zinc-400"
                             }`}
                           >
                             {matchCount} Laga
@@ -2924,8 +2924,8 @@ export default function PengaturanPage() {
 
               if (currentMatches.length === 0) {
                 return (
-                  <div className="py-12 text-center rounded-2xl bg-[#121216]/95 border border-zinc-800/90 p-6 sm:p-8 space-y-6 shadow-xl">
-                    <GitBranch className="w-12 h-12 text-orange-400 mx-auto" />
+                  <div className="py-12 text-center rounded-2xl bg-[#0a172c]/90 border border-cyan-900/40 p-6 sm:p-8 space-y-6 shadow-xl">
+                    <GitBranch className="w-12 h-12 text-cyan-400 mx-auto" />
                     <div className="space-y-1">
                       <p className="text-lg font-bold text-white">Belum Ada Jadwal Laga ({selectedBracketRound})</p>
                       <p className="text-xs text-zinc-400 max-w-md mx-auto">
@@ -2939,7 +2939,7 @@ export default function PengaturanPage() {
                     {qualifiedBracketParticipants.length > 0 ? (
                       <div className="max-w-4xl mx-auto pt-2 text-left">
                         <div className="flex items-center justify-between pb-2 border-b border-zinc-800 text-xs font-mono">
-                          <span className="text-orange-400 font-bold uppercase tracking-wider">
+                          <span className="text-cyan-400 font-bold uppercase tracking-wider">
                             Daftar Tim Lolos ke {selectedBracketRound} ({qualifiedBracketParticipants.length} Tim):
                           </span>
                           <span className="text-emerald-400 text-[11px] font-bold">
@@ -2955,7 +2955,7 @@ export default function PengaturanPage() {
                               className="p-3.5 rounded-xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-between shadow-sm"
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <span className="w-6 h-6 rounded-lg bg-orange-500/15 text-orange-400 font-mono text-xs font-bold flex items-center justify-center shrink-0">
+                                <span className="w-6 h-6 rounded-lg bg-cyan-500/15 text-cyan-400 font-mono text-xs font-bold flex items-center justify-center shrink-0">
                                   {idx + 1}
                                 </span>
                                 <div className="truncate">
@@ -2984,7 +2984,7 @@ export default function PengaturanPage() {
                         onClick={handleOpenManualBracketModal}
                         className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs sm:text-sm font-bold border border-zinc-700 hover:border-zinc-600 shadow-lg transition-all cursor-pointer"
                       >
-                        <Users className="w-4 h-4 text-orange-400" />
+                        <Users className="w-4 h-4 text-cyan-400" />
                         <span>Input / Susun Manual ({selectedBracketRound})</span>
                       </button>
 
@@ -2993,7 +2993,7 @@ export default function PengaturanPage() {
                           type="button"
                           onClick={() => handleGenerateBracket(selectedBracketRound)}
                           disabled={isGeneratingBracket}
-                          className="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs sm:text-sm font-bold hover:brightness-110 shadow-lg shadow-orange-500/25 transition-all cursor-pointer"
+                          className="inline-flex items-center px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-bold hover:brightness-110 shadow-lg shadow-cyan-500/25 transition-all cursor-pointer"
                         >
                           <span>Acak &amp; Buat Jadwal ({selectedBracketRound})</span>
                         </button>
@@ -3024,7 +3024,7 @@ export default function PengaturanPage() {
                         {qualifiedBracketParticipants.length} Tim Lolos
                       </span>
                     </div>
-                    <span className="font-mono text-orange-400 font-bold">
+                    <span className="font-mono text-cyan-400 font-bold">
                       {currentMatches.length} Laga Terjadwal
                     </span>
                   </div>
@@ -3052,12 +3052,12 @@ export default function PengaturanPage() {
                     return (
                       <div
                         key={match.id}
-                        className="bg-[#121216]/95 border border-zinc-800/90 hover:border-zinc-700/80 rounded-2xl p-5 shadow-xl space-y-4 transition-all"
+                        className="bg-[#0a172c]/90 border border-cyan-900/40 hover:border-zinc-700/80 rounded-2xl p-5 shadow-xl space-y-4 transition-all"
                       >
                         {/* Match Card Header */}
                         <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
                           <div className="flex items-center gap-2.5">
-                            <span className="px-3 py-1 rounded-lg bg-orange-500/20 text-orange-300 font-mono font-extrabold text-xs tracking-wider border border-orange-500/40">
+                            <span className="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 font-mono font-extrabold text-xs tracking-wider border border-cyan-500/40">
                               {match.matchLabel}
                             </span>
                             <span className="text-xs text-zinc-400 font-medium">
@@ -3111,7 +3111,7 @@ export default function PengaturanPage() {
                                 } catch {}
                               }}
                               onClick={() => handleStartMatchWithShutter(match)}
-                              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-zinc-950 font-black text-xs hover:brightness-110 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(249,115,22,0.4)] animate-pulse hover:animate-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-black text-xs hover:brightness-110 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(0,163,255,0.4)] animate-pulse hover:animate-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                               title="Buka Arena Tanding & Timer Stopwatch"
                             >
                               <Play className="w-3.5 h-3.5 fill-current" />
@@ -3128,7 +3128,7 @@ export default function PengaturanPage() {
                                   className={`px-2 py-0.5 rounded-lg font-semibold transition-all ${
                                     match.status === st
                                       ? st === "Berlangsung"
-                                        ? "bg-orange-500 text-zinc-950 font-bold shadow-md shadow-orange-500/20"
+                                        ? "bg-cyan-500 text-zinc-950 font-bold shadow-md shadow-cyan-500/20"
                                         : st === "Selesai"
                                         ? "bg-emerald-500 text-zinc-950 font-bold"
                                         : "bg-amber-500 text-zinc-950 font-bold"
@@ -3346,9 +3346,9 @@ export default function PengaturanPage() {
                             </div>
 
                             {/* BLOK PUTARAN 2 (TUKAR SISI) - DIMUNCULKAN DI BAWAHNYA LANGSUNG */}
-                            <div className="p-4 rounded-xl bg-zinc-950/60 border border-orange-500/30 space-y-3">
+                            <div className="p-4 rounded-xl bg-zinc-950/60 border border-cyan-500/30 space-y-3">
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="px-2.5 py-0.5 rounded-lg bg-orange-500/15 border border-orange-500/40 text-orange-300 font-mono text-xs font-black uppercase flex items-center gap-1.5">
+                                <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 font-mono text-xs font-black uppercase flex items-center gap-1.5">
                                   <ArrowLeftRight className="w-3.5 h-3.5" />
                                   <span>🔁 Putaran 2 (Tukar Sisi Arena)</span>
                                 </span>
@@ -3469,7 +3469,7 @@ export default function PengaturanPage() {
                             {/* REKAP HASIL AKHIR & RATA-RATA DARI KEDUA PUTARAN */}
                             <div className="p-3.5 rounded-xl bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border border-zinc-700/80 flex flex-wrap items-center justify-between gap-4 font-mono">
                               <div className="flex items-center gap-2">
-                                <span className="text-xs text-orange-400 font-black uppercase tracking-wider">
+                                <span className="text-xs text-cyan-400 font-black uppercase tracking-wider">
                                   🎯 Rata-Rata Resmi Akhir:
                                 </span>
                                 <span className="text-[11px] text-zinc-400">
@@ -3506,7 +3506,7 @@ export default function PengaturanPage() {
                           /* TAMPILAN 1X MAIN (LANGSUNG DATA) ATAU TANDING TUNGGAL */
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
                             {!isSingle && (
-                              <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-zinc-900 border-2 border-zinc-700 items-center justify-center text-[11px] font-black text-orange-400 shadow-lg">
+                              <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-zinc-900 border-2 border-zinc-700 items-center justify-center text-[11px] font-black text-cyan-400 shadow-lg">
                                 VS
                               </div>
                             )}
@@ -3542,7 +3542,7 @@ export default function PengaturanPage() {
                                     step="0.5"
                                     value={match.scoreA}
                                     onChange={(e) => handleSetExactScore(match.id, "A", parseFloat(e.target.value) || 0)}
-                                    className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-orange-500 shadow-inner"
+                                    className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-cyan-500 shadow-inner"
                                   />
                                 </div>
                               </div>
@@ -3629,7 +3629,7 @@ export default function PengaturanPage() {
                                         step="0.5"
                                         value={match.scoreB}
                                         onChange={(e) => handleSetExactScore(match.id, "B", parseFloat(e.target.value) || 0)}
-                                        className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-orange-500 shadow-inner"
+                                        className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-cyan-500 shadow-inner"
                                       />
                                     </div>
                                   </div>
@@ -3692,10 +3692,10 @@ export default function PengaturanPage() {
         {activeTab === "timer" && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full items-start">
             {/* Kolom Kiri (7 Kolom): Konsol Live Stopwatch & Kontrol Langsung */}
-            <div className="lg:col-span-7 bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
+            <div className="lg:col-span-7 bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
               <div className="border-b border-zinc-800 pb-3 flex items-center justify-between">
                 <div>
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                     LIVE ARENA STOPWATCH CONSOLE
                   </span>
                   <h3 className="text-xl font-bold text-white mt-0.5">Kontrol Pertandingan & Stopwatch</h3>
@@ -3716,7 +3716,7 @@ export default function PengaturanPage() {
                   >
                     {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
                   </button>
-                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
+                  <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                     <Timer className="w-5 h-5" />
                   </div>
                 </div>
@@ -3738,15 +3738,15 @@ export default function PengaturanPage() {
                       <span>PERSIAPAN SELESAI (00:00) • SIAP START PERTANDINGAN!</span>
                     </div>
                   ) : timerPhase === "countdown" ? (
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-yellow-500/20 via-orange-500/20 to-red-500/20 border border-orange-500/60 text-orange-300 text-xs font-bold font-mono tracking-wider animate-pulse shadow-[0_0_20px_rgba(249,115,22,0.35)]">
-                      <span className="w-2.5 h-2.5 rounded-full bg-orange-400 animate-ping" />
-                      <Clock className="w-4 h-4 text-orange-400" />
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-cyan-500/20 via-sky-500/20 to-blue-500/20 border border-cyan-500/60 text-cyan-300 text-xs font-bold font-mono tracking-wider animate-pulse shadow-[0_0_20px_rgba(0,163,255,0.35)]">
+                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+                      <Clock className="w-4 h-4 text-cyan-400" />
                       <span>HITUNG MUNDUR START (3-2-1)</span>
                     </div>
                   ) : timerPhase === "match" ? (
                     <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/50 text-emerald-300 text-xs font-bold font-mono tracking-wider shadow-[0_0_25px_rgba(16,185,129,0.25)]">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                      <Flame className="w-4 h-4 text-orange-400" />
+                      <Flame className="w-4 h-4 text-cyan-400" />
                       <span>PERTANDINGAN BERJALAN (STOPWATCH LIVE)</span>
                     </div>
                   ) : timerPhase === "paused" ? (
@@ -3769,19 +3769,19 @@ export default function PengaturanPage() {
 
                 {/* Giant Digital Stopwatch Digits */}
                 {timerPhase === "countdown" ? (
-                  <div className="font-mono text-7xl sm:text-8xl font-black text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)] tracking-tight animate-bounce">
+                  <div className="font-mono text-7xl sm:text-8xl font-black text-cyan-400 drop-shadow-[0_0_40px_rgba(0,163,255,0.6)] tracking-tight animate-bounce">
                     {timerSeconds}
                   </div>
                 ) : timerPhase === "preparation" ? (
-                  <div className="font-mono text-6xl sm:text-7xl font-black bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(249,115,22,0.35)] tracking-tight">
+                  <div className="font-mono text-6xl sm:text-7xl font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(245,158,11,0.35)] tracking-tight">
                     {formatTimerDisplay(timerSeconds)}
                   </div>
                 ) : (
                   <div className="font-mono font-black select-none flex items-baseline justify-center tracking-tight">
-                    <span className="text-6xl sm:text-7xl bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(249,115,22,0.35)]">
+                    <span className="text-6xl sm:text-7xl bg-gradient-to-r from-cyan-300 via-sky-400 to-blue-500 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(0,163,255,0.35)]">
                       {getStopwatchParts(timerElapsedMs).minutes}:{getStopwatchParts(timerElapsedMs).seconds}
                     </span>
-                    <span className="text-3xl sm:text-4xl text-amber-400 font-extrabold ml-1.5 drop-shadow-[0_0_20px_rgba(245,158,11,0.5)]">
+                    <span className="text-3xl sm:text-4xl text-cyan-400 font-extrabold ml-1.5 drop-shadow-[0_0_20px_rgba(0,163,255,0.5)]">
                       .{getStopwatchParts(timerElapsedMs).centiseconds}
                     </span>
                   </div>
@@ -3798,7 +3798,7 @@ export default function PengaturanPage() {
                       Waktu persiapan selesai! Klik tombol "Mulai Pertandingan (Hitung Mundur 3-2-1)" untuk memulai.
                     </p>
                   ) : timerPhase === "countdown" ? (
-                    <p className="text-orange-400 font-bold text-sm tracking-wide animate-pulse">
+                    <p className="text-cyan-400 font-bold text-sm tracking-wide animate-pulse">
                       Bersiap di arena... Pertandingan dimulai dalam {timerSeconds} detik!
                     </p>
                   ) : timerPhase === "match" ? (
@@ -3806,7 +3806,7 @@ export default function PengaturanPage() {
                       <p className="text-zinc-300">
                         Stopwatch Berjalan (Hitung Maju dari 00:00)
                         {matchLimit > 0 && (
-                          <span className="text-orange-400 ml-1">
+                          <span className="text-cyan-400 ml-1">
                             • Batas: {formatTimerDisplay(matchLimit)}
                           </span>
                         )}
@@ -3814,7 +3814,7 @@ export default function PengaturanPage() {
                       {matchLimit > 0 && (
                         <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden border border-zinc-700/60">
                           <div
-                            className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 h-full transition-all duration-300"
+                            className="bg-gradient-to-r from-cyan-400 via-sky-500 to-blue-600 h-full transition-all duration-300"
                             style={{
                               width: `${Math.min(100, Math.round((timerSeconds / matchLimit) * 100))}%`,
                             }}
@@ -3882,12 +3882,12 @@ export default function PengaturanPage() {
                     }}
                     className={`py-3.5 px-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition-all shadow-lg ${
                       timerPhase === "countdown"
-                        ? "bg-orange-500 text-zinc-950 font-black animate-pulse shadow-orange-500/40"
+                        ? "bg-cyan-500 text-zinc-950 font-black animate-pulse shadow-cyan-500/40"
                         : timerPhase === "match"
                         ? isTimerRunning
                           ? "bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40"
                           : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400 shadow-emerald-500/25"
-                        : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-400 hover:to-red-400 text-white shadow-orange-500/25"
+                        : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-cyan-500/25"
                     }`}
                   >
                     {timerPhase === "match" && isTimerRunning ? (
@@ -3928,7 +3928,7 @@ export default function PengaturanPage() {
                     onClick={handleResetStopwatch}
                     className="py-2.5 px-3 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                   >
-                    <RotateCcw className="w-3.5 h-3.5 text-orange-400" />
+                    <RotateCcw className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Reset (00:00)</span>
                   </button>
 
@@ -3954,9 +3954,9 @@ export default function PengaturanPage() {
             </div>
 
             {/* Kolom Kanan (5 Kolom): Konfigurasi Durasi Persiapan, Limit Waktu & Tampilan Monitor */}
-            <div className="lg:col-span-5 bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
+            <div className="lg:col-span-5 bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
               <div className="border-b border-zinc-800 pb-3">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                   TIMER CONFIGURATION
                 </span>
                 <h3 className="text-xl font-bold text-white mt-0.5">Konfigurasi Durasi & Layar</h3>
@@ -4016,7 +4016,7 @@ export default function PengaturanPage() {
                         setTimerSeconds(v);
                       }
                     }}
-                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 font-mono text-sm text-white focus:outline-none focus:border-orange-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 font-mono text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
@@ -4025,10 +4025,10 @@ export default function PengaturanPage() {
               <div className="space-y-3 pt-4 border-t border-zinc-800/80">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-white flex items-center gap-2">
-                    <Timer className="w-3.5 h-3.5 text-orange-400" />
+                    <Timer className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Batas Waktu Stopwatch (Limit):</span>
                   </label>
-                  <span className="text-[11px] font-mono text-orange-400 font-semibold">
+                  <span className="text-[11px] font-mono text-cyan-400 font-semibold">
                     {matchLimit > 0 ? `${formatTimerDisplay(matchLimit)} (${Math.floor(matchLimit / 60)}m)` : "Tanpa Batas"}
                   </span>
                 </div>
@@ -4049,7 +4049,7 @@ export default function PengaturanPage() {
                       onClick={() => setMatchLimit(item.sec)}
                       className={`py-2 rounded-xl text-xs font-mono font-bold border transition-all ${
                         matchLimit === item.sec
-                          ? "bg-orange-500/20 text-orange-300 border-orange-500/60 shadow-sm"
+                          ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/60 shadow-sm"
                           : "bg-zinc-900 text-zinc-400 border-zinc-800 hover:text-white"
                       }`}
                     >
@@ -4072,7 +4072,7 @@ export default function PengaturanPage() {
                       setMatchLimit(m * 60);
                     }}
                     placeholder="0 untuk tanpa batas"
-                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 font-mono text-sm text-white focus:outline-none focus:border-orange-500"
+                    className="w-full px-4 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 font-mono text-sm text-white focus:outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
@@ -4104,7 +4104,7 @@ export default function PengaturanPage() {
                 <button
                   type="button"
                   onClick={() => saveSettings()}
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs sm:text-sm font-bold hover:brightness-110 transition-all shadow-md flex items-center justify-center gap-2"
+                  className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-bold hover:brightness-110 transition-all shadow-md flex items-center justify-center gap-2"
                 >
                   <Save className="w-4 h-4" />
                   <span>Simpan Pengaturan Timer</span>
@@ -4113,12 +4113,12 @@ export default function PengaturanPage() {
             </div>
 
             {/* Kolom Penuh (12 Kolom): KUSTOMISASI & INPUT AUDIO ARENA */}
-            <div className="lg:col-span-12 bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
+            <div className="lg:col-span-12 bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 sm:p-7 shadow-xl space-y-6">
               {/* Header Bagian Sound */}
               <div className="border-b border-zinc-800 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                       ARENA SOUND & BUZZER SYSTEM
                     </span>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
@@ -4126,7 +4126,7 @@ export default function PengaturanPage() {
                     </span>
                   </div>
                   <h3 className="text-xl font-bold text-white mt-1 flex items-center gap-2">
-                    <Music className="w-5 h-5 text-orange-400" />
+                    <Music className="w-5 h-5 text-cyan-400" />
                     <span>Kustomisasi & Input Sound Pertandingan</span>
                   </h3>
                   <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
@@ -4180,9 +4180,9 @@ export default function PengaturanPage() {
                         setSoundVolume(val);
                         saveSettings({ sound_volume: String(val) });
                       }}
-                      className="w-24 accent-orange-500 cursor-pointer"
+                      className="w-24 accent-cyan-500 cursor-pointer"
                     />
-                    <span className="text-[11px] font-mono text-orange-400 font-bold w-9 text-right">
+                    <span className="text-[11px] font-mono text-cyan-400 font-bold w-9 text-right">
                       {Math.round(soundVolume * 100)}%
                     </span>
                   </div>
@@ -4429,11 +4429,11 @@ export default function PengaturanPage() {
                 <div className={`p-4 rounded-xl bg-zinc-900/60 border flex flex-col justify-between space-y-4 transition-all ${
                   activePlayingKey === "start"
                     ? "border-rose-500/60 shadow-[0_0_20px_rgba(244,63,94,0.2)] bg-rose-950/10"
-                    : "border-zinc-800 hover:border-orange-500/40"
+                    : "border-zinc-800 hover:border-cyan-500/40"
                 }`}>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400">
+                      <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                         <Flame className="w-4 h-4" />
                       </div>
                       <div className="flex items-center gap-1.5">
@@ -4463,7 +4463,7 @@ export default function PengaturanPage() {
                         </div>
                       ) : (
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-800/80 border border-zinc-700/60 text-[11px] font-mono text-zinc-400">
-                          <Sparkles className="w-3 h-3 text-orange-400" />
+                          <Sparkles className="w-3 h-3 text-cyan-400" />
                           <span>Preset: Ascending Horn</span>
                         </div>
                       )}
@@ -4474,7 +4474,7 @@ export default function PengaturanPage() {
                     {/* Toggle Loop / Putar Ulang Otomatis */}
                     <label className="flex items-center justify-between text-[11px] text-zinc-400 cursor-pointer hover:text-zinc-200 transition-colors">
                       <span className="flex items-center gap-1.5">
-                        <Repeat className={`w-3.5 h-3.5 ${soundStartLoop ? "text-orange-400" : "text-zinc-500"}`} />
+                        <Repeat className={`w-3.5 h-3.5 ${soundStartLoop ? "text-cyan-400" : "text-zinc-500"}`} />
                         <span>Putar Ulang Otomatis (Loop)</span>
                       </span>
                       <input
@@ -4485,7 +4485,7 @@ export default function PengaturanPage() {
                           setSoundStartLoop(next);
                           saveSettings({ sound_start_loop: String(next) });
                         }}
-                        className="accent-orange-500 w-3.5 h-3.5 cursor-pointer rounded"
+                        className="accent-cyan-500 w-3.5 h-3.5 cursor-pointer rounded"
                       />
                     </label>
 
@@ -4513,7 +4513,7 @@ export default function PengaturanPage() {
                           onClick={() => handlePlayTest("start")}
                           className="py-2 px-2.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                         >
-                          <Play className="w-3.5 h-3.5 text-orange-400" />
+                          <Play className="w-3.5 h-3.5 text-cyan-400" />
                           <span>Putar / Tes</span>
                         </button>
                       )}
@@ -4522,7 +4522,7 @@ export default function PengaturanPage() {
                         type="button"
                         disabled={isUploadingSound}
                         onClick={() => startFileInputRef.current?.click()}
-                        className="py-2 px-2.5 rounded-lg bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border border-orange-500/40 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
+                        className="py-2 px-2.5 rounded-lg bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
                       >
                         <Upload className="w-3.5 h-3.5" />
                         <span>Unggah File</span>
@@ -4662,9 +4662,9 @@ export default function PengaturanPage() {
 
               {/* Catatan / Keterangan Format Audio */}
               <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-zinc-800 flex items-start gap-3 text-xs text-zinc-400">
-                <Sparkles className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                <Sparkles className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
                 <p>
-                  <strong className="text-zinc-200">Tips Audio Arena:</strong> Format audio yang didukung meliputi <span className="font-mono text-orange-400">.mp3</span>, <span className="font-mono text-orange-400">.wav</span>, <span className="font-mono text-orange-400">.ogg</span>, dan <span className="font-mono text-orange-400">.m4a</span>. Berkas audio disimpan di server lokal dan langsung disinkronkan ke seluruh layar arena. Jika berkas kustom tidak diunggah, sistem otomatis menggunakan generator audio studio Web Audio API bawaan secara instan tanpa jeda koneksi.
+                  <strong className="text-zinc-200">Tips Audio Arena:</strong> Format audio yang didukung meliputi <span className="font-mono text-cyan-400">.mp3</span>, <span className="font-mono text-cyan-400">.wav</span>, <span className="font-mono text-cyan-400">.ogg</span>, dan <span className="font-mono text-cyan-400">.m4a</span>. Berkas audio disimpan di server lokal dan langsung disinkronkan ke seluruh layar arena. Jika berkas kustom tidak diunggah, sistem otomatis menggunakan generator audio studio Web Audio API bawaan secara instan tanpa jeda koneksi.
                 </p>
               </div>
             </div>
@@ -4675,14 +4675,14 @@ export default function PengaturanPage() {
         {activeTab === "point" && (
           <div className="space-y-6 w-full">
             {/* Bagian 1: Header Aturan Poin Kustom & Tombol Tambah */}
-            <div className="bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
+            <div className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 sm:p-8 shadow-xl space-y-6">
               <div className="border-b border-zinc-800/80 pb-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400 font-bold">
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400 font-bold">
                       KUSTOMISASI MENU POIN ARENA
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-400 text-[10px] font-mono font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-[10px] font-mono font-bold">
                       Custom Rules
                     </span>
                   </div>
@@ -4706,7 +4706,7 @@ export default function PengaturanPage() {
                   <button
                     type="button"
                     onClick={handleOpenAddPointRule}
-                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-400 hover:brightness-110 text-zinc-950 text-xs sm:text-sm font-black flex items-center gap-2 transition-all shadow-lg shadow-orange-500/20"
+                    className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:brightness-110 text-white text-xs sm:text-sm font-black flex items-center gap-2 transition-all shadow-lg shadow-cyan-500/25"
                   >
                     <Plus className="w-4 h-4 stroke-[3]" />
                     <span>Tambah Aturan Poin Baru</span>
@@ -4750,7 +4750,7 @@ export default function PengaturanPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-                    <Sliders className="w-3.5 h-3.5 text-orange-400" />
+                    <Sliders className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Daftar Tombol & Aturan Poin ({customPointRules.length})</span>
                   </h4>
                   <span className="text-[11px] text-zinc-500 font-mono">
@@ -4768,7 +4768,7 @@ export default function PengaturanPage() {
                     <button
                       type="button"
                       onClick={handleOpenAddPointRule}
-                      className="px-4 py-2 rounded-lg bg-orange-500 text-zinc-950 font-bold text-xs inline-flex items-center gap-1.5"
+                      className="px-4 py-2 rounded-lg bg-cyan-500 text-zinc-950 font-bold text-xs inline-flex items-center gap-1.5"
                     >
                       <Plus className="w-3.5 h-3.5" />
                       <span>Buat Aturan Poin</span>
@@ -4819,7 +4819,7 @@ export default function PengaturanPage() {
                                 type="checkbox"
                                 checked={rule.enabled}
                                 onChange={() => handleToggleRuleStatus(rule.id)}
-                                className="accent-orange-500 w-4 h-4 cursor-pointer rounded"
+                                className="accent-cyan-500 w-4 h-4 cursor-pointer rounded"
                               />
                             </label>
                           </div>
@@ -4885,7 +4885,7 @@ export default function PengaturanPage() {
                               className="text-[11px] font-mono text-zinc-400 hover:text-zinc-200 flex items-center gap-1 transition-colors"
                               title="Tes suara & aksi poin ini"
                             >
-                              <Play className="w-3 h-3 text-orange-400" />
+                              <Play className="w-3 h-3 text-cyan-400" />
                               <span>Tes Tombol</span>
                             </button>
 
@@ -4922,9 +4922,9 @@ export default function PengaturanPage() {
         {activeTab === "ticker_kategori" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Setting Announcement Ticker */}
-            <div className="bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 shadow-xl space-y-4">
               <div className="border-b border-zinc-800 pb-3">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                   TICKER MONITOR ARENA
                 </span>
                 <h3 className="text-lg font-bold text-white mt-0.5">Teks Pengumuman Berjalan (Ticker)</h3>
@@ -4938,14 +4938,14 @@ export default function PengaturanPage() {
                   value={announcement}
                   onChange={(e) => setAnnouncement(e.target.value)}
                   placeholder="Ketik pengumuman live untuk monitor..."
-                  className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-orange-500"
+                  className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-cyan-500"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={() => saveSettings()}
-                className="px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs font-bold flex items-center gap-1.5"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white text-xs font-bold flex items-center gap-1.5"
               >
                 <Save className="w-4 h-4" />
                 <span>Simpan Ticker</span>
@@ -4953,9 +4953,9 @@ export default function PengaturanPage() {
             </div>
 
             {/* Manajemen Kategori Lomba */}
-            <div className="bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 shadow-xl space-y-4">
               <div className="border-b border-zinc-800 pb-3">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                   CABANG KOMPETISI
                 </span>
                 <h3 className="text-lg font-bold text-white mt-0.5">Kelola Kategori / Cabang Lomba</h3>
@@ -4968,11 +4968,11 @@ export default function PengaturanPage() {
                   value={newCatName}
                   onChange={(e) => setNewCatName(e.target.value)}
                   placeholder="Nama kategori lomba baru..."
-                  className="flex-1 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-orange-500"
+                  className="flex-1 px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-xs text-white focus:outline-none focus:border-cyan-500"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs font-bold shrink-0"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white text-xs font-bold shrink-0"
                 >
                   + Tambah
                 </button>
@@ -5011,9 +5011,9 @@ export default function PengaturanPage() {
         {activeTab === "backup" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Export & Import CSV */}
-            <div className="bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 shadow-xl space-y-4">
               <div className="border-b border-zinc-800 pb-3">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                   REKAPITULASI SPREADSHEET
                 </span>
                 <h3 className="text-lg font-bold text-white mt-0.5">Export & Import Data CSV</h3>
@@ -5028,7 +5028,7 @@ export default function PengaturanPage() {
                   onClick={handleExportCSV}
                   className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white text-xs font-semibold flex items-center gap-1.5"
                 >
-                  <Download className="w-3.5 h-3.5 text-orange-400" />
+                  <Download className="w-3.5 h-3.5 text-cyan-400" />
                   <span>Download File CSV Klasemen</span>
                 </button>
               </div>
@@ -5036,18 +5036,18 @@ export default function PengaturanPage() {
               <form onSubmit={handleImportCSV} className="space-y-3">
                 <span className="text-xs font-semibold text-white block">Import Massal Format CSV</span>
                 <p className="text-[11px] text-zinc-400">
-                  Format: <code className="text-orange-300">Nama Tim, Instansi, Kota, Kategori, Babak1, Babak2, Babak3</code>
+                  Format: <code className="text-cyan-300">Nama Tim, Instansi, Kota, Kategori, Babak1, Babak2, Babak3</code>
                 </p>
                 <textarea
                   rows={4}
                   value={csvText}
                   onChange={(e) => setCsvText(e.target.value)}
                   placeholder={`Garuda Muda, Universitas Diponegoro, Semarang, Cyber Security & CTF, 850, 870, 820\nBorneo AI, Universitas Tanjungpura, Pontianak, AI & Smart System, 810, 830, 790`}
-                  className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-white focus:outline-none focus:border-orange-500"
+                  className="w-full p-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-mono text-white focus:outline-none focus:border-cyan-500"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs font-bold"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white text-xs font-bold"
                 >
                   Proses Import Data
                 </button>
@@ -5055,9 +5055,9 @@ export default function PengaturanPage() {
             </div>
 
             {/* Database Info & Reset */}
-            <div className="bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 shadow-xl space-y-4">
               <div className="border-b border-zinc-800 pb-3">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                   STATUS DATABASE & SISTEM
                 </span>
                 <h3 className="text-lg font-bold text-white mt-0.5">Penyimpanan Terpadu</h3>
@@ -5066,7 +5066,7 @@ export default function PengaturanPage() {
 
               <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-zinc-800 space-y-2 text-xs font-mono">
                 <p className="text-zinc-400">
-                  Path File: <span className="text-orange-300">/data/next_arena.db</span>
+                  Path File: <span className="text-cyan-300">/data/next_arena.db</span>
                 </p>
                 <p className="text-zinc-400">
                   Total Record Peserta: <span className="text-white font-bold">{participants.length} tim</span>
@@ -5134,7 +5134,7 @@ export default function PengaturanPage() {
               {/* Header (Fixed) */}
               <div className="flex items-center justify-between px-5 py-3.5 border-b border-zinc-800/80 bg-zinc-950/60 shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
                     <Sliders className="w-4 h-4" />
                   </div>
                   <div>
@@ -5164,7 +5164,7 @@ export default function PengaturanPage() {
                     {/* Nama / Label Poin */}
                     <div className="sm:col-span-7 space-y-1">
                       <label className="block text-xs font-semibold text-zinc-300">
-                        Nama / Label Poin <span className="text-orange-400">*</span>
+                        Nama / Label Poin <span className="text-cyan-400">*</span>
                       </label>
                       <input
                         type="text"
@@ -5172,7 +5172,7 @@ export default function PengaturanPage() {
                         placeholder="Contoh: Bonus Lap Cepat, Sentuh Garis"
                         value={ruleForm.label}
                         onChange={(e) => setRuleForm({ ...ruleForm, label: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-orange-500 placeholder:text-zinc-600 font-medium"
+                        className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-cyan-500 placeholder:text-zinc-600 font-medium"
                       />
                     </div>
 
@@ -5180,7 +5180,7 @@ export default function PengaturanPage() {
                     <div className="sm:col-span-5 space-y-1">
                       <div className="flex items-center justify-between">
                         <label className="block text-xs font-semibold text-zinc-300">
-                          Nilai Poin <span className="text-orange-400">*</span>
+                          Nilai Poin <span className="text-cyan-400">*</span>
                         </label>
                         <span className="text-[10px] font-mono text-zinc-500">(- Penalti)</span>
                       </div>
@@ -5198,7 +5198,7 @@ export default function PengaturanPage() {
                               color: val < 0 && ruleForm.color === "emerald" ? "rose" : ruleForm.color,
                             });
                           }}
-                          className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 font-mono text-white text-sm font-bold focus:outline-none focus:border-orange-500"
+                          className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 font-mono text-white text-sm font-bold focus:outline-none focus:border-cyan-500"
                         />
                         <span className="text-[11px] font-mono font-bold text-zinc-400 shrink-0">PTS</span>
                       </div>
@@ -5233,7 +5233,7 @@ export default function PengaturanPage() {
                           }
                           className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold transition-all ${
                             ruleForm.points === chip.val
-                              ? "bg-orange-500 text-zinc-950 font-black shadow-sm"
+                              ? "bg-cyan-500 text-zinc-950 font-black shadow-sm"
                               : chip.val > 0
                               ? "bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 border border-emerald-500/30"
                               : "bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 border border-rose-500/30"
@@ -5274,7 +5274,7 @@ export default function PengaturanPage() {
                           }
                           className={`p-2 rounded-xl border text-center transition-all ${
                             ruleForm.type === t.id
-                              ? "bg-orange-500/20 border-orange-500 text-orange-300 font-bold"
+                              ? "bg-cyan-500/20 border-cyan-500 text-cyan-300 font-bold"
                               : "bg-zinc-900/60 border-zinc-800 text-zinc-400 hover:border-zinc-700"
                           }`}
                         >
@@ -5323,7 +5323,7 @@ export default function PengaturanPage() {
                       placeholder="Contoh: Diberikan saat menyelesaikan putaran rintangan..."
                       value={ruleForm.description}
                       onChange={(e) => setRuleForm({ ...ruleForm, description: e.target.value })}
-                      className="w-full px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-orange-500 placeholder:text-zinc-600"
+                      className="w-full px-3 py-1.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-xs focus:outline-none focus:border-cyan-500 placeholder:text-zinc-600"
                     />
                   </div>
 
@@ -5331,7 +5331,7 @@ export default function PengaturanPage() {
                   <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-2.5">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-bold text-white flex items-center gap-1.5">
-                        <Keyboard className="w-3.5 h-3.5 text-orange-400" />
+                        <Keyboard className="w-3.5 h-3.5 text-cyan-400" />
                         <span>Hotkey Tombol Keyboard (Pertandingan Langsung)</span>
                       </label>
                       <span className="text-[10px] text-zinc-400 font-mono">1 Karakter Keyboard</span>
@@ -5400,7 +5400,7 @@ export default function PengaturanPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-zinc-950 text-xs font-bold hover:brightness-110 shadow-lg shadow-orange-500/20 transition-all"
+                    className="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold hover:brightness-110 shadow-lg shadow-cyan-500/20 transition-all"
                   >
                     {editingRuleId ? "Simpan Perubahan" : "Simpan Aturan Poin"}
                   </button>
@@ -5465,10 +5465,10 @@ export default function PengaturanPage() {
         {/* MODAL TAMBAH / EDIT BABAK */}
         {isAddStageModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[#121216] border border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl relative">
+            <div className="bg-[#0a172c] border border-cyan-900/50 rounded-3xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl relative">
               <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4">
                 <div>
-                  <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                     MANAJEMEN TURNAMEN
                   </span>
                   <h3 className="text-xl font-black text-white mt-0.5">
@@ -5498,7 +5498,7 @@ export default function PengaturanPage() {
                     value={newStageName}
                     onChange={(e) => setNewStageName(e.target.value)}
                     placeholder="Contoh: Babak 16 Besar / Babak Playoff"
-                    className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white font-bold text-sm focus:outline-none focus:border-orange-500"
+                    className="w-full px-4 py-3 rounded-xl bg-zinc-950 border border-zinc-800 text-white font-bold text-sm focus:outline-none focus:border-cyan-500"
                     autoFocus
                   />
                 </div>
@@ -5579,18 +5579,18 @@ export default function PengaturanPage() {
                       onClick={() => setNewStageTurns("2x")}
                       className={`p-3.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
                         newStageTurns === "2x"
-                          ? "bg-orange-500/20 border-orange-500 text-orange-300 shadow-sm ring-1 ring-orange-500/50"
+                          ? "bg-cyan-500/20 border-cyan-500 text-cyan-300 shadow-sm ring-1 ring-cyan-500/50"
                           : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white"
                       }`}
                     >
                       <div className="space-y-0.5">
                         <span className="font-bold text-xs flex items-center gap-1.5 text-white">
-                          <ArrowLeftRight className="w-3.5 h-3.5 text-orange-400" />
+                          <ArrowLeftRight className="w-3.5 h-3.5 text-cyan-400" />
                           <span>2x Main</span>
                         </span>
                         <span className="text-[10px] text-zinc-400 block">Tukar Sisi Arena</span>
                       </div>
-                      {newStageTurns === "2x" && <Check className="w-4 h-4 text-orange-400 stroke-[3]" />}
+                      {newStageTurns === "2x" && <Check className="w-4 h-4 text-cyan-400 stroke-[3]" />}
                     </button>
                   </div>
                 </div>
@@ -5671,7 +5671,7 @@ export default function PengaturanPage() {
                       handleAddStage(newStageName, newStageModel, newStageTurns, newStageResetPoints);
                     }
                   }}
-                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-amber-500 text-zinc-950 text-xs font-bold hover:brightness-110 shadow-md transition-all cursor-pointer"
+                  className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 text-xs font-bold hover:brightness-110 shadow-md transition-all cursor-pointer"
                 >
                   {editingStage ? "Simpan Perubahan Babak" : "Simpan & Tambahkan Babak"}
                 </button>
@@ -5698,12 +5698,12 @@ export default function PengaturanPage() {
         {/* MODAL SUSUN / INPUT JADWAL LAGA MANUAL */}
         {showManualBracketModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-            <div className="bg-[#121216] border border-zinc-800 rounded-3xl p-6 sm:p-8 max-w-4xl w-full space-y-6 shadow-2xl relative max-h-[92vh] flex flex-col">
+            <div className="bg-[#0a172c] border border-cyan-900/50 rounded-3xl p-6 sm:p-8 max-w-4xl w-full space-y-6 shadow-2xl relative max-h-[92vh] flex flex-col">
               {/* Header */}
               <div className="flex items-start justify-between border-b border-zinc-800/80 pb-4 shrink-0">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-md bg-orange-500/20 text-orange-300 font-mono text-[11px] font-bold uppercase tracking-wider border border-orange-500/30">
+                    <span className="px-2.5 py-0.5 rounded-md bg-cyan-500/20 text-cyan-300 font-mono text-[11px] font-bold uppercase tracking-wider border border-cyan-500/30">
                       Input Manual Bagan
                     </span>
                     <span className="text-zinc-500 text-xs">•</span>
@@ -5729,7 +5729,7 @@ export default function PengaturanPage() {
               <div className="shrink-0 p-4 rounded-2xl bg-zinc-950/70 border border-zinc-800/80 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                   <div className="flex items-center gap-2 font-mono">
-                    <Users className="w-4 h-4 text-orange-400" />
+                    <Users className="w-4 h-4 text-cyan-400" />
                     <span className="text-zinc-300 font-bold">
                       Daftar Tim Lolos ke {selectedBracketRound} ({qualifiedBracketParticipants.length} Tim):
                     </span>
@@ -5799,7 +5799,7 @@ export default function PengaturanPage() {
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span className="w-6 h-6 rounded-lg bg-orange-500/15 text-orange-400 font-mono text-xs font-black flex items-center justify-center shrink-0">
+                        <span className="w-6 h-6 rounded-lg bg-cyan-500/15 text-cyan-400 font-mono text-xs font-black flex items-center justify-center shrink-0">
                           {idx + 1}
                         </span>
                         <input
@@ -5807,7 +5807,7 @@ export default function PengaturanPage() {
                           value={pair.label || `Laga ${String(idx + 1).padStart(2, "0")}`}
                           onChange={(e) => handleUpdateManualPair(idx, "label", e.target.value)}
                           placeholder={`Laga ${String(idx + 1).padStart(2, "0")}`}
-                          className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-white font-mono text-xs font-bold w-28 focus:outline-none focus:border-orange-500"
+                          className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800 text-white font-mono text-xs font-bold w-28 focus:outline-none focus:border-cyan-500"
                         />
                       </div>
 
@@ -5848,7 +5848,7 @@ export default function PengaturanPage() {
 
                       {/* VS Divider */}
                       <div className="text-center font-black text-xs font-mono text-zinc-500 pt-3 md:pt-4">
-                        <span className="px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-orange-400">
+                        <span className="px-2.5 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-cyan-400">
                           VS
                         </span>
                       </div>
@@ -5888,7 +5888,7 @@ export default function PengaturanPage() {
                   onClick={handleAddManualPairRow}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 text-xs font-bold transition-all cursor-pointer"
                 >
-                  <Plus className="w-4 h-4 text-orange-400" />
+                  <Plus className="w-4 h-4 text-cyan-400" />
                   <span>Tambah Baris Laga</span>
                 </button>
 
@@ -5905,7 +5905,7 @@ export default function PengaturanPage() {
                     type="button"
                     onClick={handleSaveManualBracket}
                     disabled={isSavingManualBracket}
-                    className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 text-zinc-950 text-xs sm:text-sm font-black hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-orange-500/20 cursor-pointer"
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 text-white text-xs sm:text-sm font-black hover:brightness-110 disabled:opacity-50 transition-all shadow-lg shadow-cyan-500/20 cursor-pointer"
                   >
                     <Save className="w-4 h-4" />
                     <span>{isSavingManualBracket ? "Menyimpan..." : "Simpan & Terapkan Jadwal"}</span>
@@ -5956,7 +5956,7 @@ export default function PengaturanPage() {
                     type="checkbox"
                     checked={resetWithLogs}
                     onChange={(e) => setResetWithLogs(e.target.checked)}
-                    className="w-4 h-4 rounded accent-orange-500 cursor-pointer"
+                    className="w-4 h-4 rounded accent-cyan-500 cursor-pointer"
                   />
                   <span>Hapus juga seluruh catatan log poin laga ini</span>
                 </label>
@@ -5988,7 +5988,7 @@ export default function PengaturanPage() {
       <footer className="border-t border-zinc-900 bg-[#070709] py-4 px-6 text-center text-xs text-zinc-500 mt-auto">
         <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>© 2026 NEXT ARENA — NUSANTARA NEXT Competition Management System</span>
-          <Link href="/" className="text-orange-400 hover:text-orange-300 font-semibold">
+          <Link href="/" className="text-cyan-400 hover:text-cyan-300 font-semibold">
             Buka Tampilan Monitor Utama →
           </Link>
         </div>

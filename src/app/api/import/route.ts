@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         total,
         existingCount + i + 1,
         "Baru saja (Import CSV)",
-        "from-amber-400 to-orange-500"
+        "from-cyan-500 to-blue-600"
       );
 
       importedCount++;

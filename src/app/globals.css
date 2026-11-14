@@ -7,23 +7,23 @@
 }
 
 body {
-  background-color: #09090b;
-  color: #f4f4f5;
+  background-color: #060d1a;
+  color: #f1f5f9;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   overflow-x: hidden;
 }
 
-/* Custom Low-Poly / Geometric Arena Background */
+/* Custom Low-Poly / Geometric Arena Background with Nusantara Next 2026 Cyber Palette */
 .bg-low-poly {
-  background-color: #09090b;
+  background-color: #060d1a;
   background-image: 
-    radial-gradient(at 15% 15%, rgba(250, 204, 21, 0.08) 0px, transparent 45%),
-    radial-gradient(at 85% 20%, rgba(239, 68, 68, 0.08) 0px, transparent 45%),
-    radial-gradient(at 50% 80%, rgba(249, 115, 22, 0.06) 0px, transparent 50%),
-    linear-gradient(135deg, rgba(255, 255, 255, 0.015) 25%, transparent 25%),
-    linear-gradient(225deg, rgba(255, 255, 255, 0.015) 25%, transparent 25%),
-    linear-gradient(45deg, rgba(255, 255, 255, 0.015) 25%, transparent 25%),
-    linear-gradient(315deg, rgba(255, 255, 255, 0.015) 25%, #09090b 25%);
+    radial-gradient(at 15% 15%, rgba(0, 163, 255, 0.12) 0px, transparent 50%),
+    radial-gradient(at 85% 20%, rgba(245, 158, 11, 0.09) 0px, transparent 50%),
+    radial-gradient(at 50% 80%, rgba(2, 132, 199, 0.08) 0px, transparent 55%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.012) 25%, transparent 25%),
+    linear-gradient(225deg, rgba(255, 255, 255, 0.012) 25%, transparent 25%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.012) 25%, transparent 25%),
+    linear-gradient(315deg, rgba(255, 255, 255, 0.012) 25%, #060d1a 25%);
   background-size: 100% 100%, 100% 100%, 100% 100%, 64px 64px, 64px 64px, 64px 64px, 64px 64px;
 }
 
@@ -33,14 +33,14 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #09090b;
+  background: #060d1a;
 }
 ::-webkit-scrollbar-thumb {
-  background: #272732;
+  background: #1e3a5f;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #f97316;
+  background: #00a3ff;
 }
 
 /* Running Text (Marquee) Animation */

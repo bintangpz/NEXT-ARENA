@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       p.totalPoints,
       p.previousRank || 1,
       p.lastUpdated || "Baru saja",
-      p.avatarColor || "from-orange-500 to-yellow-400"
+      p.avatarColor || "from-cyan-500 to-blue-600"
     );
 
     const insertLog = db.prepare(`

@@ -94,23 +94,23 @@ export function ArenaShutterTransition({
     <div className="fixed inset-0 z-[99999] pointer-events-auto overflow-hidden flex flex-col justify-between">
       {/* Top Shutter (Slides Down from Top) */}
       <div
-        className={`w-full h-1/2 bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 border-b-4 border-orange-500 shadow-[0_15px_50px_rgba(249,115,22,0.4)] transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] relative overflow-hidden flex flex-col justify-end items-center pb-8 ${
+        className={`w-full h-1/2 bg-gradient-to-b from-[#040812] via-[#09152b] to-[#040812] border-b-4 border-cyan-400 shadow-[0_15px_50px_rgba(0,163,255,0.4)] transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] relative overflow-hidden flex flex-col justify-end items-center pb-8 ${
           isClosed ? "translate-y-0" : "-translate-y-full"
         }`}
       >
         {/* Subtle grid pattern background */}
-        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#f97316_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
+        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#00a3ff_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
         {/* Hazard warning stripes on bottom border */}
-        <div className="absolute bottom-0 inset-x-0 h-2 bg-[repeating-linear-gradient(45deg,#f97316,#f97316_12px,#09090b_12px,#09090b_24px)] opacity-80" />
+        <div className="absolute bottom-0 inset-x-0 h-2 bg-[repeating-linear-gradient(45deg,#00a3ff,#00a3ff_12px,#071224_12px,#071224_24px)] opacity-90" />
 
         <div
           className={`transition-all duration-300 transform ${
             phase === "closed" ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-4 scale-95"
           }`}
         >
-          <span className="px-3.5 py-1 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/40 text-xs font-mono font-bold uppercase tracking-widest inline-flex items-center gap-1.5 shadow-lg">
-            <Zap className="w-3.5 h-3.5 text-yellow-400 fill-current animate-bounce" />
+          <span className="px-3.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 text-xs font-mono font-bold uppercase tracking-widest inline-flex items-center gap-1.5 shadow-lg">
+            <Zap className="w-3.5 h-3.5 text-amber-400 fill-current animate-bounce" />
             MEMASUKI ARENA TANDING • {round.toUpperCase()}
           </span>
         </div>
@@ -122,16 +122,16 @@ export function ArenaShutterTransition({
           phase === "closed" ? "scale-100 opacity-100" : "scale-75 opacity-0"
         }`}
       >
-        <div className="p-8 rounded-3xl bg-zinc-950/95 border-2 border-orange-500 shadow-[0_0_80px_rgba(249,115,22,0.6)] backdrop-blur-2xl flex flex-col items-center space-y-4 max-w-xl mx-auto">
+        <div className="p-8 rounded-3xl bg-[#060e1c]/95 border-2 border-cyan-400 shadow-[0_0_80px_rgba(0,163,255,0.6)] backdrop-blur-2xl flex flex-col items-center space-y-4 max-w-xl mx-auto">
           {/* Logo with energetic pulsating glow */}
           <div className="relative">
-            <div className="absolute -inset-4 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-600 rounded-full blur-2xl opacity-70 animate-pulse" />
+            <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500 via-sky-400 to-amber-500 rounded-full blur-2xl opacity-75 animate-pulse" />
             <ArenaLogo size="lg" showTagline={false} />
           </div>
 
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-2 text-orange-400 font-mono text-xs font-bold tracking-widest uppercase">
-              <Swords className="w-4 h-4" />
+            <div className="inline-flex items-center gap-2 text-cyan-400 font-mono text-xs font-bold tracking-widest uppercase">
+              <Swords className="w-4 h-4 text-amber-400" />
               <span>{matchLabel} • {category}</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white tracking-wide">
@@ -140,7 +140,7 @@ export function ArenaShutterTransition({
           </div>
 
           {/* Versus Duel Banner */}
-          <div className="grid grid-cols-2 gap-4 w-full pt-2 border-t border-zinc-800">
+          <div className="grid grid-cols-2 gap-4 w-full pt-2 border-t border-cyan-900/50">
             <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-500/40 text-center">
               <span className="text-[10px] font-mono font-bold text-rose-400 uppercase block">SUDUT MERAH</span>
               <span className="text-sm font-black text-white truncate block">{teamA}</span>
@@ -151,7 +151,7 @@ export function ArenaShutterTransition({
             </div>
           </div>
 
-          <p className="text-[11px] font-mono text-zinc-400 animate-pulse">
+          <p className="text-[11px] font-mono text-cyan-200/70 animate-pulse">
             Memuat Arena Stopwatch & Kontrol Hotkey Pertandingan...
           </p>
         </div>
@@ -159,23 +159,23 @@ export function ArenaShutterTransition({
 
       {/* Bottom Shutter (Slides Up from Bottom) */}
       <div
-        className={`w-full h-1/2 bg-gradient-to-t from-zinc-950 via-zinc-900 to-zinc-950 border-t-4 border-orange-500 shadow-[0_-15px_50px_rgba(249,115,22,0.4)] transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] relative overflow-hidden flex flex-col justify-start items-center pt-8 ${
+        className={`w-full h-1/2 bg-gradient-to-t from-[#040812] via-[#09152b] to-[#040812] border-t-4 border-cyan-400 shadow-[0_-15px_50px_rgba(0,163,255,0.4)] transition-transform duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)] relative overflow-hidden flex flex-col justify-start items-center pt-8 ${
           isClosed ? "translate-y-0" : "translate-y-full"
         }`}
       >
         {/* Subtle grid pattern background */}
-        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#f97316_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
+        <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#00a3ff_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
         {/* Hazard warning stripes on top border */}
-        <div className="absolute top-0 inset-x-0 h-2 bg-[repeating-linear-gradient(45deg,#f97316,#f97316_12px,#09090b_12px,#09090b_24px)] opacity-80" />
+        <div className="absolute top-0 inset-x-0 h-2 bg-[repeating-linear-gradient(45deg,#00a3ff,#00a3ff_12px,#071224_12px,#071224_24px)] opacity-90" />
 
         <div
           className={`transition-all duration-300 transform ${
             phase === "closed" ? "opacity-100 translate-y-0 scale-100" : "opacity-0 translate-y-4 scale-95"
           }`}
         >
-          <span className="text-xs font-mono text-zinc-500 uppercase tracking-widest">
-            NEXT ARENA COMPETITION SYSTEM • V2.0
+          <span className="text-xs font-mono text-cyan-400/80 uppercase tracking-widest">
+            NUSANTARA NEXT 2026 • ARENA COMPETITION SYSTEM
           </span>
         </div>
       </div>

@@ -29,7 +29,7 @@ export function ParticipantDetailModal({
       size="2xl"
       badge={
         <div className="flex items-center gap-2">
-          <span className="text-xs px-2 py-0.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 font-semibold">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-semibold">
             {participant.category}
           </span>
           <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300">
@@ -54,7 +54,7 @@ export function ParticipantDetailModal({
                 onClose();
                 onEdit(participant);
               }}
-              className="px-3.5 py-2 rounded-xl bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Edit3 className="w-3.5 h-3.5" />
               <span>Edit Profil & Skor</span>
@@ -91,17 +91,17 @@ export function ParticipantDetailModal({
               {participant.scores.babak2}
             </span>
           </div>
-          <div className="p-3 rounded-xl bg-zinc-900/90 border border-orange-500/30">
-            <span className="text-[11px] text-orange-400 block">Babak 3 (Final)</span>
-            <span className="font-mono text-base font-bold text-orange-300">
+          <div className="p-3 rounded-xl bg-zinc-900/90 border border-cyan-500/30">
+            <span className="text-[11px] text-cyan-400 block">Babak 3 (Final)</span>
+            <span className="font-mono text-base font-bold text-cyan-300">
               {participant.scores.babak3}
             </span>
           </div>
-          <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/40">
-            <span className="text-[11px] text-yellow-300 block font-semibold">
+          <div className="p-3 rounded-xl bg-gradient-to-br from-cyan-500/20 to-amber-500/20 border border-cyan-500/40">
+            <span className="text-[11px] text-amber-300 block font-semibold">
               Total Poin
             </span>
-            <span className="font-mono text-lg font-black text-yellow-400">
+            <span className="font-mono text-lg font-black text-amber-400">
               {participant.totalPoints.toLocaleString("id-ID")}
             </span>
           </div>
@@ -111,7 +111,7 @@ export function ParticipantDetailModal({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-              <UserCheck className="w-4 h-4 text-orange-400" />
+              <UserCheck className="w-4 h-4 text-cyan-400" />
               <span>Daftar Anggota Tim ({(participant.members || []).length})</span>
             </h4>
             <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
@@ -129,7 +129,7 @@ export function ParticipantDetailModal({
 
           <div className="p-4 rounded-xl bg-zinc-900/70 border border-zinc-800 space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
-              <ClipboardCheck className="w-4 h-4 text-orange-400" />
+              <ClipboardCheck className="w-4 h-4 text-cyan-400" />
               <span>Rincian Kriteria Juri (Babak 3)</span>
             </h4>
             <div className="space-y-2 text-xs">
@@ -142,11 +142,11 @@ export function ParticipantDetailModal({
                 <div key={c.label} className="space-y-1">
                   <div className="flex justify-between">
                     <span className="text-zinc-300">{c.label}</span>
-                    <span className="font-mono font-bold text-orange-400">{c.val} / 250</span>
+                    <span className="font-mono font-bold text-cyan-400">{c.val} / 250</span>
                   </div>
                   <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-orange-500 to-yellow-400"
+                      className="h-full bg-gradient-to-r from-cyan-500 to-amber-400"
                       style={{ width: `${Math.min(100, (c.val / 250) * 100)}%` }}
                     />
                   </div>

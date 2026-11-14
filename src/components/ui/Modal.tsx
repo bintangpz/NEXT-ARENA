@@ -78,16 +78,16 @@ export function Modal({
 
       {/* Modal Dialog Card */}
       <div
-        className={`relative z-10 w-full ${sizeClasses[size]} bg-[#141419] border border-zinc-800/90 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden ${className}`}
+        className={`relative z-10 w-full ${sizeClasses[size]} bg-[#0a172c] border border-cyan-900/50 rounded-2xl shadow-2xl flex flex-col max-h-[92vh] overflow-hidden ${className}`}
         role="dialog"
         aria-modal="true"
       >
         {/* Header (Rendered if title, badge, or close button needed) */}
         {(title || subtitle || badge || icon) && (
-          <div className="flex items-start justify-between gap-4 px-6 py-4 sm:py-5 border-b border-zinc-800/80 shrink-0 bg-zinc-950/40">
+          <div className="flex items-start justify-between gap-4 px-6 py-4 sm:py-5 border-b border-cyan-900/40 shrink-0 bg-[#060d1a]/80">
             <div className="flex items-start gap-3 min-w-0">
               {icon && (
-                <div className="w-10 h-10 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0 mt-0.5">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0 mt-0.5">
                   {icon}
                 </div>
               )}
@@ -132,7 +132,7 @@ export function Modal({
 
         {/* Modal Footer (Optional) */}
         {footer && (
-          <div className="px-6 py-4 border-t border-zinc-800/80 bg-zinc-950/40 shrink-0 flex items-center justify-end gap-2.5">
+          <div className="px-6 py-4 border-t border-cyan-900/40 bg-[#060d1a]/80 shrink-0 flex items-center justify-end gap-2.5">
             {footer}
           </div>
         )}

@@ -30,6 +30,7 @@ import {
   ClipboardCheck,
   X,
   FileText,
+  Flag,
 } from "lucide-react";
 import { ArenaLogo } from "@/components/ArenaLogo";
 import {
@@ -93,6 +94,23 @@ export default function ArenaBattleMatchPage() {
   }
 
   const [toastMsg, setToastMsg] = useState<ArenaToastPayload | null>(null);
+
+  interface CornerActionNotif {
+    key: number;
+    label: string;
+    isPositive: boolean;
+    isFinish?: boolean;
+  }
+
+  // Notifikasi aksi skor (Point, Cekpoint, Retry, Finish) di tepi kiri/kanan dalam kotak timer
+  const [cornerNotifs, setCornerNotifs] = useState<{
+    red: CornerActionNotif | null;
+    blue: CornerActionNotif | null;
+  }>({
+    red: null,
+    blue: null,
+  });
+  const cornerNotifSeqRef = useRef<number>(0);
 
   // Finish Status & Auto-Stop States (Disimpan per Sesi/Putaran & per Sudut agar 1 sisi hanya bisa Finish 1x dan langsung terkunci)
   const [finishedCorners, setFinishedCorners] = useState<{
@@ -190,6 +208,38 @@ export default function ArenaBattleMatchPage() {
       },
       2000
     );
+  };
+
+  const formatScoringNotifLabel = (ruleLabel?: string) => {
+    const raw = (ruleLabel || "").trim();
+    const lower = raw.toLowerCase();
+    if (lower.includes("finish")) return "Finish";
+    if (lower.includes("cekpoint") || lower.includes("checkpoint")) return "Cekpoint";
+    if (lower.includes("retry")) return "Retry";
+    if (!raw || lower === "point" || lower === "poin" || lower.includes("manual")) {
+      return "Point";
+    }
+    return raw;
+  };
+
+  const showTimerCornerNotif = (
+    corner: "red" | "blue",
+    label: string,
+    isPositive: boolean = true,
+    isFinish: boolean = false,
+    duration: number = 1800
+  ) => {
+    cornerNotifSeqRef.current += 1;
+    const key = cornerNotifSeqRef.current;
+    setCornerNotifs((prev) => ({
+      ...prev,
+      [corner]: { key, label, isPositive, isFinish },
+    }));
+    setTimeout(() => {
+      setCornerNotifs((prev) =>
+        prev[corner]?.key === key ? { ...prev, [corner]: null } : prev
+      );
+    }, duration);
   };
 
   // Load arena data
@@ -751,6 +801,7 @@ export default function ArenaBattleMatchPage() {
         ? { ...prev, p2Red: "", p2Blue: "" }
         : { ...prev, p1Red: "", p1Blue: "" }
     );
+    setCornerNotifs({ red: null, blue: null });
     const nowClock = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     setMatchHistory((prev) => [
       {
@@ -858,13 +909,7 @@ export default function ArenaBattleMatchPage() {
 
     // 2. Jika sudut/sisi ini sudah FINISH pada sesi ini, kunci seluruh penambahan poin & larang Finish lebih dari 1x
     const existingFinishTime = getCornerFinishTime(legToUse, corner);
-    if (existingFinishTime) {
-      showPointToast(
-        `🏁 ${teamName} sudah FINISH (${existingFinishTime})! Tidak dapat menambah poin lagi.`,
-        false
-      );
-      return;
-    }
+    if (existingFinishTime) return;
 
     const currentSwTime = formatTime(matchElapsedMs);
     const nowClock = new Date().toLocaleTimeString("id-ID", {
@@ -902,6 +947,9 @@ export default function ArenaBattleMatchPage() {
         }),
       }).catch(() => {});
     }
+
+    const isFinishAction = Boolean(ruleLabel && ruleLabel.toUpperCase().includes("FINISH"));
+    const cornerNotifLabel = formatScoringNotifLabel(ruleLabel);
 
     let nextLegScores = {
       scoreALeg1: match.scoreALeg1 || 0,
@@ -945,7 +993,13 @@ export default function ArenaBattleMatchPage() {
           : null
       );
 
-      showPointToast(`${teamName} (Sesi ${legToUse}): ${delta > 0 ? "+" : ""}${delta} PTS`, delta > 0);
+      showTimerCornerNotif(
+        corner,
+        cornerNotifLabel,
+        delta > 0,
+        isFinishAction,
+        isFinishAction ? 2400 : 1800
+      );
       playPointChime(delta);
 
       try {
@@ -989,7 +1043,13 @@ export default function ArenaBattleMatchPage() {
           : null
       );
 
-      showPointToast(`${teamName}: ${delta > 0 ? "+" : ""}${delta} PTS`, delta > 0);
+      showTimerCornerNotif(
+        corner,
+        cornerNotifLabel,
+        delta > 0,
+        isFinishAction,
+        isFinishAction ? 2400 : 1800
+      );
       playPointChime(delta);
 
       try {
@@ -1008,83 +1068,221 @@ export default function ArenaBattleMatchPage() {
     }
 
     // CEK KONDISI FINISH (Maksimal 1x per sisi, langsung kunci poin sisi tersebut) & AUTO-STOP PERTANDINGAN
-    const isFinishAction = ruleLabel && ruleLabel.toUpperCase().includes("FINISH");
     if (isFinishAction) {
-      const currentRedTime = legToUse === 1 ? finishedCorners.p1Red : finishedCorners.p2Red;
-      const currentBlueTime = legToUse === 1 ? finishedCorners.p1Blue : finishedCorners.p2Blue;
-
-      const nextRedTime = corner === "red" ? currentSwTime : currentRedTime;
-      const nextBlueTime = corner === "blue" ? currentSwTime : currentBlueTime;
-
-      setFinishedCorners((prev) =>
-        legToUse === 1
-          ? { ...prev, p1Red: nextRedTime, p1Blue: nextBlueTime }
-          : { ...prev, p2Red: nextRedTime, p2Blue: nextBlueTime }
+      finalizeCornerAndCheckMatchEnd(
+        corner,
+        legToUse,
+        currentSwTime,
+        nextLegScores,
+        nowClock
       );
-
-      const isEveryoneDone = isSingle
-        ? legToUse === 1
-          ? Boolean(nextRedTime)
-          : Boolean(nextBlueTime)
-        : Boolean(nextRedTime && nextBlueTime);
-
-      if (isEveryoneDone) {
-        // SEMUA TIM TELAH FINISH -> AUTO STOP PERTANDINGAN!
-        stopAllSounds();
-        setIsTimerRunning(false);
-
-        const doneTeamDesc = isSingle ? match.teamA : "SEMUA TIM";
-        const doneTimes = isSingle
-          ? legToUse === 1
-            ? nextRedTime
-            : nextBlueTime
-          : `${nextRedTime} & ${nextBlueTime}`;
-
-        const autoStopLog: (typeof matchHistory)[0] = {
-          id: `hist-${Date.now()}-${Math.random().toString(36).substring(2, 7)}-autostop`,
-          timestamp: nowClock,
-          timeFormatted: currentSwTime,
-          corner: "system",
-          teamName: "ARENA SYSTEM",
-          actionLabel: `🏁 ${doneTeamDesc} FINISH! Sesi ${legToUse} Otomatis Berhenti (${currentSwTime})`,
-          delta: 0,
-          leg: legToUse,
-        };
-        setMatchHistory((prev) => [autoStopLog, ...prev]);
-
-        showPointToast(
-          `🏁 ${doneTeamDesc} FINISH! (${doneTimes}) - Menyelesaikan Sesi ${legToUse}...`,
-          true
-        );
-
-        let hasProceeded = false;
-        const proceedToTransition = () => {
-          if (hasProceeded) return;
-          hasProceeded = true;
-          if (is2x && legToUse === 1) {
-            handleCompleteLeg1(false, nextLegScores);
-          } else {
-            handleFinishMatch(false, nextLegScores);
-          }
-        };
-
-        if (soundEnabled) {
-          // Habiskan suara finish dulu baru transisi buka modal
-          playSound("finish", soundFinishUrl, soundVolume, false, () => {
-            proceedToTransition();
-          });
-          // Fallback batas aman maksimal 7 detik jika audio terputus atau tidak trigger onended
-          setTimeout(proceedToTransition, 7000);
-        } else {
-          setTimeout(proceedToTransition, 1500);
-        }
-      } else {
-        showPointToast(
-          `🏁 ${teamName} FINISH (${currentSwTime})! Poin untuk ${teamName} kini terkunci.`,
-          true
-        );
-      }
     }
+  };
+
+  /** Finalize a corner's finish timestamp and auto-stop/transition when all active sides have completed. */
+  const finalizeCornerAndCheckMatchEnd = (
+    corner: "red" | "blue",
+    legToUse: 1 | 2,
+    recordedFinishTime: string,
+    nextLegScores: {
+      scoreALeg1: number;
+      scoreBLeg1: number;
+      scoreALeg2: number;
+      scoreBLeg2: number;
+      scoreA: number;
+      scoreB: number;
+    },
+    nowClock: string
+  ) => {
+    if (!match) return;
+
+    const currentRedTime = legToUse === 1 ? finishedCorners.p1Red : finishedCorners.p2Red;
+    const currentBlueTime = legToUse === 1 ? finishedCorners.p1Blue : finishedCorners.p2Blue;
+
+    const nextRedTime = corner === "red" ? recordedFinishTime : currentRedTime;
+    const nextBlueTime = corner === "blue" ? recordedFinishTime : currentBlueTime;
+
+    setFinishedCorners((prev) =>
+      legToUse === 1
+        ? { ...prev, p1Red: nextRedTime, p1Blue: nextBlueTime }
+        : { ...prev, p2Red: nextRedTime, p2Blue: nextBlueTime }
+    );
+
+    const isEveryoneDone = isSingle
+      ? legToUse === 1
+        ? Boolean(nextRedTime)
+        : Boolean(nextBlueTime)
+      : Boolean(nextRedTime && nextBlueTime);
+
+    if (!isEveryoneDone) return;
+
+    // SEMUA TIM TELAH FINISH -> AUTO STOP PERTANDINGAN!
+    stopAllSounds();
+    setIsTimerRunning(false);
+
+    const doneTeamDesc = isSingle ? match.teamA : "SEMUA TIM";
+
+    const autoStopLog: (typeof matchHistory)[0] = {
+      id: `hist-${Date.now()}-${Math.random().toString(36).substring(2, 7)}-autostop`,
+      timestamp: nowClock,
+      timeFormatted: recordedFinishTime,
+      corner: "system",
+      teamName: "ARENA SYSTEM",
+      actionLabel: `🏁 ${doneTeamDesc} FINISH! Sesi ${legToUse} Otomatis Berhenti (${recordedFinishTime})`,
+      delta: 0,
+      leg: legToUse,
+    };
+    setMatchHistory((prev) => [autoStopLog, ...prev]);
+
+    let hasProceeded = false;
+    const proceedToTransition = () => {
+      if (hasProceeded) return;
+      hasProceeded = true;
+      if (is2x && legToUse === 1) {
+        handleCompleteLeg1(false, nextLegScores);
+      } else {
+        handleFinishMatch(false, nextLegScores);
+      }
+    };
+
+    if (soundEnabled) {
+      // Habiskan suara finish dulu baru transisi buka modal
+      playSound("finish", soundFinishUrl, soundVolume, false, () => {
+        proceedToTransition();
+      });
+      // Fallback batas aman maksimal 7 detik jika audio terputus atau tidak trigger onended
+      setTimeout(proceedToTransition, 7000);
+    } else {
+      setTimeout(proceedToTransition, 1500);
+    }
+  };
+
+  /** Handle corner surrender: save current score as-is and record finish time at full match limit (e.g. 05:00.00). */
+  const handleSurrender = async (corner: "red" | "blue", explicitLeg?: 1 | 2) => {
+    if (!match) return;
+
+    const legToUse: 1 | 2 = explicitLeg || (activeLeg as 1 | 2) || 1;
+
+    if (timerPhase !== "match" && timerPhase !== "match_paused") {
+      showPointToast(
+        "🔒 Tombol Menyerah hanya aktif saat Waktu Pertandingan dimulai.",
+        false
+      );
+      return;
+    }
+
+    if (is2x && legToUse !== activeLeg) {
+      showPointToast(
+        `🔒 Sesi ${legToUse} tidak aktif! Pertandingan saat ini sedang berjalan di Sesi ${activeLeg}.`,
+        false
+      );
+      return;
+    }
+
+    if (isSingle) {
+      if (legToUse === 1 && corner === "blue") return;
+      if (legToUse === 2 && corner === "red") return;
+    }
+
+    if (getCornerFinishTime(legToUse, corner)) return;
+
+    const targetTeam: "A" | "B" = is2x
+      ? legToUse === 1
+        ? (corner === "red" ? "A" : "B")
+        : (corner === "red" ? "B" : "A")
+      : (corner === "red" ? redTeamKey : blueTeamKey);
+
+    const teamName = targetTeam === "A" ? match.teamA : match.teamB;
+
+    const fullTimeMs = (matchLimit > 0 ? matchLimit : 300) * 1000;
+    const fullTimeFormatted = formatTime(fullTimeMs);
+    const nowClock = new Date().toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+
+    const surrenderHist: (typeof matchHistory)[0] = {
+      id: `hist-surrender-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp: nowClock,
+      timeFormatted: fullTimeFormatted,
+      corner,
+      teamName: teamName || (corner === "red" ? "Sudut Merah" : "Sudut Biru"),
+      actionLabel: "Menyerah (Finish Waktu Habis)",
+      delta: 0,
+      leg: legToUse,
+    };
+    setMatchHistory((prev) => [surrenderHist, ...prev]);
+
+    const targetParticipant = participants.find((p) => p.name === teamName);
+    if (targetParticipant) {
+      fetch("/api/participants", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "quick_adjust",
+          participantId: targetParticipant.id,
+          delta: 0,
+          label: `Menyerah • FINISH (${(match.matchLabel || "").startsWith("Laga") ? match.matchLabel : `Laga ${match.matchLabel}`} P${legToUse} @${fullTimeFormatted})`,
+          targetRound: "babak1",
+        }),
+      }).catch(() => {});
+    }
+
+    const scoreALeg1 = match.scoreALeg1 || 0;
+    const scoreBLeg1 = match.scoreBLeg1 || 0;
+    const scoreALeg2 = match.scoreALeg2 || 0;
+    const scoreBLeg2 = match.scoreBLeg2 || 0;
+    const avgA = is2x ? Number(((scoreALeg1 + scoreALeg2) / 2).toFixed(2)) : (match.scoreA || 0);
+    const avgB = is2x ? Number(((scoreBLeg1 + scoreBLeg2) / 2).toFixed(2)) : (match.scoreB || 0);
+
+    const nextLegScores = {
+      scoreALeg1,
+      scoreBLeg1,
+      scoreALeg2,
+      scoreBLeg2,
+      scoreA: avgA,
+      scoreB: avgB,
+    };
+
+    showTimerCornerNotif(corner, "Menyerah", false, false, 2400);
+    playPointChime(-1);
+
+    try {
+      await fetch("/api/bracket", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          is2x
+            ? {
+                matchId: match.id,
+                currentLeg: legToUse,
+                scoreALeg1,
+                scoreBLeg1,
+                scoreALeg2,
+                scoreBLeg2,
+                scoreA: avgA,
+                scoreB: avgB,
+                status: "Berlangsung",
+              }
+            : {
+                matchId: match.id,
+                scoreA: avgA,
+                scoreB: avgB,
+                status: "Berlangsung",
+              }
+        ),
+      });
+      broadcastSync("DATA_REFRESH");
+    } catch (e) {}
+
+    finalizeCornerAndCheckMatchEnd(
+      corner,
+      legToUse,
+      fullTimeFormatted,
+      nextLegScores,
+      nowClock
+    );
   };
 
   const handleSetExactScore = async (
@@ -1125,13 +1323,7 @@ export default function ArenaBattleMatchPage() {
     const teamName = targetTeam === "A" ? match.teamA : match.teamB;
 
     const existingFinishTime = getCornerFinishTime(legToUse, corner);
-    if (existingFinishTime) {
-      showPointToast(
-        `🏁 ${teamName} sudah FINISH (${existingFinishTime})! Skor telah terkunci.`,
-        false
-      );
-      return;
-    }
+    if (existingFinishTime) return;
     const currentSwTime =
       timerPhase === "match" || timerPhase === "match_paused" || timerPhase === "finished"
         ? formatTime(matchElapsedMs)
@@ -1235,6 +1427,7 @@ export default function ArenaBattleMatchPage() {
     matchElapsedBaseRef.current = 0;
     setIsTimerRunning(false);
     setTimerPhase("idle");
+    setCornerNotifs({ red: null, blue: null });
 
     const nowClock = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     setMatchHistory((prev) => [
@@ -1383,6 +1576,7 @@ export default function ArenaBattleMatchPage() {
     matchElapsedBaseRef.current = 0;
     setIsTimerRunning(false);
     setTimerPhase("idle");
+    setCornerNotifs({ red: null, blue: null });
     setShowLeg1Modal(false);
 
     const nowClock = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
@@ -1627,6 +1821,7 @@ export default function ArenaBattleMatchPage() {
         setTimerPhase("idle");
         setTimerSeconds(prepDuration > 0 ? prepDuration : 10);
         setFinishedCorners({ p1Red: "", p1Blue: "", p2Red: "", p2Blue: "" });
+        setCornerNotifs({ red: null, blue: null });
         stopAllSounds();
 
         if (resetWithLogs) {
@@ -1708,15 +1903,15 @@ export default function ArenaBattleMatchPage() {
         className={`p-5 sm:p-6 rounded-3xl border-2 transition-all space-y-4 flex flex-col justify-between ${
           isWinner
             ? isRed
-              ? "bg-gradient-to-b from-rose-950/40 via-zinc-900/90 to-zinc-950 border-rose-500 shadow-[0_0_40px_rgba(244,63,94,0.3)]"
-              : "bg-gradient-to-b from-blue-950/40 via-zinc-900/90 to-zinc-950 border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.3)]"
+              ? "bg-gradient-to-b from-rose-950/40 via-[#0a172c]/90 to-[#060d1a] border-rose-500 shadow-[0_0_40px_rgba(244,63,94,0.3)]"
+              : "bg-gradient-to-b from-blue-950/40 via-[#0a172c]/90 to-[#060d1a] border-blue-500 shadow-[0_0_40px_rgba(59,130,246,0.3)]"
             : isCurrentActiveLeg
             ? isRed
-              ? "bg-gradient-to-b from-rose-950/25 via-zinc-900/95 to-zinc-950 border-rose-500/70 ring-1 ring-rose-500/50 shadow-xl"
-              : "bg-gradient-to-b from-blue-950/25 via-zinc-900/95 to-zinc-950 border-blue-500/70 ring-1 ring-blue-500/50 shadow-xl"
+              ? "bg-gradient-to-b from-rose-950/25 via-[#0a172c]/95 to-[#060d1a] border-rose-500/70 ring-1 ring-rose-500/50 shadow-xl"
+              : "bg-gradient-to-b from-blue-950/25 via-[#0a172c]/95 to-[#060d1a] border-blue-500/70 ring-1 ring-blue-500/50 shadow-xl"
             : isRed
-            ? "bg-gradient-to-b from-rose-950/15 via-zinc-900/80 to-zinc-950/90 border-rose-500/30 opacity-90"
-            : "bg-gradient-to-b from-blue-950/15 via-zinc-900/80 to-zinc-950/90 border-blue-500/30 opacity-90"
+            ? "bg-gradient-to-b from-rose-950/15 via-[#0a172c]/80 to-[#060d1a]/90 border-rose-500/30 opacity-90"
+            : "bg-gradient-to-b from-blue-950/15 via-[#0a172c]/80 to-[#060d1a]/90 border-blue-500/30 opacity-90"
         }`}
       >
         {/* Header: Sudut Tag & Score box */}
@@ -1745,7 +1940,7 @@ export default function ArenaBattleMatchPage() {
 
               {isFinished && (
                 <span className="px-2.5 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/60 font-mono font-black text-[11px] flex items-center gap-1">
-                  🏁 SUDAH FINISH ({finishTime}) • POIN TERKUNCI
+                  🏁 FINISH ({finishTime})
                 </span>
               )}
             </div>
@@ -1778,7 +1973,7 @@ export default function ArenaBattleMatchPage() {
                 onChange={(e) =>
                   handleSetExactScore(corner, parseFloat(e.target.value) || 0, leg)
                 }
-                className={`w-20 px-2 py-1 text-center font-mono text-xl font-black rounded-xl bg-zinc-950 border focus:outline-none transition-all shadow-inner ${
+                className={`w-20 px-2 py-1 text-center font-mono text-xl font-black rounded-xl bg-[#060d1a] border focus:outline-none transition-all shadow-inner ${
                   isScoringLocked
                     ? "text-zinc-500 border-zinc-800 cursor-not-allowed opacity-60"
                     : isRed
@@ -1792,23 +1987,19 @@ export default function ArenaBattleMatchPage() {
 
         {/* Buttons Row: Point Rules + Hotkeys + Quick +1/-1 */}
         <div className="pt-2 border-t border-zinc-800/80 space-y-2">
-          {isScoringLocked && (
+          {isScoringLocked && !isFinished && (
             <div
               className={`px-3 py-1.5 rounded-xl border text-[11px] font-mono font-bold flex items-center gap-2 ${
-                isFinished
-                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                  : timerPhase === "preparation" ||
-                    timerPhase === "prep_paused" ||
-                    timerPhase === "prep_ended" ||
-                    timerPhase === "countdown"
+                timerPhase === "preparation" ||
+                timerPhase === "prep_paused" ||
+                timerPhase === "prep_ended" ||
+                timerPhase === "countdown"
                   ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
                   : "bg-zinc-900/90 border-zinc-800 text-zinc-400"
               }`}
             >
               <span>
-                {isFinished
-                  ? `🏁 Sisi ini sudah FINISH pada ${finishTime} — Tidak bisa tambah poin / Finish lagi`
-                  : is2x && !isCurrentActiveLeg
+                {is2x && !isCurrentActiveLeg
                   ? `🔒 Sesi ${leg} Terkunci — Pertandingan sedang di Sesi ${activeLeg}`
                   : timerPhase === "preparation" ||
                     timerPhase === "prep_paused" ||
@@ -1884,6 +2075,20 @@ export default function ArenaBattleMatchPage() {
             >
               -1
             </button>
+            <button
+              type="button"
+              disabled={isScoringLocked}
+              onClick={() => handleSurrender(corner, leg)}
+              className={`ml-auto px-3 py-1.5 rounded-xl border font-mono font-bold text-xs transition-all flex items-center gap-1.5 ${
+                isScoringLocked
+                  ? "bg-zinc-900/50 border-zinc-800/60 text-zinc-600 opacity-45 cursor-not-allowed"
+                  : "bg-amber-500/10 hover:bg-rose-500/20 border-amber-500/40 hover:border-rose-500/60 text-amber-300 hover:text-rose-200 cursor-pointer shadow-sm"
+              }`}
+              title={`Menyerah — Simpan poin terakhir & catat finish waktu habis (${formatTime((matchLimit > 0 ? matchLimit : 300) * 1000)})`}
+            >
+              <Flag className="w-3.5 h-3.5" />
+              <span>Menyerah</span>
+            </button>
           </div>
         </div>
       </div>
@@ -1892,7 +2097,7 @@ export default function ArenaBattleMatchPage() {
 
   if (isLoading || !match) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center space-y-4">
+      <div className="min-h-screen bg-[#060d1a] flex flex-col items-center justify-center space-y-4">
         <ArenaLogo size="lg" />
         <p className="text-sm font-mono text-zinc-400 animate-pulse">Memuat Arena Pertandingan...</p>
       </div>
@@ -1904,9 +2109,9 @@ export default function ArenaBattleMatchPage() {
     match.winner === "A" ? match.teamA : match.winner === "B" ? match.teamB : null;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col justify-between selection:bg-orange-500 selection:text-black relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#060d1a] text-white flex flex-col justify-between selection:bg-cyan-500 selection:text-black relative overflow-x-hidden">
       {/* Background Subtle Hex/Diamond Pattern */}
-      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#f97316_1px,transparent_1px)] [background-size:28px_28px] pointer-events-none" />
+      <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#00a3ff_1px,transparent_1px)] [background-size:28px_28px] pointer-events-none" />
 
       {/* FLOATING ARENA HUD NOTIFICATION (PREMIUM TOAST) */}
       {toastMsg && (
@@ -1917,12 +2122,12 @@ export default function ArenaBattleMatchPage() {
           {toastMsg.kind === "switch_leg" ? (
             <div className={`px-6 py-4 rounded-3xl border backdrop-blur-2xl shadow-2xl flex items-center gap-4 ${
               toastMsg.leg === 2
-                ? "bg-zinc-950/95 border-orange-500/80 shadow-[0_15px_50px_rgba(249,115,22,0.4)]"
-                : "bg-zinc-950/95 border-amber-500/80 shadow-[0_15px_50px_rgba(245,158,11,0.4)]"
+                ? "bg-[#0a172c]/95 border-cyan-500/80 shadow-[0_15px_50px_rgba(0,163,255,0.4)]"
+                : "bg-[#0a172c]/95 border-amber-500/80 shadow-[0_15px_50px_rgba(245,158,11,0.4)]"
             }`}>
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
                 toastMsg.leg === 2
-                  ? "bg-orange-500/20 text-orange-400 border border-orange-500/50"
+                  ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/50"
                   : "bg-amber-500/20 text-amber-400 border border-amber-500/50"
               }`}>
                 {toastMsg.leg === 2 ? (
@@ -1935,7 +2140,7 @@ export default function ArenaBattleMatchPage() {
                 <div className="flex items-center gap-2">
                   <span className={`text-[11px] font-mono font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg ${
                     toastMsg.leg === 2
-                      ? "bg-orange-500 text-zinc-950 font-black shadow-md shadow-orange-500/20"
+                      ? "bg-cyan-500 text-zinc-950 font-black shadow-md shadow-cyan-500/20"
                       : "bg-amber-500 text-zinc-950 font-black shadow-md shadow-amber-500/20"
                   }`}>
                     {toastMsg.title}
@@ -1999,21 +2204,21 @@ export default function ArenaBattleMatchPage() {
       )}
 
       {/* TOP HEADER BAR */}
-      <header className="px-4 sm:px-8 py-4 bg-[#121216]/95 border-b border-zinc-800/90 flex flex-wrap items-center justify-between gap-4 z-40 sticky top-0 backdrop-blur-xl shadow-xl">
+      <header className="px-4 sm:px-8 py-4 bg-[#060e1c]/95 border-b border-cyan-900/40 flex flex-wrap items-center justify-between gap-4 z-40 sticky top-0 backdrop-blur-xl shadow-xl">
         <div className="flex items-center gap-4">
           <Link
             href="/?tab=bracket"
-            className="px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+            className="px-3.5 py-2 rounded-xl bg-[#0a172c] hover:bg-[#0e2240] text-zinc-300 hover:text-white border border-cyan-900/40 text-xs font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Kembali ke Bagan</span>
           </Link>
 
-          <div className="h-6 w-px bg-zinc-800 hidden sm:block" />
+          <div className="h-6 w-px bg-cyan-900/40 hidden sm:block" />
 
           <div>
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-lg bg-orange-500/20 text-orange-300 font-mono font-black text-xs border border-orange-500/40">
+              <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 font-mono font-black text-xs border border-cyan-500/40">
                 {match.matchLabel}
               </span>
               <span className="text-xs font-bold text-white tracking-wide">
@@ -2030,16 +2235,16 @@ export default function ArenaBattleMatchPage() {
             type="button"
             onClick={() => setSoundEnabled((prev) => !prev)}
             title={soundEnabled ? "Audio Aktif" : "Audio Nonaktif"}
-            className="p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-all"
+            className="p-2.5 rounded-xl bg-[#0a172c] hover:bg-[#0e2240] border border-cyan-900/40 text-zinc-400 hover:text-white transition-all"
           >
-            {soundEnabled ? <Volume2 className="w-4 h-4 text-orange-400" /> : <VolumeX className="w-4 h-4" />}
+            {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4" />}
           </button>
 
           <button
             type="button"
             onClick={toggleFullscreen}
             title="Layar Penuh (F11)"
-            className="p-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition-all"
+            className="p-2.5 rounded-xl bg-[#0a172c] hover:bg-[#0e2240] border border-cyan-900/40 text-zinc-400 hover:text-white transition-all"
           >
             {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           </button>
@@ -2049,9 +2254,54 @@ export default function ArenaBattleMatchPage() {
       {/* MAIN BATTLEFIELD & TIMER CONSOLE */}
       <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex flex-col justify-between gap-6 z-10">
         {/* CENTER ARENA TIMER / STOPWATCH HUD */}
-        <div className="bg-[#121216]/95 border-2 border-zinc-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center space-y-4">
+        <div className="bg-[#0a172c]/95 border-2 border-cyan-900/50 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden flex flex-col items-center justify-center space-y-4">
           {/* Subtle neon glow background behind timer */}
-          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-48 bg-gradient-to-b from-orange-500/20 to-transparent blur-3xl pointer-events-none" />
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-96 h-48 bg-gradient-to-b from-cyan-500/20 to-transparent blur-3xl pointer-events-none" />
+
+          {/* Corner Action Notifications Inside Timer Box Edges (Kiri = Sudut Merah, Kanan = Sudut Biru) */}
+          <div className="absolute inset-0 pointer-events-none z-20 !mt-0">
+            {(["red", "blue"] as const).map((side) => {
+              const notif = cornerNotifs[side];
+              if (!notif) return null;
+              const isLeft = side === "red";
+              const toneClass = notif.isFinish
+                ? "bg-amber-500/15 border-amber-400/70 text-amber-300 shadow-[0_0_24px_rgba(245,158,11,0.3)]"
+                : notif.isPositive
+                ? "bg-emerald-500/15 border-emerald-400/60 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.25)]"
+                : "bg-rose-500/15 border-rose-500/60 text-rose-300 shadow-[0_0_20px_rgba(244,63,94,0.25)]";
+              const slideAnim = isLeft ? "slide-in-from-left-3" : "slide-in-from-right-3";
+
+              return (
+                <div
+                  key={`${side}-${notif.key}`}
+                  className={`absolute top-3.5 sm:top-6 ${
+                    isLeft ? "left-3.5 sm:left-6" : "right-3.5 sm:right-6"
+                  } animate-in fade-in ${slideAnim} duration-200`}
+                >
+                  <div
+                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl border backdrop-blur-md font-mono font-black text-xs sm:text-sm uppercase tracking-wider flex items-center gap-2 ${toneClass}`}
+                  >
+                    {isLeft && (
+                      <span className="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)] shrink-0" />
+                    )}
+                    {notif.label === "Menyerah" ? (
+                      <Flag className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                    ) : notif.isFinish ? (
+                      <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                    ) : notif.isPositive ? (
+                      <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current shrink-0" />
+                    ) : (
+                      <RotateCcw className="w-3.5 h-3.5 shrink-0" />
+                    )}
+                    <span>{notif.label}</span>
+                    {!isLeft && (
+                      <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)] shrink-0" />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
           {/* Phase Badge & Round status */}
           <div className="flex flex-wrap items-center justify-center gap-3">
@@ -2064,7 +2314,7 @@ export default function ArenaBattleMatchPage() {
                   : timerPhase === "prep_ended"
                   ? "bg-cyan-500/20 text-cyan-300 border-cyan-400/60 animate-pulse"
                   : timerPhase === "countdown"
-                  ? "bg-orange-500/20 text-orange-300 border-orange-500/50 animate-bounce"
+                  ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/50 animate-bounce"
                   : timerPhase === "match"
                   ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 animate-pulse"
                   : timerPhase === "match_paused"
@@ -2080,7 +2330,9 @@ export default function ArenaBattleMatchPage() {
                     ? "bg-emerald-400 animate-ping"
                     : timerPhase === "prep_ended"
                     ? "bg-cyan-400 animate-ping"
-                    : timerPhase === "countdown" || timerPhase === "preparation"
+                    : timerPhase === "countdown"
+                    ? "bg-cyan-400 animate-ping"
+                    : timerPhase === "preparation"
                     ? "bg-amber-400 animate-ping"
                     : "bg-zinc-500"
                 }`}
@@ -2105,7 +2357,7 @@ export default function ArenaBattleMatchPage() {
             </span>
 
             {is2x && (
-              <span className="px-3.5 py-1 rounded-full bg-orange-500/20 text-orange-300 border border-orange-500/40 text-xs font-mono font-bold">
+              <span className="px-3.5 py-1 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-xs font-mono font-bold">
                 {activeLeg === 1 ? "SESI 1 / PUTARAN 1" : "SESI 2 / PUTARAN 2 (TUKAR SISI)"}
               </span>
             )}
@@ -2113,19 +2365,19 @@ export default function ArenaBattleMatchPage() {
 
           {/* Giant Digital Stopwatch / Timer Display */}
           {timerPhase === "countdown" ? (
-            <div className="font-mono text-8xl sm:text-9xl md:text-[10rem] font-black tracking-tight text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)] select-none animate-bounce">
+            <div className="font-mono text-8xl sm:text-9xl md:text-[10rem] font-black tracking-tight text-cyan-400 drop-shadow-[0_0_40px_rgba(0,163,255,0.6)] select-none animate-bounce">
               {timerSeconds}
             </div>
           ) : timerPhase === "preparation" || timerPhase === "prep_paused" ? (
-            <div className="font-mono text-7xl sm:text-8xl md:text-9xl font-black tracking-tight text-white drop-shadow-[0_0_35px_rgba(249,115,22,0.35)] select-none">
+            <div className="font-mono text-7xl sm:text-8xl md:text-9xl font-black tracking-tight text-white drop-shadow-[0_0_35px_rgba(245,158,11,0.35)] select-none">
               {`${String(Math.floor(timerSeconds / 60)).padStart(2, "0")}:${String(timerSeconds % 60).padStart(2, "0")}`}
             </div>
           ) : (
             <div className="font-mono font-black tracking-tight text-white select-none flex items-baseline justify-center">
-              <span className="text-7xl sm:text-8xl md:text-9xl drop-shadow-[0_0_35px_rgba(249,115,22,0.35)]">
+              <span className="text-7xl sm:text-8xl md:text-9xl drop-shadow-[0_0_35px_rgba(0,163,255,0.35)]">
                 {getStopwatchParts(matchElapsedMs).minutes}:{getStopwatchParts(matchElapsedMs).seconds}
               </span>
-              <span className="text-4xl sm:text-5xl md:text-6xl text-amber-400 font-extrabold ml-1.5 sm:ml-2.5 drop-shadow-[0_0_25px_rgba(245,158,11,0.5)]">
+              <span className="text-4xl sm:text-5xl md:text-6xl text-cyan-400 font-extrabold ml-1.5 sm:ml-2.5 drop-shadow-[0_0_25px_rgba(0,163,255,0.5)]">
                 .{getStopwatchParts(matchElapsedMs).centiseconds}
               </span>
             </div>
@@ -2138,7 +2390,7 @@ export default function ArenaBattleMatchPage() {
               <button
                 type="button"
                 onClick={handleMainAction}
-                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 text-zinc-950 hover:brightness-110 font-black text-sm sm:text-base flex items-center gap-2.5 transition-all shadow-xl shadow-orange-500/25 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
+                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 hover:brightness-110 font-black text-sm sm:text-base flex items-center gap-2.5 transition-all shadow-xl shadow-cyan-500/25 cursor-pointer transform hover:scale-[1.02] active:scale-[0.98]"
                 title="Mulai Waktu Persiapan (Mario Kart TV Channel OST)"
               >
                 <Play className="w-5 h-5 fill-current" />
@@ -2162,7 +2414,7 @@ export default function ArenaBattleMatchPage() {
               <button
                 type="button"
                 onClick={handleMainAction}
-                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 text-zinc-950 hover:brightness-110 font-black text-sm sm:text-base flex items-center gap-2.5 transition-all shadow-xl shadow-amber-500/25 cursor-pointer"
+                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:brightness-110 font-black text-sm sm:text-base flex items-center gap-2.5 transition-all shadow-xl shadow-cyan-500/25 cursor-pointer"
                 title="Lanjutkan Waktu Persiapan"
               >
                 <Play className="w-5 h-5 fill-current" />
@@ -2186,9 +2438,9 @@ export default function ArenaBattleMatchPage() {
               <button
                 type="button"
                 disabled
-                className="px-8 py-3.5 rounded-2xl bg-orange-500/25 border border-orange-500/50 text-orange-300 font-black text-sm sm:text-base flex items-center gap-2.5 shadow-lg opacity-90 cursor-not-allowed animate-pulse"
+                className="px-8 py-3.5 rounded-2xl bg-cyan-500/20 border border-cyan-500/50 text-cyan-300 font-black text-sm sm:text-base flex items-center gap-2.5 shadow-lg opacity-90 cursor-not-allowed animate-pulse"
               >
-                <FastForward className="w-5 h-5 text-orange-400" />
+                <FastForward className="w-5 h-5 text-cyan-400" />
                 <span>Bersiap! Pertandingan Segera Mulai...</span>
               </button>
             )}
@@ -2221,7 +2473,7 @@ export default function ArenaBattleMatchPage() {
               <button
                 type="button"
                 onClick={handleResetTimer}
-                className="px-6 py-3.5 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-bold text-sm flex items-center gap-2 transition-all cursor-pointer"
+                className="px-6 py-3.5 rounded-2xl bg-[#0a172c] hover:bg-[#0e2240] border border-cyan-900/40 text-zinc-300 hover:text-white font-bold text-sm flex items-center gap-2 transition-all cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Tanding Ulang</span>
@@ -2232,7 +2484,7 @@ export default function ArenaBattleMatchPage() {
             <button
               type="button"
               onClick={handleResetTimer}
-              className="px-4 py-3.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white font-semibold text-sm flex items-center gap-2 transition-all cursor-pointer"
+              className="px-4 py-3.5 rounded-2xl bg-[#0a172c] hover:bg-[#0e2240] border border-cyan-900/40 text-zinc-400 hover:text-white font-semibold text-sm flex items-center gap-2 transition-all cursor-pointer"
               title="Reset Waktu ke Standby Persiapan"
             >
               <RotateCcw className="w-4 h-4" />
@@ -2279,13 +2531,13 @@ export default function ArenaBattleMatchPage() {
 
         {/* 2X MAIN SWITCHER BAR & PROGRESS */}
         {is2x && (
-          <div className="p-4 sm:p-5 rounded-3xl bg-[#121216]/95 border border-zinc-800/90 flex flex-wrap items-center justify-between gap-4 shadow-xl">
+          <div className="p-4 sm:p-5 rounded-3xl bg-[#0a172c]/95 border border-cyan-900/40 flex flex-wrap items-center justify-between gap-4 shadow-xl">
             {/* Segmented Control Putaran 1 vs Putaran 2 */}
             <div className="flex items-center gap-3">
               <span className="text-xs text-zinc-400 font-mono font-bold uppercase tracking-wider hidden sm:inline-block">
                 Fokus Sesi Laga:
               </span>
-              <div className="inline-flex p-1 rounded-2xl bg-zinc-900/90 border border-zinc-800 gap-1.5 shadow-inner">
+              <div className="inline-flex p-1 rounded-2xl bg-[#060d1a]/90 border border-cyan-900/40 gap-1.5 shadow-inner">
                 {/* Tab Putaran 1 */}
                 <button
                   type="button"
@@ -2312,7 +2564,7 @@ export default function ArenaBattleMatchPage() {
                   onClick={() => handleSwitchLeg(2)}
                   className={`px-4 py-2.5 rounded-xl text-xs font-mono font-bold flex items-center gap-2.5 transition-all cursor-pointer ${
                     activeLeg === 2
-                      ? "bg-gradient-to-r from-orange-500 to-amber-500 text-zinc-950 shadow-md font-black shadow-orange-500/25 scale-[1.02]"
+                      ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md font-black shadow-cyan-500/25 scale-[1.02]"
                       : "text-zinc-400 hover:text-white hover:bg-zinc-800/60"
                   }`}
                   title="Pindah fokus hotkey dan stopwatch ke Putaran 2 (Tukar Sisi Arena)"
@@ -2320,7 +2572,7 @@ export default function ArenaBattleMatchPage() {
                   <ArrowLeftRight className="w-3.5 h-3.5" />
                   <span>Putaran 2 (Tukar Sisi)</span>
                   <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
-                    activeLeg === 2 ? "bg-zinc-950/20 text-zinc-950" : "bg-zinc-800 text-zinc-400"
+                    activeLeg === 2 ? "bg-white/20 text-white" : "bg-zinc-800 text-zinc-400"
                   }`}>
                     {isSingle ? `${match.scoreALeg2 || 0} PTS` : `${match.scoreBLeg2 || 0} - ${match.scoreALeg2 || 0}`}
                   </span>
@@ -2399,7 +2651,7 @@ export default function ArenaBattleMatchPage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 relative">
                 {!isSingle && (
-                  <div className="hidden lg:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-zinc-950 border-2 border-zinc-800 items-center justify-center font-black text-xs text-orange-400 shadow-[0_0_20px_rgba(0,0,0,0.8)]">
+                  <div className="hidden lg:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-[#060e1c] border-2 border-cyan-800/60 items-center justify-center font-black text-xs text-cyan-400 shadow-[0_0_20px_rgba(0,163,255,0.2)]">
                     VS
                   </div>
                 )}
@@ -2456,11 +2708,11 @@ export default function ArenaBattleMatchPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                  <h3 className="text-xs sm:text-sm font-black font-mono tracking-wider text-orange-400 uppercase flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(0,163,255,0.6)]" />
+                  <h3 className="text-xs sm:text-sm font-black font-mono tracking-wider text-cyan-400 uppercase flex items-center gap-2">
                     <span>SESI 2 • PUTARAN 2 (TUKAR SISI ARENA)</span>
                     {activeLeg === 2 && (
-                      <span className="px-2 py-0.5 rounded-full bg-orange-500/20 border border-orange-500/40 text-orange-300 text-[10px] font-mono font-bold animate-pulse">
+                      <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-[10px] font-mono font-bold animate-pulse">
                         🎮 Hotkey Stopwatch Aktif
                       </span>
                     )}
@@ -2477,7 +2729,7 @@ export default function ArenaBattleMatchPage() {
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 relative">
                 {!isSingle && (
-                  <div className="hidden lg:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-zinc-950 border-2 border-zinc-800 items-center justify-center font-black text-xs text-orange-400 shadow-[0_0_20px_rgba(0,0,0,0.8)]">
+                  <div className="hidden lg:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-[#060e1c] border-2 border-cyan-800/60 items-center justify-center font-black text-xs text-cyan-400 shadow-[0_0_20px_rgba(0,163,255,0.2)]">
                     VS
                   </div>
                 )}
@@ -2532,7 +2784,7 @@ export default function ArenaBattleMatchPage() {
           /* STANDARD 1X MAIN (2 CARDS) */
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 relative">
             {!isSingle && (
-              <div className="hidden lg:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-zinc-950 border-4 border-zinc-800 items-center justify-center font-black text-sm text-orange-400 shadow-[0_0_30px_rgba(0,0,0,0.8)]">
+              <div className="hidden lg:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-[#060e1c] border-4 border-cyan-800/60 items-center justify-center font-black text-sm text-cyan-400 shadow-[0_0_30px_rgba(0,163,255,0.25)]">
                 VS
               </div>
             )}
@@ -2567,10 +2819,10 @@ export default function ArenaBattleMatchPage() {
         )}
 
         {/* MATCH HISTORY & AUDIT LOG */}
-        <div className="p-6 rounded-3xl bg-zinc-900/80 border border-zinc-800/80 shadow-xl space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-800/80 pb-4">
+        <div className="p-6 rounded-3xl bg-[#0a172c]/90 border border-cyan-900/40 shadow-xl space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-cyan-900/40 pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400">
+              <div className="w-10 h-10 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
                 <History className="w-5 h-5" />
               </div>
               <div>
@@ -2593,13 +2845,13 @@ export default function ArenaBattleMatchPage() {
             <div className="flex flex-wrap items-center gap-2">
               {/* Toggle Split / Unified View */}
               {is2x && (
-                <div className="flex items-center bg-zinc-950 p-1 rounded-xl border border-zinc-800 text-xs font-mono">
+                <div className="flex items-center bg-[#060d1a] p-1 rounded-xl border border-cyan-900/40 text-xs font-mono">
                   <button
                     type="button"
                     onClick={() => setHistoryViewMode("split")}
                     className={`px-3 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                       historyViewMode === "split"
-                        ? "bg-orange-500 text-zinc-950 shadow"
+                        ? "bg-cyan-500 text-zinc-950 shadow"
                         : "text-zinc-400 hover:text-white"
                     }`}
                   >
@@ -2655,7 +2907,7 @@ export default function ArenaBattleMatchPage() {
             is2x ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 {/* KOLOM KIRI: PUTARAN 1 */}
-                <div className="bg-zinc-950/70 border border-amber-500/30 rounded-2xl p-4 flex flex-col space-y-3 shadow-inner">
+                <div className="bg-[#060d1a]/80 border border-amber-500/30 rounded-2xl p-4 flex flex-col space-y-3 shadow-inner">
                   <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-zinc-800/80">
                     <div className="flex items-center gap-2">
                       <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]" />
@@ -2762,14 +3014,14 @@ export default function ArenaBattleMatchPage() {
                 </div>
 
                 {/* KOLOM KANAN: PUTARAN 2 (TUKAR SISI) */}
-                <div className="bg-zinc-950/70 border border-orange-500/30 rounded-2xl p-4 flex flex-col space-y-3 shadow-inner">
+                <div className="bg-[#060d1a]/80 border border-cyan-500/30 rounded-2xl p-4 flex flex-col space-y-3 shadow-inner">
                   <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-zinc-800/80">
                     <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.6)]" />
-                      <h4 className="font-mono font-black text-orange-400 text-sm tracking-wide">
+                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(0,163,255,0.6)]" />
+                      <h4 className="font-mono font-black text-cyan-400 text-sm tracking-wide">
                         SESI 2 • LOG PUTARAN 2 (TUKAR SISI)
                       </h4>
-                      <span className="px-2 py-0.5 rounded-md bg-orange-500/20 border border-orange-500/40 text-orange-300 text-[11px] font-mono font-bold">
+                      <span className="px-2 py-0.5 rounded-md bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-[11px] font-mono font-bold">
                         {p2History.length} Log
                       </span>
                     </div>
@@ -2781,7 +3033,7 @@ export default function ArenaBattleMatchPage() {
                         onClick={() => setP2TeamFilter("all")}
                         className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
                           p2TeamFilter === "all"
-                            ? "bg-orange-500 text-zinc-950 font-bold shadow"
+                            ? "bg-cyan-500 text-zinc-950 font-bold shadow"
                             : "bg-zinc-900 text-zinc-400 hover:text-white"
                         }`}
                       >
@@ -3001,11 +3253,11 @@ export default function ArenaBattleMatchPage() {
       </main>
 
       {/* FOOTER BAR */}
-      <footer className="px-6 py-3 bg-[#0d0d10] border-t border-zinc-800/80 flex flex-wrap items-center justify-between text-xs text-zinc-500 font-mono">
+      <footer className="px-6 py-3 bg-[#060e1c] border-t border-cyan-900/40 flex flex-wrap items-center justify-between text-xs text-zinc-500 font-mono">
         <div className="flex items-center gap-3">
           <span>NEXT ARENA COMPETITION SYSTEM</span>
           <span>•</span>
-          <span className="text-orange-400">{match.matchLabel}</span>
+          <span className="text-cyan-400">{match.matchLabel}</span>
         </div>
         <div>
           Status: <strong className="text-zinc-300">{match.status}</strong>
@@ -3015,15 +3267,15 @@ export default function ArenaBattleMatchPage() {
       {/* MODAL TRANSISI PUTARAN 1 KE PUTARAN 2 (TINJAU & REVISI LOG SEBELUM ACC) */}
       {showLeg1Modal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-          <div className="bg-[#121216] border-2 border-orange-500/80 rounded-3xl p-6 sm:p-8 max-w-3xl w-full text-center space-y-5 shadow-[0_0_80px_rgba(249,115,22,0.35)] animate-in fade-in zoom-in-95 duration-200 my-auto">
+          <div className="bg-[#0a172c] border-2 border-cyan-500/80 rounded-3xl p-6 sm:p-8 max-w-3xl w-full text-center space-y-5 shadow-[0_0_80px_rgba(0,163,255,0.35)] animate-in fade-in zoom-in-95 duration-200 my-auto">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4 text-left">
+            <div className="flex items-center justify-between border-b border-cyan-900/40 pb-4 text-left">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 via-orange-500 to-red-500 flex items-center justify-center text-zinc-950 shadow-lg shadow-orange-500/25 shrink-0">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-400 via-sky-400 to-amber-400 flex items-center justify-center text-zinc-950 shadow-lg shadow-cyan-500/25 shrink-0">
                   <ClipboardCheck className="w-6 h-6 stroke-[2.5]" />
                 </div>
                 <div>
-                  <span className="text-[10px] font-mono font-black uppercase tracking-widest text-orange-400 block">
+                  <span className="text-[10px] font-mono font-black uppercase tracking-widest text-cyan-400 block">
                     SESI TINJAUAN RESMI • 2X MAIN (TUKAR SISI)
                   </span>
                   <h2 className="text-xl sm:text-2xl font-black text-white">
@@ -3196,7 +3448,7 @@ export default function ArenaBattleMatchPage() {
             <div className="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800 text-left space-y-3 font-mono">
               <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800/80 pb-2">
                 <div className="flex items-center gap-2">
-                  <History className="w-4 h-4 text-orange-400" />
+                  <History className="w-4 h-4 text-cyan-400" />
                   <span className="text-xs font-bold text-white uppercase tracking-wider">
                     Log Aktivitas Putaran 1 ({p1History.length} Event):
                   </span>
@@ -3206,7 +3458,7 @@ export default function ArenaBattleMatchPage() {
                     type="button"
                     onClick={() => setLeg1LogFilter("all")}
                     className={`px-2 py-0.5 rounded-md cursor-pointer ${
-                      leg1LogFilter === "all" ? "bg-orange-500 text-zinc-950 font-bold" : "text-zinc-400 hover:text-white"
+                      leg1LogFilter === "all" ? "bg-cyan-500 text-zinc-950 font-bold" : "text-zinc-400 hover:text-white"
                     }`}
                   >
                     Semua ({p1History.length})
@@ -3290,8 +3542,8 @@ export default function ArenaBattleMatchPage() {
             </div>
 
             {/* Info Posisi Putaran 2 (Tukar Sisi Arena) */}
-            <div className="p-3.5 rounded-2xl bg-orange-500/10 border border-orange-500/30 text-left space-y-1.5 font-mono text-xs">
-              <span className="text-orange-400 font-black uppercase text-[11px] block">
+            <div className="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-left space-y-1.5 font-mono text-xs">
+              <span className="text-cyan-400 font-black uppercase text-[11px] block">
                 🔁 Posisi Baru Setelah ACC (Putaran 2 Tukar Sisi):
               </span>
               <div className="grid grid-cols-2 gap-2 text-zinc-300">
@@ -3316,7 +3568,7 @@ export default function ArenaBattleMatchPage() {
                 onClick={() => setShowLeg1Modal(false)}
                 className="w-full sm:w-1/3 py-3.5 px-4 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white font-bold text-xs font-mono transition-all cursor-pointer"
               >
-                Tutup (Belum ACC)
+                Tutup
               </button>
 
               <button
@@ -3325,7 +3577,7 @@ export default function ArenaBattleMatchPage() {
                 className="w-full sm:w-2/3 py-3.5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 text-zinc-950 font-black text-sm hover:brightness-110 shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2.5 transition-all cursor-pointer transform hover:scale-[1.01] active:scale-[0.99]"
               >
                 <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
-                <span>ACC Skor &amp; Masuk ke Putaran 2 ➔</span>
+                <span>Lanjut</span>
               </button>
             </div>
           </div>
@@ -3335,13 +3587,13 @@ export default function ArenaBattleMatchPage() {
       {/* WINNER CELEBRATION MODAL */}
       {showWinnerModal && (
         <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4">
-          <div className="bg-[#121216] border-2 border-orange-500/80 rounded-3xl p-8 max-w-lg w-full text-center space-y-6 shadow-[0_0_80px_rgba(249,115,22,0.4)] animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-yellow-400 via-orange-500 to-red-500 mx-auto flex items-center justify-center text-zinc-950 shadow-xl shadow-orange-500/30">
+          <div className="bg-[#0a172c] border-2 border-cyan-500/80 rounded-3xl p-8 max-w-lg w-full text-center space-y-6 shadow-[0_0_80px_rgba(0,163,255,0.4)] animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-cyan-400 via-sky-400 to-amber-400 mx-auto flex items-center justify-center text-zinc-950 shadow-xl shadow-cyan-500/30">
               <Trophy className="w-10 h-10 fill-current" />
             </div>
 
             <div className="space-y-2">
-              <span className="text-xs font-mono font-bold uppercase tracking-widest text-orange-400">
+              <span className="text-xs font-mono font-bold uppercase tracking-widest text-cyan-400">
                 HASIL RESMI PERTANDINGAN
               </span>
               <h2 className="text-2xl sm:text-3xl font-black text-white">
@@ -3369,8 +3621,8 @@ export default function ArenaBattleMatchPage() {
                     <span className="text-zinc-200 block truncate">{match.teamA}: <strong>{match.scoreALeg1 || 0}</strong></span>
                     <span className="text-zinc-200 block truncate">{match.teamB}: <strong>{match.scoreBLeg1 || 0}</strong></span>
                   </div>
-                  <div className="bg-zinc-900/70 p-2.5 rounded-xl border border-orange-500/30">
-                    <span className="text-[10px] text-orange-400 font-bold block mb-1">PUTARAN 2 (TUKAR SISI):</span>
+                  <div className="bg-[#060d1a]/80 p-2.5 rounded-xl border border-cyan-500/30">
+                    <span className="text-[10px] text-cyan-400 font-bold block mb-1">PUTARAN 2 (TUKAR SISI):</span>
                     <span className="text-zinc-200 block truncate">{match.teamB}: <strong>{match.scoreBLeg2 || 0}</strong></span>
                     <span className="text-zinc-200 block truncate">{match.teamA}: <strong>{match.scoreALeg2 || 0}</strong></span>
                   </div>
@@ -3412,7 +3664,7 @@ export default function ArenaBattleMatchPage() {
                   } catch {}
                   setShutterToNext(nextMatch);
                 }}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-zinc-950 font-black text-xs sm:text-sm hover:brightness-110 shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-black text-xs sm:text-sm hover:brightness-110 shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <Play className="w-4 h-4 fill-current" />
                 <span>
@@ -3437,7 +3689,7 @@ export default function ArenaBattleMatchPage() {
       {/* MODAL RESET PERTANDINGAN */}
       {showResetMatchModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-[#121216] border-2 border-rose-500/40 rounded-3xl shadow-[0_0_60px_rgba(244,63,94,0.3)] overflow-hidden p-6 sm:p-7 space-y-5">
+          <div className="relative w-full max-w-md bg-[#0a172c] border-2 border-rose-500/40 rounded-3xl shadow-[0_0_60px_rgba(244,63,94,0.3)] overflow-hidden p-6 sm:p-7 space-y-5">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0 shadow-lg shadow-rose-500/20">
                 <RotateCcw className="w-6 h-6 stroke-[2.3]" />

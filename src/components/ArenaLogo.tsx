@@ -3,130 +3,70 @@ import React from "react";
 interface ArenaLogoProps {
   size?: "sm" | "md" | "lg";
   showTagline?: boolean;
+  className?: string;
 }
 
-export function ArenaLogo({ size = "md", showTagline = true }: ArenaLogoProps) {
+export function ArenaLogo({ size = "md", showTagline = true, className = "" }: ArenaLogoProps) {
   const dimensions = {
     sm: "w-9 h-9",
     md: "w-12 h-12",
     lg: "w-16 h-16",
   }[size];
 
+  const titleSize = {
+    sm: "text-lg sm:text-xl",
+    md: "text-xl sm:text-2xl",
+    lg: "text-2xl sm:text-3xl",
+  }[size];
+
   return (
-    <div className="flex items-center gap-3.5 select-none group">
-      {/* 3D Hexagonal Cube with Glowing Yellow-Orange-Red 'A' Star */}
+    <div className={`flex items-center gap-3 select-none group ${className}`}>
+      {/* Cybernetic Mascot Emblem in Glowing Tech Frame */}
       <div className={`relative ${dimensions} flex items-center justify-center shrink-0`}>
-        {/* Outer Multi-Tone Neon Glow matching reference logo */}
+        {/* Outer Cyan & Amber Tech Glow */}
         <div
-          className="absolute inset-0 rounded-xl opacity-80 blur-md transition-opacity duration-300 group-hover:opacity-100"
+          className="absolute inset-0 rounded-2xl opacity-80 blur-md transition-opacity duration-300 group-hover:opacity-100"
           style={{
             background:
-              "linear-gradient(180deg, rgba(250,204,21,0.65) 0%, rgba(249,115,22,0.55) 55%, rgba(239,68,68,0.75) 100%)",
+              "linear-gradient(135deg, rgba(0, 163, 255, 0.75) 0%, rgba(2, 132, 199, 0.4) 40%, rgba(245, 158, 11, 0.75) 100%)",
           }}
         />
-        <svg
-          viewBox="0 0 100 112"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="relative w-full h-full drop-shadow-[0_0_8px_rgba(249,115,22,0.5)]"
-        >
-          <defs>
-            <linearGradient id="hexBorderGrad" x1="50" y1="2" x2="50" y2="110" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#fde047" />
-              <stop offset="50%" stopColor="#f97316" />
-              <stop offset="100%" stopColor="#ef4444" />
-            </linearGradient>
-            <linearGradient id="topFaceGrad" x1="50" y1="6" x2="50" y2="56" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#27272a" />
-              <stop offset="100%" stopColor="#09090b" />
-            </linearGradient>
-            <linearGradient id="leftFaceGrad" x1="8" y1="30" x2="50" y2="106" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#09090b" />
-              <stop offset="100%" stopColor="#18181b" />
-            </linearGradient>
-            <linearGradient id="rightFaceGrad" x1="92" y1="30" x2="50" y2="106" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#18181b" />
-              <stop offset="100%" stopColor="#050507" />
-            </linearGradient>
-            <linearGradient id="laserGrad" x1="50" y1="6" x2="50" y2="85" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#fef08a" />
-              <stop offset="35%" stopColor="#f97316" />
-              <stop offset="100%" stopColor="#ef4444" />
-            </linearGradient>
-            <filter id="neonGlow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="2.2" result="blur" />
-              <feComposite in="SourceGraphic" in2="blur" operator="over" />
-            </filter>
-          </defs>
+        {/* Frame Base */}
+        <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-[#0c1c38] via-[#071326] to-[#040914] border border-cyan-400/40 p-1 flex items-center justify-center shadow-[inset_0_0_12px_rgba(0,163,255,0.25)]">
+          {/* Subtle Cyber Corner Accents */}
+          <div className="absolute top-0.5 left-0.5 w-1.5 h-1.5 border-t-2 border-l-2 border-cyan-400" />
+          <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 border-t-2 border-r-2 border-amber-400" />
+          <div className="absolute bottom-0.5 left-0.5 w-1.5 h-1.5 border-b-2 border-l-2 border-cyan-400" />
+          <div className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 border-b-2 border-r-2 border-amber-400" />
 
-          {/* Outer Hexagon Base */}
-          <polygon
-            points="50,4 94,29 94,83 50,108 6,83 6,29"
-            fill="#09090b"
-            stroke="url(#hexBorderGrad)"
-            strokeWidth="2.5"
+          {/* Official Cyber Hornbill Mascot */}
+          <img
+            src="/nusantara-next-mascot.png"
+            alt="Nusantara Next Mascot"
+            className="w-full h-full object-contain filter drop-shadow-[0_0_6px_rgba(0,163,255,0.6)] transition-transform duration-300 group-hover:scale-105"
           />
-
-          {/* 3D Cube Faces */}
-          {/* Top Face */}
-          <polygon points="50,4 94,29 50,55 6,29" fill="url(#topFaceGrad)" />
-          {/* Left Face */}
-          <polygon points="6,29 50,55 50,108 6,83" fill="url(#leftFaceGrad)" />
-          {/* Right Face */}
-          <polygon points="94,29 94,83 50,108 50,55" fill="url(#rightFaceGrad)" />
-
-          {/* Subtle Cube Seam Lines */}
-          <line x1="6" y1="29" x2="50" y2="55" stroke="#27272a" strokeWidth="1" />
-          <line x1="94" y1="29" x2="50" y2="55" stroke="#27272a" strokeWidth="1" />
-          <line x1="50" y1="55" x2="50" y2="108" stroke="#27272a" strokeWidth="1" />
-
-          {/* Glowing 'A' / Delta Apex Lines matching the NEXT Arena Emblem */}
-          <g filter="url(#neonGlow)">
-            {/* Left & Right Diagonal Rays from Top Apex to Bottom Corners */}
-            <path
-              d="M50 7 L8 82 L50 61 L92 82 Z"
-              stroke="url(#laserGrad)"
-              strokeWidth="3.2"
-              strokeLinejoin="round"
-              fill="rgba(239, 68, 68, 0.08)"
-            />
-            {/* Inner Chevron Highlight */}
-            <path
-              d="M9 82 L50 59 L91 82"
-              stroke="#ef4444"
-              strokeWidth="2.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            {/* Top Apex Bright Core */}
-            <path
-              d="M32 38 L50 7 L68 38"
-              stroke="#fde047"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </g>
-        </svg>
+        </div>
       </div>
 
-      {/* Vertical Divider */}
-      <div className="h-10 w-[1px] bg-gradient-to-b from-zinc-600/30 via-zinc-400/70 to-zinc-600/30" />
+      {/* Cyber Circuit Vertical Divider */}
+      <div className="h-10 w-[2px] bg-gradient-to-b from-cyan-500/20 via-cyan-400/80 to-amber-500/30 rounded-full" />
 
       {/* Brand Typography */}
       <div className="flex flex-col justify-center">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold tracking-[0.28em] uppercase px-1.5 py-0.5 rounded bg-gradient-to-r from-red-500/20 via-orange-500/20 to-yellow-500/20 text-orange-400 border border-orange-500/30">
+          <span className="text-[10px] font-bold tracking-[0.24em] uppercase px-1.5 py-0.5 rounded bg-gradient-to-r from-cyan-500/15 via-[#0B2046]/40 to-amber-500/15 text-cyan-300 border border-cyan-400/30 flex items-center gap-1.5 shadow-[0_0_10px_rgba(0,163,255,0.15)]">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
             NUSANTARA NEXT
+            <span className="text-amber-400 font-extrabold">2026</span>
           </span>
         </div>
         <div className="flex items-baseline gap-2 mt-0.5">
-          <span className="text-xl sm:text-2xl font-light tracking-[0.32em] text-white uppercase leading-none">
+          <span className={`${titleSize} font-black tracking-[0.28em] text-white uppercase leading-none drop-shadow-[0_0_12px_rgba(0,163,255,0.3)]`}>
             ARENA
           </span>
           {showTagline && (
-            <span className="hidden md:inline-block text-[11px] font-medium tracking-[0.22em] uppercase bg-gradient-to-r from-red-500 via-orange-400 to-yellow-400 bg-clip-text text-transparent">
-              THE PLACE TO PLAY
+            <span className="hidden md:inline-block text-[10px] font-semibold tracking-[0.18em] uppercase bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 bg-clip-text text-transparent">
+              NEW ERA OF EXPERIENCE AND TECHNOLOGY
             </span>
           )}
         </div>

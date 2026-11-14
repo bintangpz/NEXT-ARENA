@@ -23,17 +23,17 @@ export function SpotlightModal({
       isOpen={isOpen}
       onClose={onClose}
       size="4xl"
-      className="bg-gradient-to-b from-[#1a1510] via-[#121216] to-[#09090b] border-yellow-500/40 text-center shadow-[0_0_80px_rgba(250,204,21,0.2)]"
+      className="bg-gradient-to-b from-[#091833] via-[#060e1c] to-[#040812] border-amber-400/50 text-center shadow-[0_0_80px_rgba(245,158,11,0.25)]"
     >
       <div className="space-y-8 py-2">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-yellow-500/15 border border-yellow-500/40 text-yellow-300 text-xs font-bold uppercase tracking-widest">
-            <Crown className="w-4 h-4 text-yellow-400" />
+          <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-bold uppercase tracking-widest shadow-sm">
+            <Crown className="w-4 h-4 text-amber-400" />
             NUSANTARA NEXT 2026 • OFFICIAL PODIUM SPOTLIGHT
           </div>
           <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white uppercase">
             TOP 3 CHAMPIONS OF{" "}
-            <span className="bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 bg-clip-text text-transparent">
               NEXT ARENA
             </span>
           </h2>
@@ -47,15 +47,19 @@ export function SpotlightModal({
                 key={champ.id}
                 className={`rounded-2xl border p-6 space-y-3 transition-transform ${
                   pos === 1
-                    ? "bg-gradient-to-b from-yellow-500/20 to-zinc-950 border-yellow-400/60 md:scale-105 shadow-2xl order-first md:order-none"
-                    : "bg-zinc-900/90 border-zinc-800"
+                    ? "bg-gradient-to-b from-amber-500/20 via-[#0c1a30] to-[#060e1c] border-amber-400/70 md:scale-105 shadow-[0_0_35px_rgba(245,158,11,0.25)] order-first md:order-none"
+                    : pos === 2
+                    ? "bg-gradient-to-b from-cyan-500/15 via-[#0c1a30] to-[#060e1c] border-cyan-400/50 shadow-[0_0_25px_rgba(0,163,255,0.15)]"
+                    : "bg-gradient-to-b from-sky-500/10 via-[#0c1a30] to-[#060e1c] border-sky-400/40"
                 }`}
               >
                 <span
                   className={`inline-block px-3 py-1 rounded-full text-xs font-black uppercase ${
                     pos === 1
-                      ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-zinc-950 shadow"
-                      : "bg-zinc-800 text-zinc-300"
+                      ? "bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-zinc-950 shadow-md shadow-amber-500/20"
+                      : pos === 2
+                      ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-white shadow-md shadow-cyan-500/20"
+                      : "bg-gradient-to-r from-sky-400 to-blue-600 text-white"
                   }`}
                 >
                   JUARA #{pos}
@@ -63,7 +67,9 @@ export function SpotlightModal({
                 <h3 className="text-xl font-extrabold text-white truncate">{champ.name}</h3>
                 <p className="text-xs text-zinc-400 truncate">{champ.institution}</p>
                 <div className="pt-2">
-                  <span className="font-mono text-3xl font-black text-yellow-400">
+                  <span className={`font-mono text-3xl font-black ${
+                    pos === 1 ? "text-amber-400" : pos === 2 ? "text-cyan-400" : "text-sky-300"
+                  }`}>
                     {champ.totalPoints.toLocaleString("id-ID")}
                   </span>
                   <span className="text-xs text-zinc-400 ml-1">PTS</span>
@@ -76,7 +82,7 @@ export function SpotlightModal({
         <div className="pt-4">
           <button
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs font-semibold transition-colors"
+            className="px-6 py-2.5 rounded-xl bg-[#0a172c] hover:bg-[#0e213e] text-zinc-300 hover:text-white border border-cyan-800/40 text-xs font-semibold transition-colors"
           >
             Tutup Spotlight
           </button>

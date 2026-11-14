@@ -1688,11 +1688,11 @@ export default function NextArenaDashboard() {
 
   const getCategoryBadge = (category: CompetitionCategory) => {
     const palette = [
-      "bg-red-500/10 text-red-300 border-red-500/25",
-      "bg-orange-500/10 text-orange-300 border-orange-500/25",
-      "bg-yellow-500/10 text-yellow-300 border-yellow-500/25",
-      "bg-rose-500/10 text-rose-300 border-rose-500/25",
+      "bg-cyan-500/10 text-cyan-300 border-cyan-500/25",
+      "bg-blue-500/10 text-blue-300 border-blue-500/25",
       "bg-amber-500/10 text-amber-300 border-amber-500/25",
+      "bg-sky-500/10 text-sky-300 border-sky-500/25",
+      "bg-indigo-500/10 text-indigo-300 border-indigo-500/25",
     ];
     const index = Math.abs(
       category.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)
@@ -1710,41 +1710,41 @@ export default function NextArenaDashboard() {
   return (
     <div className="min-h-screen flex flex-col text-zinc-100">
       {/* Top Neon Gradient Line */}
-      <div className="h-1 w-full bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400" />
+      <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-sky-400 to-amber-400" />
 
       {/* Live Broadcast Ticker / Pengumuman Monitor */}
-      <div className="bg-[#0d0d12] border-b border-zinc-800/80 px-4 sm:px-6 lg:px-8 py-2">
+      <div className="bg-[#060e1c] border-b border-cyan-900/40 px-4 sm:px-6 lg:px-8 py-2">
         <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-red-500/20 border border-red-500/40 text-red-400 text-[10px] font-bold uppercase tracking-wider shrink-0 shadow-sm">
-              <Megaphone className="w-3 h-3" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold uppercase tracking-wider shrink-0 shadow-sm">
+              <Megaphone className="w-3 h-3 text-cyan-400" />
               INFO ARENA
             </span>
             <div className="group relative flex-1 min-w-0 overflow-hidden flex items-center select-none py-0.5">
               {/* Fade Gradient Edges for Smooth Entry/Exit */}
-              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0d0d12] to-transparent z-10" />
-              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0d0d12] to-transparent z-10" />
+              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#060e1c] to-transparent z-10" />
+              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#060e1c] to-transparent z-10" />
 
               {/* Running Text / Marquee Elements */}
               <div className="flex shrink-0 items-center gap-8 pr-8 animate-marquee">
                 <span className="text-xs text-zinc-300 font-medium whitespace-nowrap">
                   {announcement || "Selamat datang di NEXT ARENA Tournament!"}
                 </span>
-                <span className="text-orange-400 font-bold text-xs shrink-0 select-none">✦</span>
+                <span className="text-cyan-400 font-bold text-xs shrink-0 select-none">✦</span>
                 <span className="text-xs text-zinc-300 font-medium whitespace-nowrap">
                   {announcement || "Selamat datang di NEXT ARENA Tournament!"}
                 </span>
-                <span className="text-orange-400 font-bold text-xs shrink-0 select-none">✦</span>
+                <span className="text-amber-400 font-bold text-xs shrink-0 select-none">✦</span>
               </div>
               <div className="flex shrink-0 items-center gap-8 pr-8 animate-marquee" aria-hidden="true">
                 <span className="text-xs text-zinc-300 font-medium whitespace-nowrap">
                   {announcement || "Selamat datang di NEXT ARENA Tournament!"}
                 </span>
-                <span className="text-orange-400 font-bold text-xs shrink-0 select-none">✦</span>
+                <span className="text-cyan-400 font-bold text-xs shrink-0 select-none">✦</span>
                 <span className="text-xs text-zinc-300 font-medium whitespace-nowrap">
                   {announcement || "Selamat datang di NEXT ARENA Tournament!"}
                 </span>
-                <span className="text-orange-400 font-bold text-xs shrink-0 select-none">✦</span>
+                <span className="text-amber-400 font-bold text-xs shrink-0 select-none">✦</span>
               </div>
             </div>
           </div>
@@ -1764,10 +1764,10 @@ export default function NextArenaDashboard() {
                     : timerPhase === "paused"
                     ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
                     : timerPhase === "countdown"
-                    ? "bg-orange-500/25 text-orange-300 border border-orange-500/50 animate-pulse"
+                    ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 animate-pulse"
                     : timerPhase === "finished"
                     ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                    : "bg-zinc-900 border border-zinc-800 text-zinc-300"
+                    : "bg-[#0a172c] border border-cyan-900/40 text-zinc-300"
                 }`}
               >
                 <span
@@ -1776,7 +1776,7 @@ export default function NextArenaDashboard() {
                       ? timerPhase === "preparation"
                         ? "bg-amber-400 animate-ping"
                         : timerPhase === "countdown"
-                        ? "bg-orange-400 animate-ping"
+                        ? "bg-cyan-400 animate-ping"
                         : "bg-emerald-400 animate-ping"
                       : "bg-zinc-600"
                   }`}
@@ -1812,17 +1812,17 @@ export default function NextArenaDashboard() {
       </div>
 
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#09090b]/90 border-b border-zinc-800/80">
+      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#060e1c]/90 border-b border-cyan-900/40">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           <ArenaLogo size="md" />
 
           {/* Center Navigation Tabs */}
-          <nav className="hidden lg:flex items-center bg-zinc-900/90 p-1.5 rounded-xl border border-zinc-800">
+          <nav className="hidden lg:flex items-center bg-[#0a172c]/90 p-1.5 rounded-xl border border-cyan-800/40 shadow-inner">
             <button
               onClick={() => setActiveTab("leaderboard")}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === "leaderboard"
-                  ? "bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20"
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
@@ -1833,7 +1833,7 @@ export default function NextArenaDashboard() {
               onClick={() => setActiveTab("bracket")}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === "bracket"
-                  ? "bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20"
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
@@ -1844,7 +1844,7 @@ export default function NextArenaDashboard() {
               onClick={() => setActiveTab("judging")}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
                 activeTab === "judging"
-                  ? "bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/20"
+                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
                   : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
@@ -1868,7 +1868,7 @@ export default function NextArenaDashboard() {
               type="button"
               onClick={() => setIsViewRankingOpen(true)}
               title="Tampilkan Layar Klasemen Lengkap (Break & Jeda Pertandingan)"
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-orange-500/15 via-yellow-500/15 to-orange-500/15 hover:from-orange-500/25 hover:via-yellow-500/25 hover:to-orange-500/25 text-orange-300 hover:text-white border border-orange-500/30 hover:border-orange-500/50 shadow-sm transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-cyan-500/15 hover:from-cyan-500/25 hover:via-blue-500/25 hover:to-cyan-500/25 text-cyan-300 hover:text-white border border-cyan-500/30 hover:border-cyan-500/50 shadow-sm transition-all cursor-pointer"
             >
               <Trophy className="w-3.5 h-3.5 text-yellow-400" />
               <span>View Ranking</span>
@@ -1877,7 +1877,7 @@ export default function NextArenaDashboard() {
             {/* PENGATURAN BUTTON (BUKA HALAMAN BARU /pengaturan) */}
             <Link
               href="/pengaturan"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-zinc-950 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(249,115,22,0.35)] active:scale-95"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:brightness-110 transition-all shadow-[0_0_20px_rgba(0,163,255,0.35)] border border-cyan-400/40 active:scale-95"
             >
               <Settings className="w-4 h-4 stroke-[2.2]" />
               <span>Pengaturan</span>
@@ -1886,11 +1886,11 @@ export default function NextArenaDashboard() {
         </div>
 
         {/* Mobile Tab Switcher */}
-        <div className="flex lg:hidden items-center justify-around border-t border-zinc-800/80 bg-zinc-950/90 px-2 py-1.5">
+        <div className="flex lg:hidden items-center justify-around border-t border-cyan-900/40 bg-[#060e1c]/95 px-2 py-1.5">
           <button
             onClick={() => setActiveTab("leaderboard")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${
-              activeTab === "leaderboard" ? "text-orange-400 bg-orange-500/10" : "text-zinc-400"
+              activeTab === "leaderboard" ? "text-cyan-400 bg-cyan-500/10" : "text-zinc-400"
             }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
@@ -1899,7 +1899,7 @@ export default function NextArenaDashboard() {
           <button
             onClick={() => setActiveTab("bracket")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${
-              activeTab === "bracket" ? "text-orange-400 bg-orange-500/10" : "text-zinc-400"
+              activeTab === "bracket" ? "text-cyan-400 bg-cyan-500/10" : "text-zinc-400"
             }`}
           >
             <GitBranch className="w-3.5 h-3.5" />
@@ -1908,7 +1908,7 @@ export default function NextArenaDashboard() {
           <button
             onClick={() => setActiveTab("judging")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${
-              activeTab === "judging" ? "text-orange-400 bg-orange-500/10" : "text-zinc-400"
+              activeTab === "judging" ? "text-cyan-400 bg-cyan-500/10" : "text-zinc-400"
             }`}
           >
             <ClipboardCheck className="w-3.5 h-3.5" />
@@ -1920,23 +1920,23 @@ export default function NextArenaDashboard() {
       {/* Main Content Container */}
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">
         {/* Hero Banner + Official Brand Showcase */}
-        <section className="relative rounded-2xl overflow-hidden border border-zinc-800/90 bg-gradient-to-br from-[#121217] via-[#0d0d11] to-[#161012] p-6 sm:p-8 shadow-2xl">
-          <div className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 rounded-full bg-orange-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-red-600/10 blur-3xl" />
+        <section className="relative rounded-2xl overflow-hidden border border-cyan-500/30 bg-gradient-to-br from-[#0c1a30] via-[#071120] to-[#040813] p-6 sm:p-8 shadow-[0_0_30px_rgba(0,163,255,0.15)]">
+          <div className="pointer-events-none absolute -top-24 -right-24 w-96 h-96 rounded-full bg-cyan-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-amber-500/15 blur-3xl" />
 
           <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             {/* Left Text Info */}
             <div className="lg:col-span-7 space-y-3">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-300 text-xs font-semibold tracking-wider uppercase">
-                  <Flame className="w-3.5 h-3.5 text-orange-400" />
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-xs font-semibold tracking-wider uppercase shadow-sm">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
                   NUSANTARA NEXT Competition Management System
                 </div>
               </div>
               <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
-                NEXT <span className="font-light tracking-[0.2em] text-zinc-200">ARENA</span>
+                NEXT <span className="font-light tracking-[0.2em] text-cyan-200">ARENA</span>
               </h1>
-              <p className="text-sm sm:text-base text-zinc-400 max-w-2xl leading-relaxed">
+              <p className="text-sm sm:text-base text-zinc-300/90 max-w-2xl leading-relaxed">
                 Sistem pusat pemantauan daftar peserta, perolehan ranking point tiap babak, matriks
                 dewan juri, dan bagan turnamen Nusantara Next dengan sistem pencatatan terpadu.
               </p>
@@ -1944,41 +1944,41 @@ export default function NextArenaDashboard() {
 
             {/* Right: Official Brand Emblem */}
             <div className="lg:col-span-5 flex justify-start lg:justify-end">
-              <div className="relative rounded-xl overflow-hidden border border-zinc-800/90 bg-black/90 p-2 shadow-[0_0_30px_rgba(239,68,68,0.15)] max-w-xs sm:max-w-sm w-full">
+              <div className="relative rounded-xl overflow-hidden border border-cyan-500/40 bg-[#060e1c]/90 p-2 shadow-[0_0_30px_rgba(0,163,255,0.2)] max-w-xs sm:max-w-sm w-full">
                 <img
                   src="/arena-logo.jpg"
                   alt="NEXT Arena - The Place To Play"
                   className="w-full h-28 sm:h-32 object-cover rounded-lg opacity-95"
                 />
                 <div className="mt-2 px-2 py-0.5 flex items-center justify-between text-[11px] text-zinc-400">
-                  <span className="font-medium text-zinc-300 tracking-wider uppercase">
+                  <span className="font-medium text-cyan-300 tracking-wider uppercase">
                     NEXT ARENA MONITOR
                   </span>
-                  <span className="text-orange-400 font-semibold">SEASON 2026</span>
+                  <span className="text-amber-400 font-semibold">SEASON 2026</span>
                 </div>
               </div>
             </div>
           </div>
 
           {/* 3 KPI Stat Cards */}
-          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-6 pt-6 border-t border-zinc-800/80">
-            <div className="rounded-xl bg-zinc-900/70 border border-zinc-800/80 p-4 flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-orange-500/15 border border-orange-500/30 flex items-center justify-center text-orange-400 shrink-0">
+          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mt-6 pt-6 border-t border-cyan-900/40">
+            <div className="rounded-xl bg-[#0a172c]/70 border border-cyan-900/40 p-4 flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
                 <Users className="w-5 h-5" />
               </div>
               <div>
                 <p className="text-xs text-zinc-400 font-medium">Total Peserta / Tim</p>
                 <div className="flex items-baseline gap-2">
                   <p className="text-xl sm:text-2xl font-bold text-white">{stats.total}</p>
-                  <span className="text-xs text-amber-400 font-medium">
+                  <span className="text-xs text-cyan-300 font-medium">
                     ({stats.finalists} Finalis)
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl bg-zinc-900/70 border border-zinc-800/80 p-4 flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-yellow-500/15 border border-yellow-500/30 flex items-center justify-center text-yellow-400 shrink-0">
+            <div className="rounded-xl bg-[#0a172c]/70 border border-amber-900/40 p-4 flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
                 <Trophy className="w-5 h-5" />
               </div>
               <div className="min-w-0">
@@ -1986,14 +1986,14 @@ export default function NextArenaDashboard() {
                 <p className="text-base sm:text-lg font-bold text-white truncate">
                   {stats.highest?.name ?? "-"}
                 </p>
-                <p className="text-xs text-yellow-400 font-mono font-semibold">
+                <p className="text-xs text-amber-400 font-mono font-semibold">
                   {stats.highest ? `${stats.highest.totalPoints.toLocaleString("id-ID")} PTS` : "-"}
                 </p>
               </div>
             </div>
 
-            <div className="rounded-xl bg-zinc-900/70 border border-zinc-800/80 p-4 flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 shrink-0">
+            <div className="rounded-xl bg-[#0a172c]/70 border border-sky-900/40 p-4 flex items-center gap-3.5">
+              <div className="w-11 h-11 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
                 <Zap className="w-5 h-5" />
               </div>
               <div>
@@ -2017,7 +2017,7 @@ export default function NextArenaDashboard() {
               <section className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-2 h-6 rounded-full bg-gradient-to-b from-yellow-400 via-orange-500 to-red-600" />
+                  <div className="w-2 h-6 rounded-full bg-gradient-to-b from-amber-400 via-cyan-400 to-blue-600" />
                   <h2 className="text-lg sm:text-xl font-bold tracking-wide text-white uppercase">
                     Top 3 Podium Klasemen
                   </h2>
@@ -2034,16 +2034,16 @@ export default function NextArenaDashboard() {
                   const isSecond = rankPosition === 2;
 
                   const borderStyle = isFirst
-                    ? "border-yellow-500/50 bg-gradient-to-b from-yellow-500/10 via-[#14141a] to-[#121216] shadow-[0_0_35px_rgba(250,204,21,0.12)]"
+                    ? "border-amber-400/50 bg-gradient-to-b from-amber-500/15 via-[#0c1a30] to-[#060e1c] shadow-[0_0_35px_rgba(245,158,11,0.2)]"
                     : isSecond
-                    ? "border-orange-500/40 bg-gradient-to-b from-orange-500/10 via-[#14141a] to-[#121216]"
-                    : "border-red-500/35 bg-gradient-to-b from-red-500/10 via-[#14141a] to-[#121216]";
+                    ? "border-cyan-400/40 bg-gradient-to-b from-cyan-500/15 via-[#0c1a30] to-[#060e1c] shadow-[0_0_30px_rgba(0,163,255,0.15)]"
+                    : "border-sky-400/35 bg-gradient-to-b from-sky-500/10 via-[#0c1a30] to-[#060e1c]";
 
                   const badgeStyle = isFirst
-                    ? "bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 text-zinc-950 shadow-lg shadow-yellow-500/25"
+                    ? "bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-zinc-950 shadow-lg shadow-amber-500/25"
                     : isSecond
-                    ? "bg-gradient-to-r from-orange-400 to-red-500 text-white"
-                    : "bg-gradient-to-r from-red-500 to-rose-700 text-white";
+                    ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-white shadow-lg shadow-cyan-500/25"
+                    : "bg-gradient-to-r from-sky-400 to-blue-600 text-white";
 
                   return (
                     <div
@@ -2065,12 +2065,12 @@ export default function NextArenaDashboard() {
                           onClick={() => setDetailParticipantId(item.id)}
                           className="text-left group/title"
                         >
-                          <h3 className="text-xl font-bold text-white group-hover/title:text-orange-400 transition-colors tracking-tight">
+                          <h3 className="text-xl font-bold text-white group-hover/title:text-cyan-400 transition-colors tracking-tight">
                             {item.name}
                           </h3>
                         </button>
                         <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
-                          <Building2 className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+                          <Building2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
                           <span className="truncate">{item.institution}</span>
                         </div>
 
@@ -2078,7 +2078,7 @@ export default function NextArenaDashboard() {
                           {getCategoryBadge(item.category)}
                           <button
                             onClick={() => setDetailParticipantId(item.id)}
-                            className="text-xs text-zinc-400 hover:text-orange-300 inline-flex items-center gap-1"
+                            className="text-xs text-zinc-400 hover:text-cyan-300 inline-flex items-center gap-1"
                           >
                             <Eye className="w-3.5 h-3.5" />
                             <span>Profil Tim</span>
@@ -2104,11 +2104,11 @@ export default function NextArenaDashboard() {
                               {item.scores.babak2}
                             </span>
                           </div>
-                          <div className="bg-zinc-900/90 rounded-lg p-2 border border-orange-500/30">
-                            <span className="block text-[10px] uppercase tracking-wider text-orange-400">
+                          <div className="bg-zinc-900/90 rounded-lg p-2 border border-cyan-500/30">
+                            <span className="block text-[10px] uppercase tracking-wider text-cyan-400">
                               Babak 3
                             </span>
-                            <span className="font-mono text-sm font-semibold text-orange-300">
+                            <span className="font-mono text-sm font-semibold text-cyan-300">
                               {item.scores.babak3}
                             </span>
                           </div>
@@ -2119,7 +2119,7 @@ export default function NextArenaDashboard() {
                             <span className="text-[11px] uppercase tracking-wider text-zinc-400 block">
                               Total Ranking Point
                             </span>
-                            <span className="text-2xl sm:text-3xl font-black font-mono bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent">
+                            <span className="text-2xl sm:text-3xl font-black font-mono bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 bg-clip-text text-transparent">
                               {item.totalPoints.toLocaleString("id-ID")}
                             </span>
                             <span className="text-xs text-zinc-400 ml-1 font-mono">PTS</span>
@@ -2141,7 +2141,7 @@ export default function NextArenaDashboard() {
                                     `${activeBonus.label} (+${activeBonus.points})`
                                   )
                                 }
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-orange-500/15 hover:bg-orange-500/25 text-orange-300 border border-orange-500/30 transition-colors"
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition-colors"
                               >
                                 +{activeBonus.points} {activeBonus.label}
                               </button>
@@ -2159,13 +2159,13 @@ export default function NextArenaDashboard() {
             {/* MAIN CONTAINER: DAFTAR PESERTA & RANKING TABLE */}
             <section className="w-full">
               {/* Full Width Main Column: Participant & Ranking Table */}
-              <div className="w-full bg-[#121216]/95 border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl">
-                <div className="p-5 sm:p-6 border-b border-zinc-800 space-y-4">
+              <div className="w-full bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl overflow-hidden shadow-2xl">
+                <div className="p-5 sm:p-6 border-b border-cyan-900/40 space-y-4">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                       <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
                         <span>Daftar Peserta & Klasemen Poin</span>
-                        <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/30">
+                        <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">
                           {filteredParticipants.length} Peserta
                         </span>
                       </h2>
@@ -2183,7 +2183,7 @@ export default function NextArenaDashboard() {
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                           placeholder="Cari tim, kode NXT, instansi..."
-                          className="w-full pl-10 pr-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-orange-500/70 transition-colors"
+                          className="w-full pl-10 pr-4 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-cyan-500/70 transition-colors"
                         />
                       </div>
 
@@ -2192,7 +2192,7 @@ export default function NextArenaDashboard() {
                         title="Cetak Laporan Klasemen"
                         className="px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-medium text-zinc-300 flex items-center gap-1.5 transition-colors shrink-0"
                       >
-                        <Printer className="w-3.5 h-3.5 text-orange-400" />
+                        <Printer className="w-3.5 h-3.5 text-cyan-400" />
                         <span className="hidden sm:inline">Cetak</span>
                       </button>
 
@@ -2202,16 +2202,16 @@ export default function NextArenaDashboard() {
                         title="Sinkron Ulang Data"
                         className="px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-medium text-zinc-400 hover:text-zinc-200 flex items-center gap-1.5 transition-colors shrink-0"
                       >
-                        <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-orange-400" : ""}`} />
+                        <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin text-cyan-400" : ""}`} />
                         <span className="hidden sm:inline">Sinkron</span>
                       </button>
                     </div>
                   </div>
 
                   {/* TAB BABAK KLASEMEN (PILIHAN TAMPILAN BABAK: BABAK 1, BABAK 2, DST) */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-zinc-800/80">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-cyan-900/30">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-orange-400 shrink-0">
+                      <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400 shrink-0">
                         TAMPILAN BABAK:
                       </span>
                     </div>
@@ -2233,7 +2233,7 @@ export default function NextArenaDashboard() {
                             }}
                             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer whitespace-nowrap ${
                               isSelected
-                                ? "bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white border-orange-500/50 shadow-md shadow-orange-500/20"
+                                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-400/50 shadow-md shadow-cyan-500/25"
                                 : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
                             }`}
                           >
@@ -2257,7 +2257,7 @@ export default function NextArenaDashboard() {
                         }}
                         className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer whitespace-nowrap ${
                           selectedLeaderboardStage === "all"
-                            ? "bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white border-orange-500/50 shadow-md shadow-orange-500/20"
+                            ? "bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 text-white border-cyan-400/50 shadow-md shadow-cyan-500/25"
                             : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
                         }`}
                       >
@@ -2277,7 +2277,7 @@ export default function NextArenaDashboard() {
                             onClick={() => setSelectedCategory(cat)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
                               active
-                                ? "bg-gradient-to-r from-red-600 via-orange-500 to-amber-500 text-white font-semibold shadow-sm"
+                                ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-sm shadow-cyan-500/20"
                                 : "bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800"
                             }`}
                           >
@@ -2288,7 +2288,7 @@ export default function NextArenaDashboard() {
                       <Link
                         href="/pengaturan"
                         title="Tambah / Kelola Kategori Lomba"
-                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap bg-zinc-900 hover:bg-zinc-800 text-orange-400 border border-orange-500/30 flex items-center gap-1 shrink-0"
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap bg-zinc-900 hover:bg-zinc-800 text-cyan-400 border border-cyan-500/30 flex items-center gap-1 shrink-0"
                       >
                         <FolderPlus className="w-3.5 h-3.5" />
                         <span>+ Kategori</span>
@@ -2299,7 +2299,7 @@ export default function NextArenaDashboard() {
                       <select
                         value={selectedStatus}
                         onChange={(e) => setSelectedStatus(e.target.value)}
-                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 focus:outline-none focus:border-orange-500"
+                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 focus:outline-none focus:border-cyan-500"
                       >
                         <option value="Semua Status">Semua Status</option>
                         <option value="Finalis">Status: Finalis</option>
@@ -2310,7 +2310,7 @@ export default function NextArenaDashboard() {
                       <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 focus:outline-none focus:border-orange-500"
+                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 focus:outline-none focus:border-cyan-500"
                       >
                         <option value="total">Urutkan: Total Poin Tertinggi</option>
                         <option value="babak3">Urutkan: Skor Babak 3</option>
@@ -2326,7 +2326,7 @@ export default function NextArenaDashboard() {
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-zinc-800/90 bg-zinc-900/60 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                      <tr className="border-b border-cyan-900/40 bg-[#060e1c]/80 text-[11px] font-semibold uppercase tracking-wider text-cyan-200/80">
                         <th className="py-3.5 pl-6 pr-3 w-24">Rank</th>
                         <th className="py-3.5 px-3">Peserta / Tim & Instansi</th>
                         <th className="py-3.5 px-3">Kategori Lomba</th>
@@ -2342,7 +2342,7 @@ export default function NextArenaDashboard() {
                           <td colSpan={7} className="py-16 text-center text-zinc-400">
                             {selectedLeaderboardStage !== "all" && targetLeaderboardStageIdx !== null && targetLeaderboardStageIdx > 0 ? (
                               <div className="flex flex-col items-center justify-center gap-3">
-                                <GitBranch className="w-10 h-10 text-orange-400/60" />
+                                <GitBranch className="w-10 h-10 text-cyan-400/60" />
                                 <p className="text-base font-bold text-white">
                                   Belum Ada Peserta di {activeLeaderboardStageObj?.name || `Babak ${(targetLeaderboardStageIdx || 0) + 1}`}
                                 </p>
@@ -2356,7 +2356,7 @@ export default function NextArenaDashboard() {
                                       setSelectedLeaderboardStage(targetLeaderboardStageIdx - 1);
                                       setShowAllInStage(false);
                                     }}
-                                    className="px-4 py-2 rounded-xl bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border border-orange-500/40 text-xs font-bold transition-all cursor-pointer"
+                                    className="px-4 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 text-xs font-bold transition-all cursor-pointer"
                                   >
                                     Buka Babak {targetLeaderboardStageIdx}
                                   </button>
@@ -2378,7 +2378,7 @@ export default function NextArenaDashboard() {
                                 </p>
                                 <Link
                                   href="/pengaturan"
-                                  className="mt-2 px-4 py-2 rounded-xl text-xs font-bold text-zinc-950 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500 hover:brightness-110 transition-all shadow"
+                                  className="mt-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:brightness-110 transition-all shadow-md shadow-cyan-500/25 border border-cyan-400/40"
                                 >
                                   Tambah Peserta di Pengaturan
                                 </Link>
@@ -2398,7 +2398,7 @@ export default function NextArenaDashboard() {
                           return (
                             <tr
                               key={p.id}
-                              className={`group transition-colors hover:bg-zinc-900/65 ${
+                              className={`group transition-colors hover:bg-[#0c1c38]/40 ${
                                 p.status === "Gugur" ? "opacity-60" : ""
                               }`}
                             >
@@ -2408,12 +2408,12 @@ export default function NextArenaDashboard() {
                                   <span
                                     className={`w-8 h-8 rounded-lg font-mono font-bold text-sm flex items-center justify-center ${
                                       p.currentRank === 1
-                                        ? "bg-gradient-to-br from-yellow-400 to-orange-500 text-zinc-950 shadow-md shadow-yellow-500/20"
+                                        ? "bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-zinc-950 shadow-md shadow-amber-500/20"
                                         : p.currentRank === 2
-                                        ? "bg-gradient-to-br from-orange-400 to-red-500 text-white"
+                                        ? "bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-md shadow-cyan-500/20"
                                         : p.currentRank === 3
-                                        ? "bg-gradient-to-br from-red-500 to-rose-700 text-white"
-                                        : "bg-zinc-900 text-zinc-300 border border-zinc-800"
+                                        ? "bg-gradient-to-br from-sky-400 to-indigo-600 text-white"
+                                        : "bg-[#060e1c] text-cyan-200/80 border border-cyan-900/40"
                                     }`}
                                   >
                                     #{p.currentRank}
@@ -2450,7 +2450,7 @@ export default function NextArenaDashboard() {
                                 <div className="min-w-0">
                                   <button
                                     onClick={() => setDetailParticipantId(p.id)}
-                                    className="font-bold text-white hover:text-orange-300 transition-colors truncate text-left block cursor-pointer"
+                                    className="font-bold text-white hover:text-cyan-300 transition-colors truncate text-left block cursor-pointer"
                                   >
                                     {p.name}
                                   </button>
@@ -2493,7 +2493,7 @@ export default function NextArenaDashboard() {
                                     <span className="font-mono text-base sm:text-lg font-black text-white">
                                       {((p as any).stageRawScore || 0).toLocaleString("id-ID")}
                                     </span>
-                                    <span className="text-[10px] font-mono text-orange-400 font-bold uppercase tracking-wider">
+                                    <span className="text-[10px] font-mono text-cyan-400 font-bold uppercase tracking-wider">
                                       SKOR {activeLeaderboardStageObj?.name?.replace(/^Babak\s+/i, "") || `B${(targetLeaderboardStageIdx || 0) + 1}`}
                                     </span>
                                   </div>
@@ -2506,7 +2506,7 @@ export default function NextArenaDashboard() {
                                   <span
                                     className={`font-mono text-lg font-extrabold ${
                                       isTop3
-                                        ? "bg-gradient-to-r from-yellow-300 via-orange-400 to-red-400 bg-clip-text text-transparent"
+                                        ? "bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 bg-clip-text text-transparent"
                                         : "text-white"
                                     }`}
                                   >
@@ -2665,7 +2665,7 @@ export default function NextArenaDashboard() {
                                       type="button"
                                       onClick={() => setEditingParticipant(p)}
                                       title="Edit Profil, Anggota, Skor"
-                                      className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-orange-400 hover:text-orange-300 border border-zinc-800 transition-colors cursor-pointer"
+                                      className="p-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-cyan-400 hover:text-cyan-300 border border-zinc-800 transition-colors cursor-pointer"
                                     >
                                       <Edit3 className="w-3.5 h-3.5" />
                                     </button>
@@ -2706,7 +2706,7 @@ export default function NextArenaDashboard() {
                 </div>
                 <Link
                   href="/pengaturan"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-lg shadow-orange-500/20 transition-all cursor-pointer"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   <span>Buka Pengaturan Babak</span>
@@ -2715,19 +2715,19 @@ export default function NextArenaDashboard() {
             ) : (
               <>
                 {/* Header & Controls Bar */}
-                <div className="bg-[#121216]/95 border border-zinc-800/90 rounded-2xl p-6 shadow-xl space-y-4">
+                <div className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl p-6 shadow-xl space-y-4">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-mono uppercase tracking-wider text-orange-400">
+                        <span className="text-[11px] font-mono uppercase tracking-wider text-cyan-400">
                           JADWAL LAGA DUEL (2 TIM SEKALI MAIN)
                         </span>
-                        <span className="px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-300 font-mono text-[10px] font-bold">
+                        <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-[10px] font-bold">
                           {participants.length} Tim Terdaftar
                         </span>
                       </div>
                       <h2 className="text-xl sm:text-2xl font-black text-white mt-1 flex items-center gap-2.5">
-                        <GitBranch className="w-6 h-6 text-orange-400" />
+                        <GitBranch className="w-6 h-6 text-cyan-400" />
                         <span>Jadwal Laga Pertandingan Arena</span>
                       </h2>
                       <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
@@ -2737,7 +2737,7 @@ export default function NextArenaDashboard() {
                   </div>
 
               {/* Round Navigation Pills & Format Main Indicator */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-800">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-cyan-900/40">
                 <div className="flex flex-wrap items-center gap-2">
                   {tournamentStages.map((stage) => {
                     const matchCount = bracketMatches.filter((m) => m.round === stage.name).length;
@@ -2749,7 +2749,7 @@ export default function NextArenaDashboard() {
                         onClick={() => setSelectedBracketRound(stage.name)}
                         className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
                           isActive
-                            ? "bg-orange-500/15 border-orange-500 text-orange-300 shadow-sm"
+                            ? "bg-cyan-500/15 border-cyan-500 text-cyan-300 shadow-sm shadow-cyan-500/20"
                             : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
                         }`}
                       >
@@ -2771,7 +2771,7 @@ export default function NextArenaDashboard() {
                         </span>
                         <span
                           className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
-                            isActive ? "bg-orange-500/30 text-orange-200" : "bg-zinc-800 text-zinc-400"
+                            isActive ? "bg-cyan-500/30 text-cyan-200" : "bg-zinc-800 text-zinc-400"
                           }`}
                         >
                           {matchCount} Laga
@@ -2789,8 +2789,8 @@ export default function NextArenaDashboard() {
 
               if (currentMatches.length === 0) {
                 return (
-                  <div className="py-12 text-center rounded-2xl bg-[#121216]/95 border border-zinc-800/90 p-6 sm:p-8 space-y-6 shadow-xl">
-                    <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 mx-auto">
+                  <div className="py-12 text-center rounded-2xl bg-[#0a172c]/90 border border-cyan-900/40 p-6 sm:p-8 space-y-6 shadow-xl">
+                    <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mx-auto">
                       <GitBranch className="w-8 h-8" />
                     </div>
                     <div className="space-y-1">
@@ -2803,8 +2803,8 @@ export default function NextArenaDashboard() {
                     {/* Daftar Tim Lolos ke Babak Ini */}
                     {qualifiedBracketParticipants.length > 0 ? (
                       <div className="max-w-4xl mx-auto pt-2 text-left">
-                        <div className="flex items-center justify-between pb-2 border-b border-zinc-800 text-xs font-mono">
-                          <span className="text-orange-400 font-bold uppercase tracking-wider">
+                        <div className="flex items-center justify-between pb-2 border-b border-cyan-900/40 text-xs font-mono">
+                          <span className="text-cyan-400 font-bold uppercase tracking-wider">
                             Daftar Tim Lolos ke {selectedBracketRound} ({qualifiedBracketParticipants.length} Tim):
                           </span>
                           <span className="text-zinc-500 text-[11px]">
@@ -2818,7 +2818,7 @@ export default function NextArenaDashboard() {
                               className="p-3.5 rounded-xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-between shadow-sm"
                             >
                               <div className="flex items-center gap-2.5 min-w-0">
-                                <span className="w-6 h-6 rounded-lg bg-orange-500/15 text-orange-400 font-mono text-xs font-bold flex items-center justify-center shrink-0">
+                                <span className="w-6 h-6 rounded-lg bg-cyan-500/15 text-cyan-400 font-mono text-xs font-bold flex items-center justify-center shrink-0">
                                   {idx + 1}
                                 </span>
                                 <div className="truncate">
@@ -2846,7 +2846,7 @@ export default function NextArenaDashboard() {
                         href="/pengaturan"
                         className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
                       >
-                        <Settings className="w-4 h-4 text-orange-400" />
+                        <Settings className="w-4 h-4 text-cyan-400" />
                         <span>Buka Pengaturan Bagan</span>
                       </Link>
                     </div>
@@ -2857,7 +2857,7 @@ export default function NextArenaDashboard() {
               return (
                 <div className="space-y-4">
                   {/* Summary Header Pill */}
-                  <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-zinc-900/80 border border-zinc-800/80 text-xs">
+                  <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#0a172c]/80 border border-cyan-900/40 text-xs">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                       <span className="font-bold text-white">
@@ -2867,7 +2867,7 @@ export default function NextArenaDashboard() {
                         {qualifiedBracketParticipants.length} Tim Lolos
                       </span>
                     </div>
-                    <span className="font-mono text-orange-400 font-bold">
+                    <span className="font-mono text-cyan-400 font-bold">
                       {currentMatches.length} Laga Terjadwal
                     </span>
                   </div>
@@ -2903,12 +2903,12 @@ export default function NextArenaDashboard() {
                     return (
                       <div
                         key={match.id}
-                        className="bg-[#121216]/95 border border-zinc-800/90 hover:border-zinc-700/80 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4 transition-all"
+                        className="bg-[#0a172c]/90 border border-cyan-900/40 hover:border-cyan-500/40 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4 transition-all"
                       >
                         {/* Match Header */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800/80">
+                        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-cyan-900/30">
                           <div className="flex items-center gap-2.5">
-                            <span className="px-3 py-1 rounded-lg bg-orange-500/20 text-orange-300 font-mono font-extrabold text-xs tracking-wider border border-orange-500/40">
+                            <span className="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 font-mono font-extrabold text-xs tracking-wider border border-cyan-500/40">
                               {match.matchLabel}
                             </span>
                             <span className="text-xs text-zinc-400 font-medium">
@@ -2952,7 +2952,7 @@ export default function NextArenaDashboard() {
                                 } catch {}
                               }}
                               onClick={() => handleStartMatchWithShutter(match)}
-                              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-zinc-950 font-black text-xs hover:brightness-110 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(249,115,22,0.4)] animate-pulse hover:animate-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-black text-xs hover:brightness-110 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(0,163,255,0.4)] animate-pulse hover:animate-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
                               title="Buka Arena Tanding & Timer Stopwatch"
                             >
                               <Play className="w-3.5 h-3.5 fill-current" />
@@ -2969,7 +2969,7 @@ export default function NextArenaDashboard() {
                                   className={`px-2 py-0.5 rounded-lg font-semibold transition-all ${
                                     match.status === st
                                       ? st === "Berlangsung"
-                                        ? "bg-orange-500 text-zinc-950 font-bold shadow-md shadow-orange-500/20"
+                                        ? "bg-cyan-500 text-zinc-950 font-bold shadow-md shadow-cyan-500/20"
                                         : st === "Selesai"
                                         ? "bg-emerald-500 text-zinc-950 font-bold"
                                         : "bg-amber-500 text-zinc-950 font-bold"
@@ -3125,9 +3125,9 @@ export default function NextArenaDashboard() {
                             </div>
 
                             {/* BLOK PUTARAN 2 (TUKAR SISI) */}
-                            <div className="p-4 rounded-xl bg-zinc-950/60 border border-orange-500/30 space-y-3">
+                            <div className="p-4 rounded-xl bg-zinc-950/60 border border-cyan-500/30 space-y-3">
                               <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="px-2.5 py-0.5 rounded-lg bg-orange-500/15 border border-orange-500/30 text-orange-400 font-mono text-xs font-black uppercase flex items-center gap-1.5">
+                                <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-black uppercase flex items-center gap-1.5">
                                   <ArrowLeftRight className="w-3.5 h-3.5" />
                                   <span>Putaran 2 (Tukar Sisi Arena)</span>
                                 </span>
@@ -3286,7 +3286,7 @@ export default function NextArenaDashboard() {
                           /* STANDARD 1X MAIN / SINGLE */
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
                             {!isSingle && (
-                              <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-zinc-900 border-2 border-zinc-700 items-center justify-center text-[11px] font-black text-orange-400 shadow-lg">
+                              <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-[#060e1c] border-2 border-cyan-800/60 items-center justify-center text-[11px] font-black text-cyan-400 shadow-lg">
                                 VS
                               </div>
                             )}
@@ -3339,7 +3339,7 @@ export default function NextArenaDashboard() {
                                         handleSetExactScore(match.id, "A", val);
                                       }
                                     }}
-                                    className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-orange-500 shadow-inner"
+                                    className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-cyan-500 shadow-inner"
                                   />
                                 </div>
                               </div>
@@ -3461,7 +3461,7 @@ export default function NextArenaDashboard() {
                                             handleSetExactScore(match.id, "B", val);
                                           }
                                         }}
-                                        className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-orange-500 shadow-inner"
+                                        className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-cyan-500 shadow-inner"
                                       />
                                     </div>
                                   </div>
@@ -3542,16 +3542,16 @@ export default function NextArenaDashboard() {
 
         {/* TAB 3: MATRIKS PENILAIAN KRITERIA JURI */}
         {activeTab === "judging" && (
-          <section className="bg-[#121216]/95 border border-zinc-800/90 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="p-6 border-b border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <section className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="p-6 border-b border-cyan-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                  <Sliders className="w-5 h-5 text-orange-400" />
+                  <Sliders className="w-5 h-5 text-cyan-400" />
                   <span>Matriks Penilaian Kriteria Dewan Juri (Babak 3 Grand Final)</span>
                 </h2>
                 <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
                   Setiap kriteria memiliki bobot maksimal{" "}
-                  <span className="text-zinc-200 font-mono">250 Poin</span>. Nilai diperbarui
+                  <span className="text-cyan-200 font-mono">250 Poin</span>. Nilai diperbarui
                   secara otomatis ke sistem.
                 </p>
               </div>
@@ -3560,7 +3560,7 @@ export default function NextArenaDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-zinc-800 bg-zinc-900/60 text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                  <tr className="border-b border-cyan-900/40 bg-[#060e1c]/80 text-[11px] font-semibold uppercase tracking-wider text-cyan-200/80">
                     <th className="py-3.5 pl-6 pr-3">Rank & Peserta</th>
                     <th className="py-3.5 px-3 text-center">1. Eksekusi Teknis (0-250)</th>
                     <th className="py-3.5 px-3 text-center">2. Inovasi & Solusi (0-250)</th>
@@ -3586,10 +3586,10 @@ export default function NextArenaDashboard() {
                       presentasi: 200,
                     };
                     return (
-                      <tr key={p.id} className="hover:bg-zinc-900/50">
+                      <tr key={p.id} className="hover:bg-[#0c1c38]/40">
                         <td className="py-4 pl-6 pr-3">
                           <div className="flex items-center gap-3">
-                            <span className="w-7 h-7 rounded-lg bg-zinc-900 border border-zinc-800 font-mono text-xs font-bold flex items-center justify-center text-orange-400">
+                            <span className="w-7 h-7 rounded-lg bg-[#060e1c] border border-cyan-900/40 font-mono text-xs font-bold flex items-center justify-center text-cyan-400">
                               #{p.currentRank}
                             </span>
                             <div>
@@ -3625,7 +3625,7 @@ export default function NextArenaDashboard() {
                                   onClick={() =>
                                     handleUpdateCriteria(p.id, field, crit[field] + 10)
                                   }
-                                  className="px-1.5 py-0.5 rounded bg-orange-500/20 hover:bg-orange-500/30 text-xs font-mono text-orange-300"
+                                  className="px-1.5 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-xs font-mono text-cyan-300"
                                 >
                                   +10
                                 </button>
@@ -3634,10 +3634,10 @@ export default function NextArenaDashboard() {
                           )
                         )}
 
-                        <td className="py-4 px-4 text-right font-mono font-bold text-orange-400">
+                        <td className="py-4 px-4 text-right font-mono font-bold text-cyan-400">
                           {p.scores.babak3} PTS
                         </td>
-                        <td className="py-4 pl-3 pr-6 text-right font-mono text-base font-extrabold text-yellow-400">
+                        <td className="py-4 pl-3 pr-6 text-right font-mono text-base font-extrabold text-amber-400">
                           {p.totalPoints.toLocaleString("id-ID")} PTS
                         </td>
                       </tr>
@@ -3734,12 +3734,12 @@ export default function NextArenaDashboard() {
 
           <div className="max-w-4xl w-full text-center space-y-8">
             <div className="flex items-center justify-center gap-3">
-              <span className="text-xs sm:text-sm font-mono uppercase tracking-[0.3em] text-orange-400 font-bold">
+              <span className="text-xs sm:text-sm font-mono uppercase tracking-[0.3em] text-cyan-400 font-bold">
                 NUSANTARA NEXT ARENA • LIVE ARENA CLOCK
               </span>
             </div>
 
-            <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full border border-zinc-800 bg-zinc-900/90 text-sm sm:text-base font-bold font-mono tracking-widest uppercase shadow-2xl">
+            <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full border border-cyan-900/40 bg-[#0a172c]/90 text-sm sm:text-base font-bold font-mono tracking-widest uppercase shadow-2xl">
               <span
                 className={`w-3.5 h-3.5 rounded-full ${
                   isTimerRunning
@@ -3754,7 +3754,7 @@ export default function NextArenaDashboard() {
               ) : timerPhase === "prep_ended" ? (
                 <span className="text-yellow-400">PERSIAPAN SELESAI (00:00) • SIAP START!</span>
               ) : timerPhase === "countdown" ? (
-                <span className="text-orange-400">HITUNG MUNDUR START (3-2-1)</span>
+                <span className="text-cyan-400">HITUNG MUNDUR START (3-2-1)</span>
               ) : timerPhase === "match" ? (
                 <span className="text-emerald-400">PERTANDINGAN BERJALAN (STOPWATCH LIVE)</span>
               ) : timerPhase === "paused" ? (
@@ -3772,15 +3772,15 @@ export default function NextArenaDashboard() {
                 {timerSeconds}
               </div>
             ) : timerPhase === "preparation" ? (
-              <div className="font-mono text-7xl sm:text-9xl md:text-[11rem] font-black bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent drop-shadow-[0_0_60px_rgba(249,115,22,0.4)] tracking-tight">
+              <div className="font-mono text-7xl sm:text-9xl md:text-[11rem] font-black bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent drop-shadow-[0_0_60px_rgba(245,158,11,0.4)] tracking-tight">
                 {formatTimerDisplay(timerSeconds)}
               </div>
             ) : (
               <div className="font-mono font-black select-none flex items-baseline justify-center tracking-tight">
-                <span className="text-7xl sm:text-9xl md:text-[11rem] bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500 bg-clip-text text-transparent drop-shadow-[0_0_60px_rgba(249,115,22,0.4)]">
+                <span className="text-7xl sm:text-9xl md:text-[11rem] bg-gradient-to-r from-cyan-300 via-sky-400 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_0_60px_rgba(0,163,255,0.4)]">
                   {getStopwatchParts(timerElapsedMs).minutes}:{getStopwatchParts(timerElapsedMs).seconds}
                 </span>
-                <span className="text-4xl sm:text-6xl md:text-7xl text-amber-400 font-extrabold ml-2 drop-shadow-[0_0_30px_rgba(245,158,11,0.6)]">
+                <span className="text-4xl sm:text-6xl md:text-7xl text-cyan-400 font-extrabold ml-2 drop-shadow-[0_0_30px_rgba(0,163,255,0.6)]">
                   .{getStopwatchParts(timerElapsedMs).centiseconds}
                 </span>
               </div>
@@ -3789,7 +3789,7 @@ export default function NextArenaDashboard() {
             {/* Sub-info / Progress */}
             <div className="max-w-xl mx-auto space-y-4">
               {timerPhase === "countdown" && (
-                <p className="text-orange-400 font-mono text-xl sm:text-2xl font-bold animate-pulse">
+                <p className="text-cyan-400 font-mono text-xl sm:text-2xl font-bold animate-pulse">
                   Bersiap di arena... Pertandingan dimulai dalam {timerSeconds} detik!
                 </p>
               )}
@@ -3802,13 +3802,13 @@ export default function NextArenaDashboard() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs sm:text-sm font-mono text-zinc-400">
                     <span>Start: 00:00</span>
-                    <span className="text-orange-400 font-bold">
+                    <span className="text-cyan-400 font-bold">
                       Batas Maksimal: {formatTimerDisplay(matchLimit)}
                     </span>
                   </div>
                   <div className="w-full bg-zinc-900 rounded-full h-3.5 overflow-hidden border border-zinc-800 p-0.5">
                     <div
-                      className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 h-full rounded-full transition-all duration-300"
+                      className="bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 h-full rounded-full transition-all duration-300"
                       style={{
                         width: `${Math.min(100, Math.round((timerSeconds / matchLimit) * 100))}%`,
                       }}
@@ -3874,7 +3874,7 @@ export default function NextArenaDashboard() {
                     <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs font-mono font-bold">
                       {viewLogMatch.round}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/40 text-orange-300 text-xs font-mono font-bold">
+                    <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold">
                       {viewMatchIs2x ? "2x Main (Tukar Sisi)" : "1x Main"}
                     </span>
                   </div>
@@ -3901,8 +3901,8 @@ export default function NextArenaDashboard() {
                     {viewLogMatch.teamA} ({viewLogMatch.scoreALeg1 || 0}) vs {viewLogMatch.teamB} ({viewLogMatch.scoreBLeg1 || 0})
                   </span>
                 </div>
-                <div className="px-3 py-2 rounded-xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-between">
-                  <span className="text-orange-300 font-bold">🟠 SESI 2 (P2 Tukar Sisi):</span>
+                <div className="px-3 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between">
+                  <span className="text-cyan-300 font-bold">🔷 SESI 2 (P2 Tukar Sisi):</span>
                   <span className="text-white font-black">
                     {viewLogMatch.teamB} ({viewLogMatch.scoreBLeg2 || 0}) vs {viewLogMatch.teamA} ({viewLogMatch.scoreALeg2 || 0})
                   </span>
@@ -3950,11 +3950,11 @@ export default function NextArenaDashboard() {
                       onClick={() => setDashboardLogViewMode("p2")}
                       className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
                         dashboardLogViewMode === "p2"
-                          ? "bg-orange-500 text-zinc-950 shadow"
+                          ? "bg-cyan-500 text-zinc-950 shadow"
                           : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
                       }`}
                     >
-                      🟠 Sesi 2 / Putaran 2 ({p2MatchLogs.length})
+                      🔷 Sesi 2 / Putaran 2 ({p2MatchLogs.length})
                     </button>
                   </>
                 ) : (
@@ -4105,11 +4105,11 @@ export default function NextArenaDashboard() {
                   </div>
 
                   {/* Kolom 2 (Sesi 2 / Putaran 2 Tukar Sisi atau Tim B) */}
-                  <div className="bg-zinc-950/60 border border-orange-500/30 rounded-2xl p-4 flex flex-col space-y-3">
+                  <div className="bg-zinc-950/60 border border-cyan-500/30 rounded-2xl p-4 flex flex-col space-y-3">
                     <div className="flex items-center justify-between pb-2.5 border-b border-zinc-800">
                       <div>
-                        <span className="font-bold text-orange-400 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-orange-500" />
+                        <span className="font-bold text-cyan-400 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-cyan-400" />
                           {viewMatchIs2x ? "SESI 2 • PUTARAN 2 (TUKAR SISI)" : `TIM B • ${viewLogMatch.teamB}`}
                         </span>
                         {viewMatchIs2x && (
@@ -4118,7 +4118,7 @@ export default function NextArenaDashboard() {
                           </p>
                         )}
                       </div>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-orange-500/15 text-orange-300 border border-orange-500/30">
+                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
                         {viewMatchIs2x
                           ? `${p2MatchLogs.length} Log`
                           : `${matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamB?.toLowerCase()).length} Log`}
@@ -4217,7 +4217,7 @@ export default function NextArenaDashboard() {
                               className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
                                 parsed.leg === 1
                                   ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
-                                  : "bg-orange-500/15 border-orange-500/40 text-orange-300"
+                                  : "bg-cyan-500/15 border-cyan-500/40 text-cyan-300"
                               }`}
                             >
                               SESI {parsed.leg} (P{parsed.leg})
@@ -4341,14 +4341,14 @@ export default function NextArenaDashboard() {
       />
 
       {/* Footer */}
-      <footer className="border-t border-zinc-900 bg-[#070709] py-4 px-6 text-center text-xs text-zinc-500">
+      <footer className="border-t border-cyan-950/60 bg-[#040812] py-4 px-6 text-center text-xs text-zinc-500">
         <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>
             © 2026 <strong className="text-zinc-300">NEXT ARENA</strong> — NUSANTARA NEXT
             Competition Management System
           </span>
-          <span className="tracking-[0.2em] uppercase text-[11px] bg-gradient-to-r from-red-500 via-orange-400 to-yellow-400 bg-clip-text text-transparent font-semibold">
-            THE PLACE TO PLAY
+          <span className="tracking-[0.2em] uppercase text-[11px] bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 bg-clip-text text-transparent font-bold">
+            NEW ERA OF EXPERIENCE AND TECHNOLOGY
           </span>
         </div>
       </footer>

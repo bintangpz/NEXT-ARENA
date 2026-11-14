@@ -244,17 +244,17 @@ describe("Arena Battle Screen Refinements Test Suite", () => {
       );
     });
 
-    it("Requires ACC confirmation before proceeding to Putaran 2", () => {
+    it("Requires confirmation before proceeding to Putaran 2 with Tutup and Lanjut buttons", () => {
       assert.strictEqual(
         tandingContent.includes("handleConfirmAccLeg1"),
         true,
         "Must define handleConfirmAccLeg1 handler"
       );
       assert.strictEqual(
-        tandingContent.includes("ACC Skor &amp; Masuk ke Putaran 2") ||
-          tandingContent.includes("ACC Skor & Masuk ke Putaran 2"),
+        tandingContent.includes("<span>Lanjut</span>") &&
+          tandingContent.includes("Tutup"),
         true,
-        "Must require ACC confirmation button to proceed"
+        "Must contain 'Tutup' and 'Lanjut' buttons to proceed"
       );
     });
 

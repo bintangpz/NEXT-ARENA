@@ -96,7 +96,7 @@ export function ParticipantEditModal({
       isOpen={isOpen}
       onClose={onClose}
       size="xl"
-      icon={<Edit3 className="w-5 h-5 text-orange-400" />}
+      icon={<Edit3 className="w-5 h-5 text-cyan-400" />}
       title={`Kelola Data Tim: ${participant.name}`}
       subtitle="Ubah profil tim, kategori lomba, anggota, dan skor babak 1-3"
       footer={
@@ -120,7 +120,7 @@ export function ParticipantEditModal({
             <button
               type="button"
               onClick={handleSubmit}
-              className="px-5 py-2 rounded-xl bg-gradient-to-r from-red-600 via-orange-500 to-yellow-400 text-zinc-950 text-xs font-bold hover:brightness-110 transition-all shadow"
+              className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs font-bold hover:brightness-110 transition-all shadow-md shadow-cyan-500/20"
             >
               Simpan Perubahan
             </button>
@@ -138,7 +138,7 @@ export function ParticipantEditModal({
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-orange-500"
+              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
             />
           </div>
           <div>
@@ -147,7 +147,7 @@ export function ParticipantEditModal({
               type="text"
               value={formData.code}
               onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm font-mono text-white focus:outline-none focus:border-orange-500"
+              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm font-mono text-white focus:outline-none focus:border-cyan-500"
             />
           </div>
         </div>
@@ -161,7 +161,7 @@ export function ParticipantEditModal({
               required
               value={formData.institution}
               onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-orange-500"
+              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
             />
           </div>
           <div>
@@ -170,7 +170,7 @@ export function ParticipantEditModal({
               type="text"
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-orange-500"
+              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
             />
           </div>
         </div>
@@ -182,7 +182,7 @@ export function ParticipantEditModal({
             <select
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-orange-500"
+              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
             >
               {categories.map((cat) => (
                 <option key={cat} value={cat}>
@@ -201,7 +201,7 @@ export function ParticipantEditModal({
                   status: e.target.value as ParticipantStatus,
                 })
               }
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-orange-500"
+              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
             >
               <option value="Finalis">Finalis</option>
               <option value="Aktif">Aktif</option>
@@ -222,7 +222,7 @@ export function ParticipantEditModal({
               onChange={(e) =>
                 setFormData({ ...formData, babak1: Number(e.target.value) })
               }
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white font-mono text-sm focus:outline-none focus:border-orange-500"
+              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white font-mono text-sm focus:outline-none focus:border-cyan-500"
             />
           </div>
           <div>
@@ -235,11 +235,11 @@ export function ParticipantEditModal({
               onChange={(e) =>
                 setFormData({ ...formData, babak2: Number(e.target.value) })
               }
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white font-mono text-sm focus:outline-none focus:border-orange-500"
+              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white font-mono text-sm focus:outline-none focus:border-cyan-500"
             />
           </div>
           <div>
-            <label className="block text-xs text-orange-400 font-medium mb-1">
+            <label className="block text-xs text-cyan-400 font-medium mb-1">
               Skor Babak 3
             </label>
             <input
@@ -250,7 +250,7 @@ export function ParticipantEditModal({
               onChange={(e) =>
                 setFormData({ ...formData, babak3: Number(e.target.value) })
               }
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-orange-500/50 text-white font-mono text-sm focus:outline-none focus:border-orange-500"
+              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-cyan-500/50 text-white font-mono text-sm focus:outline-none focus:border-cyan-500"
             />
           </div>
         </div>
@@ -258,7 +258,7 @@ export function ParticipantEditModal({
         {/* Total Akumulasi Preview */}
         <div className="p-3 rounded-xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
           <span className="text-xs text-zinc-400">Total Akumulasi Poin Baru:</span>
-          <span className="font-mono text-lg font-extrabold text-orange-400">
+          <span className="font-mono text-lg font-extrabold text-cyan-400">
             {totalPointsNew.toLocaleString("id-ID")} PTS
           </span>
         </div>
@@ -277,7 +277,7 @@ export function ParticipantEditModal({
                   members: [...formData.members, { name: "", role: "Anggota Tim" }],
                 })
               }
-              className="text-xs text-orange-400 hover:text-orange-300 font-semibold inline-flex items-center gap-1"
+              className="text-xs text-cyan-400 hover:text-cyan-300 font-semibold inline-flex items-center gap-1"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>+ Tambah Anggota</span>
