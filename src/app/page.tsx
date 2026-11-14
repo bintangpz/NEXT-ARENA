@@ -2985,38 +2985,44 @@ export default function NextArenaDashboard() {
                               <span>Reset</span>
                             </button>
 
-                            {/* Tombol Mulai Pertandingan dengan Animasi Shutter */}
-                            <button
-                              type="button"
-                              disabled={Boolean(shutterMatch)}
-                              onMouseEnter={() => {
-                                try {
-                                  router.prefetch(`/tanding/${match.id}`);
-                                } catch {}
-                              }}
-                              onClick={() => handleStartMatchWithShutter(match)}
-                              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-black text-xs hover:brightness-110 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(0,163,255,0.4)] animate-pulse hover:animate-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
-                              title="Buka Arena Tanding & Timer Stopwatch"
-                            >
-                              <Play className="w-3.5 h-3.5 fill-current" />
-                              <span>Mulai Tanding</span>
-                            </button>
+                            {/* Tombol Mulai Pertandingan dengan Animasi Shutter (sembunyi jika sudah Selesai) */}
+                            {match.status !== "Selesai" && (
+                              <button
+                                type="button"
+                                disabled={Boolean(shutterMatch)}
+                                onMouseEnter={() => {
+                                  try {
+                                    router.prefetch(`/tanding/${match.id}`);
+                                  } catch {}
+                                }}
+                                onClick={() => handleStartMatchWithShutter(match)}
+                                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-black text-xs hover:brightness-110 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(0,163,255,0.4)] animate-pulse hover:animate-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                                title="Buka Arena Tanding & Timer Stopwatch"
+                              >
+                                <Play className="w-3.5 h-3.5 fill-current" />
+                                <span>Mulai Tanding</span>
+                              </button>
+                            )}
 
                             {/* Quick Status Pill */}
                             <div className="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-xl border border-zinc-800 text-xs">
-                              {(["Siap Tanding", "Berlangsung", "Selesai"] as const).map((st) => (
+                              {(match.status === "Selesai"
+                                ? (["Selesai"] as const)
+                                : (["Siap Tanding", "Berlangsung", "Selesai"] as const)
+                              ).map((st) => (
                                 <button
                                   key={st}
                                   type="button"
+                                  disabled={match.status === "Selesai"}
                                   onClick={() => handleSetMatchStatus(match.id, st)}
                                   className={`px-2 py-0.5 rounded-lg font-semibold transition-all ${
                                     match.status === st
                                       ? st === "Berlangsung"
                                         ? "bg-cyan-500 text-zinc-950 font-bold shadow-md shadow-cyan-500/20"
                                         : st === "Selesai"
-                                        ? "bg-emerald-500 text-zinc-950 font-bold"
+                                        ? "bg-emerald-500 text-zinc-950 font-bold cursor-default"
                                         : "bg-amber-500 text-zinc-950 font-bold"
-                                      : "text-zinc-400 hover:text-white"
+                                      : "text-zinc-400 hover:text-white cursor-pointer"
                                   }`}
                                 >
                                   {st}
