@@ -43,6 +43,8 @@ test("Delete Individual Score Log Feature", async (t) => {
     assert.ok(!pageContent.includes("Dua Sesi Terpisah"), "Dua Sesi Terpisah tab must be removed");
     assert.ok(!pageContent.includes("Semua ({matchLogs.length})"), "Semua tab must be removed");
     assert.ok(!pageContent.includes("setLogBreakdownLeg"), "Duplicate breakdown leg switcher must be removed");
+    assert.ok(pageContent.includes("Total Point Sesi 1"), "Must show Total Point Sesi 1 below Retry");
+    assert.ok(pageContent.includes("Total Point Sesi 2"), "Must show Total Point Sesi 2 below Retry");
     assert.ok(pageContent.includes("🔴 SUDUT MERAH"), "Must display Red corner column");
     assert.ok(pageContent.includes("🔵 SUDUT BIRU"), "Must display Blue corner column");
   });

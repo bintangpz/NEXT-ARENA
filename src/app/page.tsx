@@ -3847,11 +3847,21 @@ export default function NextArenaDashboard() {
                                 </span>
                                 {viewMatchIs2x && (
                                   <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[10px] text-zinc-400">
-                                    <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800">
-                                      P1: <strong className="text-white">{teamInfo.leg1}</strong>
+                                    <span
+                                      className={`px-1.5 py-0.5 rounded border ${dashboardLogViewMode === "p1"
+                                          ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
+                                          : "bg-zinc-900 border-zinc-800 text-zinc-400"
+                                        }`}
+                                    >
+                                      P1: <strong className={dashboardLogViewMode === "p1" ? "text-amber-200" : "text-white"}>{teamInfo.leg1}</strong>
                                     </span>
-                                    <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-cyan-500/30">
-                                      P2: <strong className="text-cyan-300">{teamInfo.leg2}</strong>
+                                    <span
+                                      className={`px-1.5 py-0.5 rounded border ${dashboardLogViewMode === "p2"
+                                          ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300"
+                                          : "bg-zinc-900 border-zinc-800 text-zinc-400"
+                                        }`}
+                                    >
+                                      P2: <strong className={dashboardLogViewMode === "p2" ? "text-cyan-200" : "text-cyan-300"}>{teamInfo.leg2}</strong>
                                     </span>
                                   </div>
                                 )}
@@ -3894,6 +3904,28 @@ export default function NextArenaDashboard() {
                                   </div>
                                 );
                               })}
+                              {(() => {
+                                const sessionTotalPts = viewMatchIs2x
+                                  ? dashboardLogViewMode === "p2"
+                                    ? teamInfo.leg2
+                                    : teamInfo.leg1
+                                  : teamInfo.finalScore;
+                                const sessionTotalLabel = viewMatchIs2x
+                                  ? dashboardLogViewMode === "p2"
+                                    ? "Total Point Sesi 2"
+                                    : "Total Point Sesi 1"
+                                  : "Total Point";
+                                return (
+                                  <div className="pt-2 mt-2 border-t border-white/15 flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg bg-zinc-900/80 text-xs">
+                                    <span className="font-black uppercase tracking-wide text-white">
+                                      {sessionTotalLabel}
+                                    </span>
+                                    <span className="font-black font-mono text-amber-400">
+                                      {sessionTotalPts} PTS
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                         );
