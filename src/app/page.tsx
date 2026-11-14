@@ -129,7 +129,6 @@ export default function NextArenaDashboard() {
   const [resetMatchTarget, setResetMatchTarget] = useState<BracketMatch | null>(null);
   const [resetWithLogs, setResetWithLogs] = useState<boolean>(true);
   const [dashboardLogViewMode, setDashboardLogViewMode] = useState<"p1" | "p2">("p1");
-  const [logBreakdownLeg, setLogBreakdownLeg] = useState<1 | 2 | "all">("all");
 
   // Babak, Model & Timer States
   const [tournamentStages, setTournamentStages] = useState<TournamentStage[]>(DEFAULT_TOURNAMENT_STAGES);
@@ -2869,7 +2868,6 @@ export default function NextArenaDashboard() {
                                   type="button"
                                   onClick={() => {
                                     setDashboardLogViewMode("p1");
-                                    setLogBreakdownLeg(is2x ? 1 : "all");
                                     setViewLogMatch(match);
                                   }}
                                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white font-mono text-xs font-bold transition-all shadow-sm cursor-pointer"
@@ -3741,10 +3739,7 @@ export default function NextArenaDashboard() {
                 <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
                   <button
                     type="button"
-                    onClick={() => {
-                      setDashboardLogViewMode("p1");
-                      setLogBreakdownLeg(1);
-                    }}
+                    onClick={() => setDashboardLogViewMode("p1")}
                     className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p1"
                         ? "bg-amber-500 text-zinc-950 shadow"
                         : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
@@ -3754,10 +3749,7 @@ export default function NextArenaDashboard() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      setDashboardLogViewMode("p2");
-                      setLogBreakdownLeg(2);
-                    }}
+                    onClick={() => setDashboardLogViewMode("p2")}
                     className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p2"
                         ? "bg-cyan-500 text-zinc-950 shadow"
                         : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
@@ -3824,27 +3816,9 @@ export default function NextArenaDashboard() {
                         Rincian Per Skor (Point, Cekpoint, Finish, Bonus, Retry)
                       </span>
                       {viewMatchIs2x && (
-                        <div className="inline-flex p-1 rounded-xl bg-zinc-900 border border-zinc-800 gap-1 text-[11px]">
-                          {(
-                            [
-                              { id: "all" as const, label: "Gabungan" },
-                              { id: 1 as const, label: "Putaran 1" },
-                              { id: 2 as const, label: "Putaran 2" },
-                            ]
-                          ).map((tab) => (
-                            <button
-                              key={String(tab.id)}
-                              type="button"
-                              onClick={() => setLogBreakdownLeg(tab.id)}
-                              className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${logBreakdownLeg === tab.id
-                                  ? "bg-cyan-500 text-zinc-950"
-                                  : "text-zinc-400 hover:text-white"
-                                }`}
-                            >
-                              {tab.label}
-                            </button>
-                          ))}
-                        </div>
+                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300">
+                          {dashboardLogViewMode === "p2" ? "Sesi 2 / Putaran 2" : "Sesi 1 / Putaran 1"}
+                        </span>
                       )}
                     </div>
 
@@ -3854,7 +3828,7 @@ export default function NextArenaDashboard() {
                           logs: matchLogs,
                           match: resolvedViewLogMatch,
                           is2xMode: viewMatchIs2x,
-                          legFilter: viewMatchIs2x ? logBreakdownLeg : "all",
+                          legFilter: viewMatchIs2x ? (dashboardLogViewMode === "p2" ? 2 : 1) : "all",
                           team: teamInfo.key,
                           customPointRules,
                         });

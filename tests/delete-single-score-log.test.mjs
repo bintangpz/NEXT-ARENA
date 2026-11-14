@@ -39,9 +39,10 @@ test("Delete Individual Score Log Feature", async (t) => {
     );
   });
 
-  await t.test("Dashboard match log modal only has Sesi 1 & Sesi 2 tabs and shows Red/Blue split per session", () => {
+  await t.test("Dashboard match log modal only has Sesi 1 & Sesi 2 tabs (no duplicate Putaran/Gabungan switcher) and shows Red/Blue split per session", () => {
     assert.ok(!pageContent.includes("Dua Sesi Terpisah"), "Dua Sesi Terpisah tab must be removed");
     assert.ok(!pageContent.includes("Semua ({matchLogs.length})"), "Semua tab must be removed");
+    assert.ok(!pageContent.includes("setLogBreakdownLeg"), "Duplicate breakdown leg switcher must be removed");
     assert.ok(pageContent.includes("🔴 SUDUT MERAH"), "Must display Red corner column");
     assert.ok(pageContent.includes("🔵 SUDUT BIRU"), "Must display Blue corner column");
   });
