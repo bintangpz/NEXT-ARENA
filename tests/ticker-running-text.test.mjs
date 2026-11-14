@@ -71,6 +71,19 @@ describe("Ticker Running Text & Remove Ubah Ticker Test Suite", () => {
       /overflow-hidden/,
       "LiveTickerBar container should clip overflow"
     );
+
+    // Single pass only: displayText appears once without crowded duplicate tracks
+    const displayTextMatches = tickerComponentContent.match(/\{displayText\}/g) || [];
+    assert.strictEqual(
+      displayTextMatches.length,
+      1,
+      "LiveTickerBar should render displayText once per pass so it clears cleanly before repeating"
+    );
+    assert.match(
+      cssContent,
+      /padding-left:\s*100%/,
+      ".animate-marquee must start off-screen right via padding-left: 100%"
+    );
   });
 
   test("Requirement 3: globals.css defines keyframes marquee and .animate-marquee", () => {

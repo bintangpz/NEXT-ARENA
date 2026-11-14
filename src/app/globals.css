@@ -43,7 +43,7 @@ body {
   background: #00a3ff;
 }
 
-/* Running Text (Marquee) Animation */
+/* Running Text (Marquee) Animation - 1 teks lewat tuntas sebelum mulai ulang */
 @keyframes marquee {
   0% {
     transform: translateX(0%);
@@ -55,8 +55,10 @@ body {
 
 .animate-marquee {
   display: inline-flex;
+  align-items: center;
   white-space: nowrap;
-  animation: marquee 28s linear infinite;
+  padding-left: 100%;
+  animation: marquee 22s linear infinite;
   will-change: transform;
 }
 

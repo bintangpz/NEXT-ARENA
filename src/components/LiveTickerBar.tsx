@@ -79,7 +79,7 @@ export function LiveTickerBar({
             <Icon className="w-3 h-3 shrink-0" />
             <span>{badgeConfig.label}</span>
           </span>
-          <div className="group relative flex-1 min-w-0 overflow-hidden flex items-center select-none py-0.5">
+          <div className="group relative flex-1 min-w-0 overflow-hidden select-none py-0.5 leading-none">
             {/* Fade Gradient Edges for Smooth Entry/Exit */}
             <div
               className={`pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r ${badgeConfig.fadeFromClass} to-transparent z-10`}
@@ -88,25 +88,8 @@ export function LiveTickerBar({
               className={`pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l ${badgeConfig.fadeFromClass} to-transparent z-10`}
             />
 
-            {/* Running Text / Marquee Elements */}
-            <div className="flex shrink-0 items-center gap-8 pr-8 animate-marquee">
-              <span className={`text-xs whitespace-nowrap ${badgeConfig.textClass}`}>
-                {displayText}
-              </span>
-              <span className={`${badgeConfig.starLeftClass} font-bold text-xs shrink-0 select-none`}>
-                ✦
-              </span>
-              <span className={`text-xs whitespace-nowrap ${badgeConfig.textClass}`}>
-                {displayText}
-              </span>
-              <span className={`${badgeConfig.starRightClass} font-bold text-xs shrink-0 select-none`}>
-                ✦
-              </span>
-            </div>
-            <div className="flex shrink-0 items-center gap-8 pr-8 animate-marquee" aria-hidden="true">
-              <span className={`text-xs whitespace-nowrap ${badgeConfig.textClass}`}>
-                {displayText}
-              </span>
+            {/* Running Text: 1 teks berjalan tuntas dari kanan ke kiri sebelum mengulang */}
+            <div className="gap-4 animate-marquee">
               <span className={`${badgeConfig.starLeftClass} font-bold text-xs shrink-0 select-none`}>
                 ✦
               </span>
