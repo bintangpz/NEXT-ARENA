@@ -21,12 +21,10 @@ import {
   Zap,
   Download,
   GitBranch,
-  ClipboardCheck,
   LayoutDashboard,
   Eye,
   Printer,
   Crown,
-  Sliders,
   Trash2,
   FolderPlus,
   Plus,
@@ -71,7 +69,6 @@ import {
   INITIAL_BRACKET_MATCHES,
   INITIAL_LOGS,
   INITIAL_PARTICIPANTS,
-  JudgingCriteria,
   Participant,
   ParticipantStatus,
   PointLog,
@@ -112,7 +109,7 @@ export default function NextArenaDashboard() {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
   // Active Navigation Tab
-  const [activeTab, setActiveTab] = useState<"leaderboard" | "bracket" | "judging">("bracket");
+  const [activeTab, setActiveTab] = useState<"leaderboard" | "bracket">("bracket");
 
   // Filters & Sorting
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua Kategori");
@@ -479,7 +476,7 @@ export default function NextArenaDashboard() {
       if (typeof window !== "undefined") {
         const urlParams = new URLSearchParams(window.location.search);
         const urlTab = urlParams.get("tab");
-        if (urlTab === "bracket" || urlTab === "leaderboard" || urlTab === "judging") {
+        if (urlTab === "bracket" || urlTab === "leaderboard") {
           setActiveTab(urlTab);
           isInitialLoadRef.current = false;
           return;
@@ -489,9 +486,7 @@ export default function NextArenaDashboard() {
       const targetTab =
         s.default_monitor_view === "bracket" || s.stage_model === "bracket"
           ? "bracket"
-          : s.default_monitor_view === "judging" || s.stage_model === "judging"
-            ? "judging"
-            : "leaderboard";
+          : "leaderboard";
 
       const syncKey = `${s.stage_model || ""}_${s.default_monitor_view || ""}`;
       if (lastSyncedModelRef.current !== syncKey || isInitialLoadRef.current) {
@@ -553,7 +548,10 @@ export default function NextArenaDashboard() {
     channel.onmessage = (event) => {
       if (event.data?.type === "SETTINGS_SYNC" && event.data.payload) {
         applySettings(event.data.payload, true);
-        if (event.data.payload.default_monitor_view) {
+        if (
+          event.data.payload.default_monitor_view === "bracket" ||
+          event.data.payload.default_monitor_view === "leaderboard"
+        ) {
           setActiveTab(event.data.payload.default_monitor_view);
         }
       } else if (event.data?.type === "DATA_REFRESH") {
@@ -1028,59 +1026,6 @@ export default function NextArenaDashboard() {
       }
     } catch (err) {
       console.error("Gagal revert babak:", err);
-    }
-  };
-
-  // Update Judging Criteria (Syncs directly with SQLite)
-  const handleUpdateCriteria = async (
-    participantId: string,
-    field: keyof JudgingCriteria,
-    value: number
-  ) => {
-    const clamped = Math.max(0, Math.min(250, value));
-
-    setParticipants((prev) =>
-      prev.map((p) => {
-        if (p.id !== participantId) return p;
-        const updatedCriteria = {
-          ...(p.criteria || { teknis: 200, inovasi: 200, kecepatan: 200, presentasi: 200 }),
-          [field]: clamped,
-        };
-        const newBabak3 =
-          updatedCriteria.teknis +
-          updatedCriteria.inovasi +
-          updatedCriteria.kecepatan +
-          updatedCriteria.presentasi;
-        const newScores = { ...p.scores, babak3: newBabak3 };
-        const stageScore = calculateParticipantScoreInStage(newScores, activeStageIndex, tournamentStages);
-        return {
-          ...p,
-          criteria: updatedCriteria,
-          scores: newScores,
-          totalPoints: stageScore,
-          lastUpdated: "Baru saja",
-        };
-      })
-    );
-
-    try {
-      const res = await fetch("/api/participants", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "update_criteria",
-          participantId,
-          field,
-          value: clamped,
-        }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data?.participants) setParticipants(json.data.participants);
-        broadcastSync("DATA_REFRESH");
-      }
-    } catch (err) {
-      console.error("Gagal update kriteria ke SQLite:", err);
     }
   };
 
@@ -1865,16 +1810,6 @@ export default function NextArenaDashboard() {
               <GitBranch className="w-3.5 h-3.5" />
               <span>Bagan Pertandingan</span>
             </button>
-            <button
-              onClick={() => setActiveTab("judging")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === "judging"
-                  ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
-                  : "text-zinc-400 hover:text-zinc-200"
-                }`}
-            >
-              <ClipboardCheck className="w-3.5 h-3.5" />
-              <span>Matriks Kriteria Juri</span>
-            </button>
           </nav>
 
           {/* Right Action Controls */}
@@ -1926,14 +1861,6 @@ export default function NextArenaDashboard() {
           >
             <GitBranch className="w-3.5 h-3.5" />
             <span>Bracket</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("judging")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === "judging" ? "text-cyan-400 bg-cyan-500/10" : "text-zinc-400"
-              }`}
-          >
-            <ClipboardCheck className="w-3.5 h-3.5" />
-            <span>Kriteria Juri</span>
           </button>
         </div>
       </header>
@@ -3556,121 +3483,6 @@ export default function NextArenaDashboard() {
                 })()}
               </>
             )}
-          </section>
-        )}
-
-        {/* TAB 3: MATRIKS PENILAIAN KRITERIA JURI */}
-        {activeTab === "judging" && (
-          <section className="bg-[#0a172c]/90 border border-cyan-900/40 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="p-6 border-b border-cyan-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                  <Sliders className="w-5 h-5 text-cyan-400" />
-                  <span>Matriks Penilaian Kriteria Dewan Juri (Babak 3 Grand Final)</span>
-                </h2>
-                <p className="text-xs sm:text-sm text-zinc-400 mt-0.5">
-                  Setiap kriteria memiliki bobot maksimal{" "}
-                  <span className="text-cyan-200 font-mono">250 Poin</span>. Nilai diperbarui
-                  secara otomatis ke sistem.
-                </p>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-cyan-900/40 bg-[#060e1c]/80 text-[11px] font-semibold uppercase tracking-wider text-cyan-200/80">
-                    <th className="py-3.5 pl-6 pr-3">Rank & Peserta</th>
-                    <th className="py-3.5 px-3 text-center">1. Eksekusi Teknis (0-250)</th>
-                    <th className="py-3.5 px-3 text-center">2. Inovasi & Solusi (0-250)</th>
-                    <th className="py-3.5 px-3 text-center">3. Kecepatan & Akurasi (0-250)</th>
-                    <th className="py-3.5 px-3 text-center">4. Presentasi & Strategi (0-250)</th>
-                    <th className="py-3.5 px-4 text-right">Skor Babak 3</th>
-                    <th className="py-3.5 pl-3 pr-6 text-right">Total Poin</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-800/60 text-sm">
-                  {globallyRankedParticipants.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center text-zinc-400">
-                        Belum ada peserta terdaftar untuk penilaian juri.
-                      </td>
-                    </tr>
-                  ) : (
-                    globallyRankedParticipants.map((p) => {
-                      const crit = p.criteria || {
-                        teknis: 200,
-                        inovasi: 200,
-                        kecepatan: 200,
-                        presentasi: 200,
-                      };
-                      return (
-                        <tr key={p.id} className="hover:bg-[#0c1c38]/40">
-                          <td className="py-4 pl-6 pr-3">
-                            <div className="flex items-center gap-3">
-                              <span className="w-7 h-7 rounded-lg bg-[#060e1c] border border-cyan-900/40 font-mono text-xs font-bold flex items-center justify-center text-cyan-400">
-                                #{p.currentRank}
-                              </span>
-                              <div>
-                                <p className="font-bold text-white">{p.name}</p>
-                                <p className="text-xs text-zinc-400">{p.institution}</p>
-                              </div>
-                            </div>
-                          </td>
-
-                          {(["teknis", "inovasi", "kecepatan", "presentasi"] as const).map(
-                            (field) => (
-                              <td key={field} className="py-4 px-3 text-center">
-                                <div className="inline-flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1">
-                                  <button
-                                    onClick={() =>
-                                      handleUpdateCriteria(p.id, field, crit[field] - 10)
-                                    }
-                                    className="px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs font-mono text-zinc-300"
-                                  >
-                                    -10
-                                  </button>
-                                  <input
-                                    type="number"
-                                    min={0}
-                                    max={250}
-                                    value={crit[field]}
-                                    onChange={(e) =>
-                                      handleUpdateCriteria(p.id, field, Number(e.target.value))
-                                    }
-                                    className="w-14 text-center bg-transparent font-mono text-sm font-bold text-white focus:outline-none"
-                                  />
-                                  <button
-                                    onClick={() =>
-                                      handleUpdateCriteria(p.id, field, crit[field] + 10)
-                                    }
-                                    className="px-1.5 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-xs font-mono text-cyan-300"
-                                  >
-                                    +10
-                                  </button>
-                                </div>
-                              </td>
-                            )
-                          )}
-
-                          <td className="py-4 px-4 text-right font-mono font-bold text-cyan-400">
-                            {p.scores.babak3} PTS
-                          </td>
-                          <td className="py-4 pl-3 pr-6 text-right font-mono text-base font-extrabold text-amber-400">
-                            <div>{p.totalPoints.toLocaleString("id-ID")} PTS</div>
-                            {fastestFinishMap[(p.name || "").trim().toLowerCase()] && (
-                              <div className="text-[10px] font-bold text-emerald-400">
-                                ⏱ {fastestFinishMap[(p.name || "").trim().toLowerCase()].bestFormatted}
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
           </section>
         )}
       </main>

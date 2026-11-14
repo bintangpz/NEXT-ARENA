@@ -9,6 +9,7 @@ if (nodeMajor < 22) {
 }
 
 const nextConfig = {
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   turbopack: {},
   serverExternalPackages: ["better-sqlite3"],
   webpack: (config, { isServer }) => {

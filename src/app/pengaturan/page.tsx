@@ -127,10 +127,10 @@ export default function PengaturanPage() {
   const [newStageResetPoints, setNewStageResetPoints] = useState<boolean>(true);
   const [stageDeleteTarget, setStageDeleteTarget] = useState<TournamentStage | null>(null);
 
-  const [stageModel, setStageModel] = useState<"klasemen" | "ranking" | "bracket" | "judging">("klasemen");
+  const [stageModel, setStageModel] = useState<"klasemen" | "ranking" | "bracket">("klasemen");
   const [activeRound, setActiveRound] = useState<string>("babak1");
   const [roundTitle, setRoundTitle] = useState<string>("BABAK 1 • PENYISIHAN");
-  const [defaultMonitorView, setDefaultMonitorView] = useState<"leaderboard" | "bracket" | "judging">("leaderboard");
+  const [defaultMonitorView, setDefaultMonitorView] = useState<"leaderboard" | "bracket">("leaderboard");
   const [matchTurns, setMatchTurns] = useState<"1x" | "2x">("2x");
   const [roundMatchTurns, setRoundMatchTurns] = useState<Record<string, "1x" | "2x">>({
     "Babak Penyisihan": "2x",
@@ -672,10 +672,10 @@ export default function PengaturanPage() {
           if (s.live_ticker !== undefined) setLiveTicker(s.live_ticker);
           if (s.live_ticker_match_id !== undefined) setLiveTickerMatchId(s.live_ticker_match_id);
           if (s.live_ticker_mode !== undefined) setLiveTickerMode(s.live_ticker_mode);
-          if (s.stage_model) setStageModel(s.stage_model as any);
+          if (s.stage_model) setStageModel(s.stage_model === "judging" ? "klasemen" : (s.stage_model as any));
           if (s.active_round) setActiveRound(s.active_round);
           if (s.round_title) setRoundTitle(s.round_title);
-          if (s.default_monitor_view) setDefaultMonitorView(s.default_monitor_view as any);
+          if (s.default_monitor_view) setDefaultMonitorView(s.default_monitor_view === "judging" ? "leaderboard" : (s.default_monitor_view as any));
           if (s.match_turns) setMatchTurns(s.match_turns as any);
           if (s.round_match_turns) {
             try {
