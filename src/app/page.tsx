@@ -1606,6 +1606,52 @@ export default function NextArenaDashboard() {
     }
   };
 
+  // Handler Hapus 1 Item Log Skor & Koreksi Poin Laga/Peserta
+  const handleDeleteSingleLog = async (matchId: string, logId: string) => {
+    try {
+      const res = await fetch(
+        `/api/bracket?matchId=${encodeURIComponent(matchId)}&logId=${encodeURIComponent(logId)}`,
+        { method: "DELETE" }
+      );
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data?.bracketMatches) setBracketMatches(json.data.bracketMatches);
+        if (json.data?.participants) setParticipants(json.data.participants);
+        if (json.data?.pointLogs) setPointLogs(json.data.pointLogs);
+        broadcastSync("DATA_REFRESH");
+      }
+    } catch (err) {
+      console.error("Gagal hapus log skor:", err);
+    }
+  };
+
+  const renderSingleLogAction = (
+    matchId: string,
+    log: PointLog,
+    badgeClass = "px-2 py-0.5 rounded font-bold text-[11px]"
+  ) => (
+    <div className="flex items-center gap-1.5 shrink-0">
+      <span
+        className={`${badgeClass} border ${
+          log.delta > 0
+            ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
+            : "bg-rose-500/15 border-rose-500/40 text-rose-300"
+        }`}
+      >
+        {log.delta > 0 ? `+${log.delta}` : log.delta}
+      </span>
+      <button
+        type="button"
+        onClick={() => handleDeleteSingleLog(matchId, log.id)}
+        title="Hapus log poin ini & koreksi skor"
+        aria-label={`Hapus log ${log.participantName}`}
+        className="p-1 rounded-lg bg-zinc-900/90 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-zinc-800 hover:border-rose-500/40 transition-colors cursor-pointer"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+
   // Export CSV Handler
   const handleExportCSV = () => {
     const headers = [
@@ -4008,14 +4054,7 @@ export default function NextArenaDashboard() {
                                   {parsed.cleanAction}
                                 </span>
                               </div>
-                              <span
-                                className={`px-2 py-0.5 rounded font-bold text-[11px] border shrink-0 ${log.delta > 0
-                                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
-                                    : "bg-rose-500/15 border-rose-500/40 text-rose-300"
-                                  }`}
-                              >
-                                {log.delta > 0 ? `+${log.delta}` : log.delta}
-                              </span>
+                              {renderSingleLogAction(resolvedViewLogMatch.id, log)}
                             </div>
                           );
                         })
@@ -4087,14 +4126,7 @@ export default function NextArenaDashboard() {
                                   {parsed.cleanAction}
                                 </span>
                               </div>
-                              <span
-                                className={`px-2 py-0.5 rounded font-bold text-[11px] border shrink-0 ${log.delta > 0
-                                    ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
-                                    : "bg-rose-500/15 border-rose-500/40 text-rose-300"
-                                  }`}
-                              >
-                                {log.delta > 0 ? `+${log.delta}` : log.delta}
-                              </span>
+                              {renderSingleLogAction(resolvedViewLogMatch.id, log)}
                             </div>
                           );
                         })
@@ -4152,14 +4184,11 @@ export default function NextArenaDashboard() {
                           </span>
                         </div>
 
-                        <span
-                          className={`px-2.5 py-1 rounded-lg font-mono font-black text-xs border ${log.delta > 0
-                              ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
-                              : "bg-rose-500/15 border-rose-500/40 text-rose-300"
-                            }`}
-                        >
-                          {log.delta > 0 ? `+${log.delta}` : log.delta} PTS
-                        </span>
+                        {renderSingleLogAction(
+                          resolvedViewLogMatch.id,
+                          log,
+                          "px-2.5 py-1 rounded-lg font-mono font-black text-xs"
+                        )}
                       </div>
                     );
                   })}

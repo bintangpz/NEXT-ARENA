@@ -124,7 +124,10 @@ export async function PUT(req: Request) {
       `).run(newB1, newB2, newB3, newTotal, participantId);
 
       const nowIso = new Date().toISOString();
-      const uniqueLogId = `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const uniqueLogId =
+        typeof body.logId === "string" && body.logId.trim()
+          ? body.logId.trim()
+          : `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       db.prepare(`
         INSERT INTO point_logs (id, participant_id, participant_name, category, delta, stage_label, timestamp)
         VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -228,7 +231,10 @@ export async function PUT(req: Request) {
       `).run(status, participantId);
 
       const nowIso = new Date().toISOString();
-      const uniqueLogId = `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const uniqueLogId =
+        typeof body.logId === "string" && body.logId.trim()
+          ? body.logId.trim()
+          : `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       db.prepare(`
         INSERT INTO point_logs (id, participant_id, participant_name, category, delta, stage_label, timestamp)
         VALUES (?, ?, ?, ?, 0, ?, ?)
@@ -281,7 +287,10 @@ export async function PUT(req: Request) {
 
     if (delta !== 0) {
       const nowIso = new Date().toISOString();
-      const uniqueLogId = `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      const uniqueLogId =
+        typeof body.logId === "string" && body.logId.trim()
+          ? body.logId.trim()
+          : `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       db.prepare(`
         INSERT INTO point_logs (id, participant_id, participant_name, category, delta, stage_label, timestamp)
         VALUES (?, ?, ?, ?, ?, ?, ?)

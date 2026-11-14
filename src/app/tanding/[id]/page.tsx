@@ -960,9 +960,10 @@ export default function ArenaBattleMatchPage() {
     });
     const labelText = ruleLabel || (delta > 0 ? `+${delta} PTS` : `${delta} PTS`);
 
-    // Tambah ke riwayat histori laga
+    // Tambah ke riwayat histori laga (gunakan prefix log- agar sinkron dengan point_logs SQLite)
+    const logId = `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const newHist: (typeof matchHistory)[0] = {
-      id: `hist-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: logId,
       timestamp: nowClock,
       timeFormatted: currentSwTime,
       corner,
@@ -981,6 +982,7 @@ export default function ArenaBattleMatchPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "quick_adjust",
+          logId,
           participantId: targetParticipant.id,
           delta,
           label: `${labelText} (${(match.matchLabel || "").startsWith("Laga") ? match.matchLabel : `Laga ${match.matchLabel}`} P${legToUse} @${currentSwTime})`,
@@ -1243,8 +1245,9 @@ export default function ArenaBattleMatchPage() {
       second: "2-digit",
     });
 
+    const surrenderLogId = `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const surrenderHist: (typeof matchHistory)[0] = {
-      id: `hist-surrender-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: surrenderLogId,
       timestamp: nowClock,
       timeFormatted: fullTimeFormatted,
       corner,
@@ -1262,6 +1265,7 @@ export default function ArenaBattleMatchPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           type: "quick_adjust",
+          logId: surrenderLogId,
           participantId: targetParticipant.id,
           delta: 0,
           label: `Menyerah • FINISH (${(match.matchLabel || "").startsWith("Laga") ? match.matchLabel : `Laga ${match.matchLabel}`} P${legToUse} @${fullTimeFormatted})`,
@@ -1325,6 +1329,113 @@ export default function ArenaBattleMatchPage() {
       nowClock
     );
   };
+
+  /** Hapus satu item log skor dari histori pertandingan & koreksi poin di match/DB */
+  const handleDeleteScoreLog = async (item: (typeof matchHistory)[number]) => {
+    if (!match || item.corner === "system") return;
+
+    setMatchHistory((prev) => prev.filter((x) => x.id !== item.id));
+
+    if (item.actionLabel.toUpperCase().includes("FINISH")) {
+      const slotCorner = item.corner;
+      setFinishedCorners((prev) => {
+        if (item.leg === 1) {
+          return slotCorner === "red" ? { ...prev, p1Red: "" } : { ...prev, p1Blue: "" };
+        }
+        return slotCorner === "red" ? { ...prev, p2Red: "" } : { ...prev, p2Blue: "" };
+      });
+    }
+
+    showTimerCornerNotif(item.corner, "Hapus Log", false, false, 1500);
+
+    try {
+      const res = await fetch(
+        `/api/bracket?matchId=${encodeURIComponent(match.id)}&logId=${encodeURIComponent(item.id)}`,
+        { method: "DELETE" }
+      );
+      if (res.ok) {
+        const json = await res.json();
+        if (json.deletedLogId) {
+          const updatedMatch = json.data?.bracketMatches?.find((m: BracketMatch) => m.id === match.id);
+          if (updatedMatch) setMatch(updatedMatch);
+          if (json.data?.participants) setParticipants(json.data.participants);
+          broadcastSync("DATA_REFRESH");
+          return;
+        }
+      }
+    } catch {}
+
+    // Fallback untuk entri lokal yang tidak tercatat di SQLite point_logs
+    if (item.delta !== 0) {
+      const isA = item.teamName?.toLowerCase() === match.teamA?.toLowerCase();
+      const isB = item.teamName?.toLowerCase() === match.teamB?.toLowerCase();
+      if (is2x) {
+        let scoreALeg1 = match.scoreALeg1 || 0;
+        let scoreBLeg1 = match.scoreBLeg1 || 0;
+        let scoreALeg2 = match.scoreALeg2 || 0;
+        let scoreBLeg2 = match.scoreBLeg2 || 0;
+        if (isA && item.leg === 1) scoreALeg1 = Number((scoreALeg1 - item.delta).toFixed(1));
+        if (isB && item.leg === 1) scoreBLeg1 = Number((scoreBLeg1 - item.delta).toFixed(1));
+        if (isA && item.leg === 2) scoreALeg2 = Number((scoreALeg2 - item.delta).toFixed(1));
+        if (isB && item.leg === 2) scoreBLeg2 = Number((scoreBLeg2 - item.delta).toFixed(1));
+        const avgA = Number(((scoreALeg1 + scoreALeg2) / 2).toFixed(2));
+        const avgB = Number(((scoreBLeg1 + scoreBLeg2) / 2).toFixed(2));
+        setMatch((prev) =>
+          prev ? { ...prev, scoreALeg1, scoreBLeg1, scoreALeg2, scoreBLeg2, scoreA: avgA, scoreB: avgB } : null
+        );
+        await fetch("/api/bracket", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            matchId: match.id,
+            scoreALeg1,
+            scoreBLeg1,
+            scoreALeg2,
+            scoreBLeg2,
+            scoreA: avgA,
+            scoreB: avgB,
+          }),
+        }).catch(() => {});
+      } else {
+        const newA = isA ? Number((match.scoreA - item.delta).toFixed(1)) : match.scoreA;
+        const newB = isB ? Number((match.scoreB - item.delta).toFixed(1)) : match.scoreB;
+        setMatch((prev) => (prev ? { ...prev, scoreA: newA, scoreB: newB } : null));
+        await fetch("/api/bracket", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ matchId: match.id, scoreA: newA, scoreB: newB }),
+        }).catch(() => {});
+      }
+      broadcastSync("DATA_REFRESH");
+    }
+  };
+
+  const renderHistoryDeltaAndDelete = (item: (typeof matchHistory)[number]) => (
+    <div className="flex items-center gap-1.5 shrink-0">
+      {item.delta !== 0 && (
+        <span
+          className={`px-2.5 py-0.5 rounded-lg font-black text-xs font-mono border shrink-0 ${
+            item.delta > 0
+              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+              : "bg-rose-500/10 border-rose-500/30 text-rose-400"
+          }`}
+        >
+          {item.delta > 0 ? `+${item.delta}` : item.delta} PTS
+        </span>
+      )}
+      {item.corner !== "system" && (
+        <button
+          type="button"
+          onClick={() => handleDeleteScoreLog(item)}
+          title="Hapus log poin ini & koreksi skor"
+          aria-label={`Hapus log ${item.actionLabel}`}
+          className="p-1.5 rounded-lg bg-zinc-900/90 hover:bg-rose-500/20 text-zinc-400 hover:text-rose-400 border border-zinc-800 hover:border-rose-500/40 transition-colors cursor-pointer"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      )}
+    </div>
+  );
 
   const handleSetExactScore = async (
     corner: "red" | "blue",
@@ -3418,17 +3529,7 @@ export default function ArenaBattleMatchPage() {
                               {item.actionLabel}
                             </span>
                           </div>
-                          {item.delta !== 0 && (
-                            <span
-                              className={`px-2.5 py-0.5 rounded-lg font-black text-xs font-mono border shrink-0 ${
-                                item.delta > 0
-                                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                                  : "bg-rose-500/10 border-rose-500/30 text-rose-400"
-                              }`}
-                            >
-                              {item.delta > 0 ? `+${item.delta}` : item.delta} PTS
-                            </span>
-                          )}
+                          {renderHistoryDeltaAndDelete(item)}
                         </div>
                       ))
                     )}
@@ -3525,17 +3626,7 @@ export default function ArenaBattleMatchPage() {
                               {item.actionLabel}
                             </span>
                           </div>
-                          {item.delta !== 0 && (
-                            <span
-                              className={`px-2.5 py-0.5 rounded-lg font-black text-xs font-mono border shrink-0 ${
-                                item.delta > 0
-                                  ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                                  : "bg-rose-500/10 border-rose-500/30 text-rose-400"
-                              }`}
-                            >
-                              {item.delta > 0 ? `+${item.delta}` : item.delta} PTS
-                            </span>
-                          )}
+                          {renderHistoryDeltaAndDelete(item)}
                         </div>
                       ))
                     )}
@@ -3569,9 +3660,7 @@ export default function ArenaBattleMatchPage() {
                             </span>
                             <span className="text-zinc-300">{item.actionLabel}</span>
                           </div>
-                          <span className={`font-mono font-bold ${item.delta > 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                            {item.delta > 0 ? `+${item.delta}` : item.delta} PTS
-                          </span>
+                          {renderHistoryDeltaAndDelete(item)}
                         </div>
                       ))}
                   </div>
@@ -3601,9 +3690,7 @@ export default function ArenaBattleMatchPage() {
                             </span>
                             <span className="text-zinc-300">{item.actionLabel}</span>
                           </div>
-                          <span className={`font-mono font-bold ${item.delta > 0 ? "text-emerald-400" : "text-rose-400"}`}>
-                            {item.delta > 0 ? `+${item.delta}` : item.delta} PTS
-                          </span>
+                          {renderHistoryDeltaAndDelete(item)}
                         </div>
                       ))}
                   </div>
@@ -3656,17 +3743,7 @@ export default function ArenaBattleMatchPage() {
                     </span>
                   </div>
 
-                  {item.delta !== 0 && (
-                    <span
-                      className={`px-2.5 py-0.5 rounded-lg font-black text-xs font-mono border shrink-0 ${
-                        item.delta > 0
-                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                          : "bg-rose-500/10 border-rose-500/30 text-rose-400"
-                      }`}
-                    >
-                      {item.delta > 0 ? `+${item.delta}` : item.delta} PTS
-                    </span>
-                  )}
+                  {renderHistoryDeltaAndDelete(item)}
                 </div>
               ))}
             </div>

@@ -786,6 +786,7 @@ export async function DELETE(req: Request) {
   try {
     const url = new URL(req.url);
     const matchId = url.searchParams.get("matchId");
+    const logId = url.searchParams.get("logId");
     const clearLogs = url.searchParams.get("clearLogs") === "true";
     const logsOnly = url.searchParams.get("logsOnly") === "true";
     const action = url.searchParams.get("action");
@@ -862,6 +863,123 @@ export async function DELETE(req: Request) {
       `).run();
 
       return NextResponse.json({ success: true, data: getAllArenaData() });
+    }
+
+    if (matchId && logId) {
+      const match = db.prepare("SELECT * FROM bracket_matches WHERE id = ?").get(matchId) as any;
+      const logRow = db.prepare("SELECT * FROM point_logs WHERE id = ?").get(logId) as any;
+
+      if (match && logRow) {
+        db.prepare("DELETE FROM point_logs WHERE id = ?").run(logId);
+
+        const delta = Number(logRow.delta || 0);
+        const participantLow = String(logRow.participant_name || "").toLowerCase();
+        const isTeamA = Boolean(match.team_a) && participantLow === String(match.team_a).toLowerCase();
+        const isTeamB = Boolean(match.team_b) && participantLow === String(match.team_b).toLowerCase();
+
+        const stages = getStagesHelper();
+        const matchStageIdx = resolveStageIndex(match.round, stages);
+        const stageTurns2x = stages[matchStageIdx]?.turns === "2x";
+        const is2xMatch =
+          stageTurns2x ||
+          (match.score_a_leg1 || 0) !== 0 ||
+          (match.score_b_leg1 || 0) !== 0 ||
+          (match.score_a_leg2 || 0) !== 0 ||
+          (match.score_b_leg2 || 0) !== 0 ||
+          (match.current_leg || 1) === 2;
+
+        const sl = String(logRow.stage_label || "");
+        const legMatch = sl.match(/\bP([12])\b/i) || sl.match(/Putaran\s*([12])/i) || sl.match(/Sesi\s*([12])/i);
+        const targetLeg = legMatch && legMatch[1] === "2" ? 2 : legMatch && legMatch[1] === "1" ? 1 : (match.current_leg || 1);
+
+        let nextLeg1A = Number(match.score_a_leg1 || 0);
+        let nextLeg1B = Number(match.score_b_leg1 || 0);
+        let nextLeg2A = Number(match.score_a_leg2 || 0);
+        let nextLeg2B = Number(match.score_b_leg2 || 0);
+        let nextScoreA = Number(match.score_a || 0);
+        let nextScoreB = Number(match.score_b || 0);
+
+        if (delta !== 0 && (isTeamA || isTeamB)) {
+          if (is2xMatch) {
+            if (isTeamA && targetLeg === 1) nextLeg1A = Number((nextLeg1A - delta).toFixed(1));
+            if (isTeamB && targetLeg === 1) nextLeg1B = Number((nextLeg1B - delta).toFixed(1));
+            if (isTeamA && targetLeg === 2) nextLeg2A = Number((nextLeg2A - delta).toFixed(1));
+            if (isTeamB && targetLeg === 2) nextLeg2B = Number((nextLeg2B - delta).toFixed(1));
+            nextScoreA = Number(((nextLeg1A + nextLeg2A) / 2).toFixed(2));
+            nextScoreB = Number(((nextLeg1B + nextLeg2B) / 2).toFixed(2));
+          } else {
+            if (isTeamA) nextScoreA = Number((nextScoreA - delta).toFixed(1));
+            if (isTeamB) nextScoreB = Number((nextScoreB - delta).toFixed(1));
+          }
+        }
+
+        let nextWinner = match.winner || null;
+        if (match.status === "Selesai") {
+          const allLogsRows = db
+            .prepare("SELECT participant_name, stage_label FROM point_logs ORDER BY rowid ASC")
+            .all() as Array<{ participant_name?: string; stage_label?: string }>;
+          const matchStub = {
+            id: match.id,
+            matchLabel: match.match_label,
+            teamA: match.team_a,
+            teamB: match.team_b,
+          } as BracketMatch;
+          const mappedLogs = allLogsRows.map((r) => ({
+            id: "",
+            participantId: "",
+            participantName: r.participant_name || "",
+            category: "",
+            delta: 0,
+            stageLabel: r.stage_label || "",
+            timestamp: "",
+          })) as PointLog[];
+          const relevantLogs = filterLogsForBracketMatch(mappedLogs, matchStub);
+          nextWinner = resolveMatchWinner({
+            scoreA: nextScoreA,
+            scoreB: nextScoreB,
+            is2xMode: is2xMatch,
+            matchLogs: relevantLogs,
+            teamA: matchStub.teamA,
+            teamB: matchStub.teamB,
+          }).winner;
+        }
+
+        db.prepare(`
+          UPDATE bracket_matches
+          SET score_a = ?, score_b = ?,
+              score_a_leg1 = ?, score_b_leg1 = ?,
+              score_a_leg2 = ?, score_b_leg2 = ?,
+              winner = ?
+          WHERE id = ?
+        `).run(nextScoreA, nextScoreB, nextLeg1A, nextLeg1B, nextLeg2A, nextLeg2B, nextWinner, matchId);
+
+        const syncParticipantScore = (teamName: string, newScore: number) => {
+          if (!teamName || teamName.startsWith("-") || teamName.startsWith("BYE")) return;
+          const p = db.prepare("SELECT * FROM participants WHERE name = ?").get(teamName) as any;
+          if (!p) return;
+
+          let b1 = p.babak1;
+          let b2 = p.babak2;
+          let b3 = p.babak3;
+          if (matchStageIdx === 0) b1 = newScore;
+          else if (matchStageIdx === 1) b2 = newScore;
+          else b3 = newScore;
+
+          const total = calculateParticipantScoreInStage({ babak1: b1, babak2: b2, babak3: b3 }, matchStageIdx, stages);
+          db.prepare(`
+            UPDATE participants
+            SET babak1 = ?, babak2 = ?, babak3 = ?, total_points = ?, last_updated = 'Baru saja'
+            WHERE id = ?
+          `).run(b1, b2, b3, total, p.id);
+        };
+
+        if (match.team_a) syncParticipantScore(match.team_a, nextScoreA);
+        if (match.team_b) syncParticipantScore(match.team_b, nextScoreB);
+
+        return NextResponse.json({ success: true, deletedLogId: logId, data: getAllArenaData() });
+      }
+
+      return NextResponse.json({ success: true, deletedLogId: null, data: getAllArenaData() });
     }
 
     if (matchId) {
