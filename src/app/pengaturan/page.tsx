@@ -68,6 +68,12 @@ import { filterLogsForBracketMatch } from "@/lib/scoreBreakdown";
 import { resolveEffectiveTicker } from "@/lib/liveTicker";
 import { resolveMatchWinner } from "@/lib/tieBreaker";
 import {
+  formatMatchModeLabel,
+  isActiveSoloCorner,
+  isSingleMatchTeamB,
+  resolveRoundTurns,
+} from "@/lib/matchMode";
+import {
   CATEGORIES as DEFAULT_CATEGORIES,
   CompetitionCategory,
   Participant,
@@ -140,15 +146,12 @@ export default function PengaturanPage() {
   });
 
   const getMatchTurnsForRound = (roundName?: string): "1x" | "2x" => {
-    const target = roundName || selectedBracketRound;
-    const stage = tournamentStages.find((s) => s.name === target);
-    if (stage) return stage.turns;
-    if (roundMatchTurns[target]) return roundMatchTurns[target];
-    if (target.includes("Penyisihan") || target.includes("16 Besar")) return roundMatchTurns["Babak Penyisihan"] || "2x";
-    if (target.includes("8 Besar")) return roundMatchTurns["Babak 8 Besar"] || "1x";
-    if (target.includes("Semifinal")) return roundMatchTurns["Babak Semifinal"] || "1x";
-    if (target.includes("Final")) return roundMatchTurns["Babak Final"] || roundMatchTurns["Babak Semifinal"] || "1x";
-    return matchTurns || "1x";
+    return resolveRoundTurns(
+      roundName || selectedBracketRound,
+      tournamentStages,
+      roundMatchTurns,
+      matchTurns || "1x"
+    );
   };
 
   const currentBracketStageIdx = useMemo(() => {
@@ -832,18 +835,20 @@ export default function PengaturanPage() {
 
       const is2x = getMatchTurnsForRound(activeMatch.round) === "2x";
       const isLeg2 = is2x && activeMatch.currentLeg === 2;
+      const isSingle = isSingleMatchTeamB(activeMatch.teamB);
 
       // Check Sudut Merah rules
       const redRule = customPointRules.find(
         (r) => r.enabled && r.hotkeyRed && r.hotkeyRed.toUpperCase() === pressedKey
       );
       if (redRule) {
+        const leg = (isLeg2 ? 2 : 1) as 1 | 2;
+        if (isSingle && !isActiveSoloCorner("red", leg, is2x)) return;
         e.preventDefault();
         if (is2x) {
           // Putaran 1: Merah = Tim A | Putaran 2 (Tukar Sisi): Merah = Tim B!
           const targetTeam = isLeg2 ? "B" : "A";
           const teamName = isLeg2 ? activeMatch.teamB : activeMatch.teamA;
-          const leg = (isLeg2 ? 2 : 1) as 1 | 2;
           handleBracketLegScoreChange(activeMatch.id, targetTeam, leg, redRule.points);
           showNotification(
             `[Hotkey ${pressedKey}] Sudut Merah (Putaran ${leg} - ${teamName}): ${redRule.points > 0 ? "+" : ""}${redRule.points} ${redRule.label}`
@@ -863,12 +868,13 @@ export default function PengaturanPage() {
         (r) => r.enabled && r.hotkeyBlue && r.hotkeyBlue.toUpperCase() === pressedKey
       );
       if (blueRule) {
+        const leg = (isLeg2 ? 2 : 1) as 1 | 2;
+        if (isSingle && !isActiveSoloCorner("blue", leg, is2x)) return;
         e.preventDefault();
         if (is2x) {
           // Putaran 1: Biru = Tim B | Putaran 2 (Tukar Sisi): Biru = Tim A!
           const targetTeam = isLeg2 ? "A" : "B";
           const teamName = isLeg2 ? activeMatch.teamA : activeMatch.teamB;
-          const leg = (isLeg2 ? 2 : 1) as 1 | 2;
           handleBracketLegScoreChange(activeMatch.id, targetTeam, leg, blueRule.points);
           showNotification(
             `[Hotkey ${pressedKey}] Sudut Biru (Putaran ${leg} - ${teamName}): ${blueRule.points > 0 ? "+" : ""}${blueRule.points} ${blueRule.label}`
@@ -3003,7 +3009,7 @@ export default function PengaturanPage() {
                   {currentMatches.map((match) => {
                     const instA = participants.find((p) => p.name === match.teamA)?.institution;
                     const instB = participants.find((p) => p.name === match.teamB)?.institution;
-                    const isSingle = match.teamB === "- (Tanding Tunggal)";
+                    const isSingle = isSingleMatchTeamB(match.teamB);
 
                     const is2x = getMatchTurnsForRound(match.round) === "2x";
                     const activeLeg = (match.currentLeg || 1) as 1 | 2;
@@ -3032,7 +3038,7 @@ export default function PengaturanPage() {
                               {match.matchLabel}
                             </span>
                             <span className="text-xs text-zinc-400 font-medium">
-                              {match.category || "Transporter SMP"} • {isSingle ? "1 Tim (Tanding Tunggal)" : is2x ? "2x Main (Tukar Sisi)" : "1x Main (Langsung Data)"}
+                              {match.category || "Transporter SMP"} • {formatMatchModeLabel(isSingle, is2x)}
                             </span>
                           </div>
 
@@ -3199,8 +3205,8 @@ export default function PengaturanPage() {
                         )}
 
                         {/* BODY TAMPILAN LAGA */}
-                        {is2x && !isSingle ? (
-                          /* TAMPILAN 2X MAIN: PUTARAN 1 & PUTARAN 2 DIMUNCULKAN BERTINGKAT SEKALIGUS (NO TAB) */
+                        {is2x ? (
+                          /* TAMPILAN 2X MAIN: PUTARAN 1 & PUTARAN 2 DIMUNCULKAN BERTINGKAT SEKALIGUS (TERMASUK TANDING TUNGGAL / GANJIL) */
                           <div className="space-y-4">
                             {/* BLOK PUTARAN 1 */}
                             <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-3">
@@ -3209,7 +3215,11 @@ export default function PengaturanPage() {
                                   <span>⚔️ Putaran 1</span>
                                 </span>
                                 <span className="text-xs font-mono text-zinc-400">
-                                  Skor P1: <strong className="text-white">{match.teamA} ({match.scoreALeg1 || 0})</strong> vs <strong className="text-white">{match.teamB} ({match.scoreBLeg1 || 0})</strong>
+                                  {isSingle ? (
+                                    <>Skor P1: <strong className="text-white">{match.teamA} ({match.scoreALeg1 || 0})</strong> (Sudut Merah)</>
+                                  ) : (
+                                    <>Skor P1: <strong className="text-white">{match.teamA} ({match.scoreALeg1 || 0})</strong> vs <strong className="text-white">{match.teamB} ({match.scoreBLeg1 || 0})</strong></>
+                                  )}
                                 </span>
                               </div>
 
@@ -3267,58 +3277,71 @@ export default function PengaturanPage() {
                                   </div>
                                 </div>
 
-                                {/* Sudut Biru Putaran 1: Team B */}
-                                <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-blue-500/30 space-y-2.5">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                                        <span className="text-[10px] font-mono font-bold text-blue-400 uppercase">
-                                          Sudut Biru
-                                        </span>
+                                {/* Sudut Biru Putaran 1: Team B atau Placeholder Tanding Tunggal */}
+                                {isSingle ? (
+                                  <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-dashed border-zinc-800 space-y-1.5 opacity-60">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="w-2 h-2 rounded-full bg-blue-500/50 shrink-0" />
+                                      <span className="text-[10px] font-mono font-bold text-blue-400 uppercase">
+                                        Sudut Biru • Sesi 1
+                                      </span>
+                                    </div>
+                                    <h5 className="text-sm font-bold text-zinc-500 italic mt-0.5">- (Tanding Tunggal)</h5>
+                                    <p className="text-[11px] text-zinc-500">Tanpa lawan di Putaran 1. Tim bermain di Sudut Merah.</p>
+                                  </div>
+                                ) : (
+                                  <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-blue-500/30 space-y-2.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                                          <span className="text-[10px] font-mono font-bold text-blue-400 uppercase">
+                                            Sudut Biru
+                                          </span>
+                                        </div>
+                                        <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamB}</h5>
+                                        {instB && <span className="text-[11px] text-zinc-400 block truncate">{instB}</span>}
                                       </div>
-                                      <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamB}</h5>
-                                      {instB && <span className="text-[11px] text-zinc-400 block truncate">{instB}</span>}
+
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
+                                        <input
+                                          type="number"
+                                          step="0.5"
+                                          value={match.scoreBLeg1 || 0}
+                                          onChange={(e) => handleSetExactLegScore(match.id, "B", 1, parseFloat(e.target.value) || 0)}
+                                          className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
+                                        />
+                                      </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
-                                      <input
-                                        type="number"
-                                        step="0.5"
-                                        value={match.scoreBLeg1 || 0}
-                                        onChange={(e) => handleSetExactLegScore(match.id, "B", 1, parseFloat(e.target.value) || 0)}
-                                        className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Quick Score Delta Buttons */}
-                                  <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
-                                    {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
+                                    {/* Quick Score Delta Buttons */}
+                                    <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
+                                      {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
+                                        <button
+                                          key={rule.id}
+                                          type="button"
+                                          onClick={() => handleBracketLegScoreChange(match.id, "B", 1, rule.points)}
+                                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${
+                                            rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                                          }`}
+                                        >
+                                          {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
+                                        </button>
+                                      ))}
                                       <button
-                                        key={rule.id}
                                         type="button"
-                                        onClick={() => handleBracketLegScoreChange(match.id, "B", 1, rule.points)}
-                                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${
-                                          rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
-                                        }`}
-                                      >
-                                        {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
-                                      </button>
-                                    ))}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleBracketLegScoreChange(match.id, "B", 1, 1)}
-                                      className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
-                                    >+1</button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleBracketLegScoreChange(match.id, "B", 1, -1)}
-                                      className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
-                                    >-1</button>
+                                        onClick={() => handleBracketLegScoreChange(match.id, "B", 1, 1)}
+                                        className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
+                                      >+1</button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleBracketLegScoreChange(match.id, "B", 1, -1)}
+                                        className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
+                                      >-1</button>
+                                    </div>
                                   </div>
-                                </div>
+                                )}
                               </div>
                             </div>
 
@@ -3330,63 +3353,80 @@ export default function PengaturanPage() {
                                   <span>🔁 Putaran 2 (Tukar Sisi Arena)</span>
                                 </span>
                                 <span className="text-xs font-mono text-zinc-400">
-                                  Skor P2: <strong className="text-white">{match.teamB} ({match.scoreBLeg2 || 0})</strong> vs <strong className="text-white">{match.teamA} ({match.scoreALeg2 || 0})</strong>
+                                  {isSingle ? (
+                                    <>Skor P2: <strong className="text-white">{match.teamA} ({match.scoreALeg2 || 0})</strong> (Sudut Biru • Tukar Sisi)</>
+                                  ) : (
+                                    <>Skor P2: <strong className="text-white">{match.teamB} ({match.scoreBLeg2 || 0})</strong> vs <strong className="text-white">{match.teamA} ({match.scoreALeg2 || 0})</strong></>
+                                  )}
                                 </span>
                               </div>
 
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {/* Sudut Merah Putaran 2: Team B (Tukar) */}
-                                <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-rose-500/30 space-y-2.5">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
-                                        <span className="text-[10px] font-mono font-bold text-rose-400 uppercase">
-                                          Sudut Merah (Tukar)
-                                        </span>
+                                {/* Sudut Merah Putaran 2: Team B (Tukar) atau Placeholder Tanding Tunggal */}
+                                {isSingle ? (
+                                  <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-dashed border-zinc-800 space-y-1.5 opacity-60">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="w-2 h-2 rounded-full bg-rose-500/50 shrink-0" />
+                                      <span className="text-[10px] font-mono font-bold text-rose-400 uppercase">
+                                        Sudut Merah • Sesi 2
+                                      </span>
+                                    </div>
+                                    <h5 className="text-sm font-bold text-zinc-500 italic mt-0.5">- (Tanding Tunggal)</h5>
+                                    <p className="text-[11px] text-zinc-500">Tanpa lawan di Putaran 2. Tim bermain di Sudut Biru (Tukar Sisi).</p>
+                                  </div>
+                                ) : (
+                                  <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-rose-500/30 space-y-2.5">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                                          <span className="text-[10px] font-mono font-bold text-rose-400 uppercase">
+                                            Sudut Merah (Tukar)
+                                          </span>
+                                        </div>
+                                        <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamB}</h5>
+                                        {instB && <span className="text-[11px] text-zinc-400 block truncate">{instB}</span>}
                                       </div>
-                                      <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamB}</h5>
-                                      {instB && <span className="text-[11px] text-zinc-400 block truncate">{instB}</span>}
+
+                                      <div className="flex items-center gap-2 shrink-0">
+                                        <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
+                                        <input
+                                          type="number"
+                                          step="0.5"
+                                          value={match.scoreBLeg2 || 0}
+                                          onChange={(e) => handleSetExactLegScore(match.id, "B", 2, parseFloat(e.target.value) || 0)}
+                                          className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
+                                        />
+                                      </div>
                                     </div>
 
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
-                                      <input
-                                        type="number"
-                                        step="0.5"
-                                        value={match.scoreBLeg2 || 0}
-                                        onChange={(e) => handleSetExactLegScore(match.id, "B", 2, parseFloat(e.target.value) || 0)}
-                                        className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Quick Score Delta Buttons */}
-                                  <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
-                                    {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
+                                    {/* Quick Score Delta Buttons */}
+                                    <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
+                                      {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
+                                        <button
+                                          key={rule.id}
+                                          type="button"
+                                          onClick={() => handleBracketLegScoreChange(match.id, "B", 2, rule.points)}
+                                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${
+                                            rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                                          }`}
+                                        >
+                                          {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
+                                        </button>
+                                      ))}
                                       <button
-                                        key={rule.id}
                                         type="button"
-                                        onClick={() => handleBracketLegScoreChange(match.id, "B", 2, rule.points)}
-                                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${
-                                          rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
-                                        }`}
-                                      >
-                                        {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
-                                      </button>
-                                    ))}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleBracketLegScoreChange(match.id, "B", 2, 1)}
-                                      className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
-                                    >+1</button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleBracketLegScoreChange(match.id, "B", 2, -1)}
-                                      className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
-                                    >-1</button>
+                                        onClick={() => handleBracketLegScoreChange(match.id, "B", 2, 1)}
+                                        className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
+                                      >+1</button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleBracketLegScoreChange(match.id, "B", 2, -1)}
+                                        className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
+                                      >-1</button>
+                                    </div>
                                   </div>
-                                </div>
+                                )}
 
                                 {/* Sudut Biru Putaran 2: Team A (Tukar) */}
                                 <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-blue-500/30 space-y-2.5">
@@ -3462,16 +3502,24 @@ export default function PengaturanPage() {
                                   </span>
                                 </div>
 
-                                <span className="text-zinc-600 font-black">VS</span>
+                                {!isSingle ? (
+                                  <>
+                                    <span className="text-zinc-600 font-black">VS</span>
 
-                                <div className="flex items-center gap-2">
-                                  <span className="text-zinc-300 font-bold">{match.teamB}:</span>
-                                  <span className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-700 font-black text-amber-400 text-sm">
-                                    {match.scoreB} PTS
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-zinc-300 font-bold">{match.teamB}:</span>
+                                      <span className="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-700 font-black text-amber-400 text-sm">
+                                        {match.scoreB} PTS
+                                      </span>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <span className="text-zinc-400 text-[11px]">
+                                    (Rata-rata P1: {match.scoreALeg1 || 0} &amp; P2: {match.scoreALeg2 || 0})
                                   </span>
-                                </div>
+                                )}
 
-                                {match.status === "Selesai" && (
+                                {match.status === "Selesai" && !isSingle && (
                                   <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 font-bold text-xs">
                                     {match.winner === "A" ? `${match.teamA} Menang` : match.winner === "B" ? `${match.teamB} Menang` : "Hasil Seri"}
                                   </span>

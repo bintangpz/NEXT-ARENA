@@ -63,6 +63,12 @@ import {
   resolveMatchWinner,
 } from "@/lib/tieBreaker";
 import {
+  formatMatchModeLabel,
+  isActiveSoloCorner,
+  isSingleMatchTeamB,
+  resolveRoundTurns,
+} from "@/lib/matchMode";
+import {
   BracketMatch,
   CATEGORIES as DEFAULT_CATEGORIES,
   CompetitionCategory,
@@ -156,15 +162,12 @@ export default function NextArenaDashboard() {
   }, [activeStage]);
 
   const getMatchTurnsForRound = (roundName?: string): "1x" | "2x" => {
-    const target = roundName || selectedBracketRound;
-    const stageObj = tournamentStages.find((st) => st.name === target);
-    if (stageObj) return stageObj.turns;
-    if (roundMatchTurns[target]) return roundMatchTurns[target];
-    if (target.includes("Penyisihan") || target.includes("16 Besar")) return roundMatchTurns["Babak Penyisihan"] || "2x";
-    if (target.includes("8 Besar")) return roundMatchTurns["Babak 8 Besar"] || "1x";
-    if (target.includes("Semifinal")) return roundMatchTurns["Babak Semifinal"] || "1x";
-    if (target.includes("Final")) return roundMatchTurns["Babak Final"] || roundMatchTurns["Babak Semifinal"] || "1x";
-    return matchTurns || "1x";
+    return resolveRoundTurns(
+      roundName || selectedBracketRound,
+      tournamentStages,
+      roundMatchTurns,
+      matchTurns || "1x"
+    );
   };
 
   const currentBracketStageIdx = useMemo(() => {
@@ -617,17 +620,19 @@ export default function NextArenaDashboard() {
 
       const is2x = getMatchTurnsForRound(activeMatch.round) === "2x";
       const isLeg2 = is2x && activeMatch.currentLeg === 2;
+      const isSingle = isSingleMatchTeamB(activeMatch.teamB);
 
       // Check Sudut Merah rules
       const redRule = customPointRules.find(
         (r) => r.enabled && r.hotkeyRed && r.hotkeyRed.toUpperCase() === pressedKey
       );
       if (redRule) {
+        const leg = (isLeg2 ? 2 : 1) as 1 | 2;
+        if (isSingle && !isActiveSoloCorner("red", leg, is2x)) return;
         e.preventDefault();
         if (is2x) {
           const targetTeam = isLeg2 ? "B" : "A";
           const teamName = isLeg2 ? activeMatch.teamB : activeMatch.teamA;
-          const leg = (isLeg2 ? 2 : 1) as 1 | 2;
           handleBracketLegScoreChange(activeMatch.id, targetTeam, leg, redRule.points, `${redRule.points > 0 ? `+${redRule.points}` : redRule.points} ${redRule.label}`);
           showPointToast(
             `[Hotkey ${pressedKey}] Sudut Merah (P${leg} - ${teamName}): ${redRule.points > 0 ? "+" : ""}${redRule.points} ${redRule.label}`,
@@ -649,11 +654,12 @@ export default function NextArenaDashboard() {
         (r) => r.enabled && r.hotkeyBlue && r.hotkeyBlue.toUpperCase() === pressedKey
       );
       if (blueRule) {
+        const leg = (isLeg2 ? 2 : 1) as 1 | 2;
+        if (isSingle && !isActiveSoloCorner("blue", leg, is2x)) return;
         e.preventDefault();
         if (is2x) {
           const targetTeam = isLeg2 ? "A" : "B";
           const teamName = isLeg2 ? activeMatch.teamA : activeMatch.teamB;
-          const leg = (isLeg2 ? 2 : 1) as 1 | 2;
           handleBracketLegScoreChange(activeMatch.id, targetTeam, leg, blueRule.points, `${blueRule.points > 0 ? `+${blueRule.points}` : blueRule.points} ${blueRule.label}`);
           showPointToast(
             `[Hotkey ${pressedKey}] Sudut Biru (P${leg} - ${teamName}): ${blueRule.points > 0 ? "+" : ""}${blueRule.points} ${blueRule.label}`,
@@ -1488,11 +1494,15 @@ export default function NextArenaDashboard() {
   // Deteksi apakah laga yang dilihat merupakan 2x Main
   const viewMatchIs2x = useMemo(() => {
     if (!resolvedViewLogMatch) return false;
-    const r = resolvedViewLogMatch.round;
-    if (roundMatchTurns[r]) return roundMatchTurns[r] === "2x";
-    if (r.includes("Penyisihan") || r.includes("16 Besar")) return (roundMatchTurns["Babak Penyisihan"] || "2x") === "2x";
-    return false;
-  }, [resolvedViewLogMatch, roundMatchTurns]);
+    return (
+      resolveRoundTurns(
+        resolvedViewLogMatch.round,
+        tournamentStages,
+        roundMatchTurns,
+        matchTurns || "1x"
+      ) === "2x"
+    );
+  }, [resolvedViewLogMatch, tournamentStages, roundMatchTurns, matchTurns]);
 
   // Log terpisah untuk Putaran 1 dan Putaran 2
   const p1MatchLogs = useMemo(() => {
@@ -2821,7 +2831,7 @@ export default function NextArenaDashboard() {
                       {currentMatches.map((match) => {
                         const instA = participants.find((p) => p.name === match.teamA)?.institution;
                         const instB = participants.find((p) => p.name === match.teamB)?.institution;
-                        const isSingle = match.teamB === "- (Tanding Tunggal)";
+                        const isSingle = isSingleMatchTeamB(match.teamB);
 
                         const is2x = getMatchTurnsForRound(match.round) === "2x";
                         const activeLeg = (match.currentLeg || 1) as 1 | 2;
@@ -2858,7 +2868,7 @@ export default function NextArenaDashboard() {
                                   {match.matchLabel}
                                 </span>
                                 <span className="text-xs text-zinc-400 font-medium">
-                                  {match.category || "Transporter SMP"} • {isSingle ? "1 Tim (Tanding Tunggal)" : is2x ? "2x Main (Tukar Sisi)" : "1x Main (Langsung Data)"}
+                                  {match.category || "Transporter SMP"} • {formatMatchModeLabel(isSingle, is2x)}
                                 </span>
                               </div>
 
@@ -3222,11 +3232,19 @@ export default function NextArenaDashboard() {
                                       }`}>
                                       {match.teamA}: <strong className="text-amber-400 text-sm">{match.scoreA} PTS</strong>
                                     </span>
-                                    <span className="text-zinc-600 font-bold">VS</span>
-                                    <span className={`px-2.5 py-1 rounded-lg border font-bold ${match.winner === "B" ? "bg-blue-500/20 text-blue-300 border-blue-500/50" : "bg-zinc-950 text-white border-zinc-800"
-                                      }`}>
-                                      {match.teamB}: <strong className="text-amber-400 text-sm">{match.scoreB} PTS</strong>
-                                    </span>
+                                    {!isSingle ? (
+                                      <>
+                                        <span className="text-zinc-600 font-bold">VS</span>
+                                        <span className={`px-2.5 py-1 rounded-lg border font-bold ${match.winner === "B" ? "bg-blue-500/20 text-blue-300 border-blue-500/50" : "bg-zinc-950 text-white border-zinc-800"
+                                          }`}>
+                                          {match.teamB}: <strong className="text-amber-400 text-sm">{match.scoreB} PTS</strong>
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <span className="text-zinc-400 text-[11px]">
+                                        (Rata-rata P1: {match.scoreALeg1 || 0} &amp; P2: {match.scoreALeg2 || 0})
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -3781,7 +3799,7 @@ export default function NextArenaDashboard() {
             <div className="p-5 overflow-y-auto flex-1 font-mono text-xs space-y-5">
               {/* RINGKASAN SKOR & RINCIAN PER KATEGORI (Point, Cekpoint, Finish, Bonus, Retry) */}
               {(() => {
-                const isSingleLogMatch = !resolvedViewLogMatch.teamB || resolvedViewLogMatch.teamB === "BYE";
+                const isSingleLogMatch = isSingleMatchTeamB(resolvedViewLogMatch.teamB);
                 const teams = [
                   {
                     key: "A" as const,
@@ -3926,7 +3944,7 @@ export default function NextArenaDashboard() {
               ) : (
                 /* TAMPILAN DUA KOLOM SUDUT MERAH & BIRU (PER SESI) */
                 (() => {
-                  const isSingleLogMatch = !resolvedViewLogMatch.teamB || resolvedViewLogMatch.teamB === "BYE";
+                  const isSingleLogMatch = isSingleMatchTeamB(resolvedViewLogMatch.teamB);
                   const sessionSourceLogs = viewMatchIs2x
                     ? dashboardLogViewMode === "p2"
                       ? p2MatchLogs

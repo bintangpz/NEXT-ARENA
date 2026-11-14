@@ -43,6 +43,12 @@ import {
 import { playSound, stopAllSounds } from "@/lib/soundEffects";
 import { resolveMatchWinner } from "@/lib/tieBreaker";
 import {
+  isActiveSoloCorner,
+  isSingleMatchTeamB,
+  mergeStageTurnsMap,
+  resolveRoundTurns,
+} from "@/lib/matchMode";
+import {
   buildLeg1ResultTicker,
   buildMatchFinishedTicker,
   buildWelcomeMatchTicker,
@@ -311,11 +317,14 @@ export default function ArenaBattleMatchPage() {
               setCustomPointRules(parsed);
             } catch (e) {}
           }
-          if (s.round_match_turns) {
-            try {
-              const parsed = typeof s.round_match_turns === "string" ? JSON.parse(s.round_match_turns) : s.round_match_turns;
-              setRoundMatchTurns(parsed);
-            } catch (e) {}
+          if (s.tournament_stages || s.round_match_turns) {
+            const mergedTurns = mergeStageTurnsMap(
+              s.tournament_stages,
+              s.round_match_turns
+            );
+            if (Object.keys(mergedTurns).length > 0) {
+              setRoundMatchTurns((prev) => ({ ...prev, ...mergedTurns }));
+            }
           }
           if (s.sound_volume !== undefined) setSoundVolume(Number(s.sound_volume) || 1);
           if (s.sound_enabled !== undefined) setSoundEnabled(s.sound_enabled === "true");
@@ -485,14 +494,10 @@ export default function ArenaBattleMatchPage() {
   // Determine if this match runs in 2x Main (Tukar Sisi)
   const is2x = useMemo(() => {
     if (!match) return false;
-    const rName = match.round;
-    if (roundMatchTurns[rName]) return roundMatchTurns[rName] === "2x";
-    if (rName.includes("Penyisihan") || rName.includes("16 Besar")) return (roundMatchTurns["Babak Penyisihan"] || "2x") === "2x";
-    if (rName.includes("8 Besar")) return (roundMatchTurns["Babak 8 Besar"] || "1x") === "2x";
-    if (rName.includes("Semifinal") || rName.includes("Final")) return (roundMatchTurns["Babak Semifinal"] || "1x") === "2x";
-    return false;
+    return resolveRoundTurns(match.round, [], roundMatchTurns, "1x") === "2x";
   }, [match, roundMatchTurns]);
 
+  const isSingle = isSingleMatchTeamB(match?.teamB);
   const activeLeg = (match?.currentLeg || 1) as 1 | 2;
   const isSwapped = is2x && activeLeg === 2;
 
@@ -931,10 +936,7 @@ export default function ArenaBattleMatchPage() {
     // Jika laga tanding tunggal (1 tim):
     // Putaran 1: Tim A bermain di Sudut Merah (Sudut Biru kosong)
     // Putaran 2: Tim A bermain di Sudut Biru (Sudut Merah kosong)
-    if (isSingle) {
-      if (legToUse === 1 && corner === "blue") return;
-      if (legToUse === 2 && corner === "red") return;
-    }
+    if (isSingle && !isActiveSoloCorner(corner, legToUse, is2x)) return;
 
     // Corner team assignment:
     // In 1x mode: Red = Team A, Blue = Team B
@@ -1222,10 +1224,7 @@ export default function ArenaBattleMatchPage() {
       return;
     }
 
-    if (isSingle) {
-      if (legToUse === 1 && corner === "blue") return;
-      if (legToUse === 2 && corner === "red") return;
-    }
+    if (isSingle && !isActiveSoloCorner(corner, legToUse, is2x)) return;
 
     if (getCornerFinishTime(legToUse, corner)) return;
 
@@ -1461,10 +1460,7 @@ export default function ArenaBattleMatchPage() {
       return;
     }
 
-    if (isSingle) {
-      if (legToUse === 1 && corner === "blue") return;
-      if (legToUse === 2 && corner === "red") return;
-    }
+    if (isSingle && !isActiveSoloCorner(corner, legToUse, is2x)) return;
 
     const targetTeam: "A" | "B" = is2x
       ? legToUse === 1
@@ -1850,7 +1846,9 @@ export default function ArenaBattleMatchPage() {
         timeFormatted: formatTime(matchElapsedMs),
         corner: "system",
         teamName: "ARENA SYSTEM",
-        actionLabel: `🏁 Sesi 1 (Putaran 1) Selesai! (${match.teamA}: ${sAL1} PTS | ${match.teamB}: ${sBL1} PTS) • Menunggu Tinjauan & ACC Log`,
+        actionLabel: isSingle
+          ? `🏁 Sesi 1 (Putaran 1) Selesai! (${match.teamA}: ${sAL1} PTS) • Menunggu Tinjauan & ACC Log`
+          : `🏁 Sesi 1 (Putaran 1) Selesai! (${match.teamA}: ${sAL1} PTS | ${match.teamB}: ${sBL1} PTS) • Menunggu Tinjauan & ACC Log`,
         delta: 0,
         leg: 1,
       },
@@ -1949,7 +1947,9 @@ export default function ArenaBattleMatchPage() {
           timeFormatted: "00:00",
           corner: "system",
           teamName: "ARENA SYSTEM",
-          actionLabel: `✅ Putaran 1 di-ACC (${match.teamA}: ${sAL1} PTS | ${match.teamB}: ${sBL1} PTS) • Beralih ke Putaran 2 (Tukar Sisi)`,
+          actionLabel: isSingle
+            ? `✅ Putaran 1 di-ACC (${match.teamA}: ${sAL1} PTS) • Beralih ke Putaran 2 (Tukar Sisi)`
+            : `✅ Putaran 1 di-ACC (${match.teamA}: ${sAL1} PTS | ${match.teamB}: ${sBL1} PTS) • Beralih ke Putaran 2 (Tukar Sisi)`,
           delta: 0,
           leg: 1,
         },
@@ -1962,7 +1962,9 @@ export default function ArenaBattleMatchPage() {
       kind: "switch_leg",
       leg: 2,
       title: "TUKAR SISI ARENA • PUTARAN 2",
-      text: `Putaran 2 Standby (Stop). Sudut Merah: ${match.teamB} • Sudut Biru: ${match.teamA}. Tekan Mulai Pertandingan bila siap.`,
+      text: isSingle
+        ? `Putaran 2 Standby (Stop). Sudut Biru: ${match.teamA} (Tukar Sisi). Tekan Mulai Pertandingan bila siap.`
+        : `Putaran 2 Standby (Stop). Sudut Merah: ${match.teamB} • Sudut Biru: ${match.teamA}. Tekan Mulai Pertandingan bila siap.`,
       teamA: match.teamB,
       teamB: match.teamA,
       isPositive: true,
@@ -2147,7 +2149,7 @@ export default function ArenaBattleMatchPage() {
         (r) => r.enabled && r.hotkeyRed && r.hotkeyRed.toUpperCase() === pressedKey
       );
       if (redRule) {
-        if (isSingle && activeLeg === 2) return;
+        if (isSingle && !isActiveSoloCorner("red", activeLeg, is2x)) return;
         e.preventDefault();
         handleScoreDelta("red", redRule.points, redRule.label);
         return;
@@ -2158,7 +2160,7 @@ export default function ArenaBattleMatchPage() {
         (r) => r.enabled && r.hotkeyBlue && r.hotkeyBlue.toUpperCase() === pressedKey
       );
       if (blueRule) {
-        if (isSingle && activeLeg === 1) return;
+        if (isSingle && !isActiveSoloCorner("blue", activeLeg, is2x)) return;
         e.preventDefault();
         handleScoreDelta("blue", blueRule.points, blueRule.label);
         return;
@@ -2486,7 +2488,6 @@ export default function ArenaBattleMatchPage() {
     );
   };
 
-  const isSingle = match?.teamB === "- (Tanding Tunggal)";
   const winnerResolution = match
     ? resolveMatchWinner({
         scoreA: match.scoreA || 0,
@@ -3797,7 +3798,7 @@ export default function ArenaBattleMatchPage() {
             </p>
 
             {/* Rekap & Revisi Skor Putaran 1 */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+            <div className={`grid gap-4 text-left ${isSingle ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
               {/* TIM A (SUDUT MERAH DI PUTARAN 1) */}
               <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 space-y-3 font-mono">
                 <div className="flex items-center justify-between">
@@ -3873,78 +3874,80 @@ export default function ArenaBattleMatchPage() {
               </div>
 
               {/* TIM B (SUDUT BIRU DI PUTARAN 1) */}
-              <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-3 font-mono">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] text-blue-400 font-bold uppercase tracking-wider">
-                    🔵 SUDUT BIRU (PUTARAN 1)
-                  </span>
-                  {finishedCorners.p1Blue ? (
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
-                      Finish: {finishedCorners.p1Blue}
+              {!isSingle && (
+                <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-3 font-mono">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-blue-400 font-bold uppercase tracking-wider">
+                      🔵 SUDUT BIRU (PUTARAN 1)
                     </span>
-                  ) : (
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                      Waktu Habis
-                    </span>
-                  )}
-                </div>
-
-                <div className="space-y-0.5">
-                  <h4 className="text-base font-black text-white truncate">{match.teamB}</h4>
-                  <p className="text-xs text-zinc-400 truncate">{instB || "Tim B"}</p>
-                </div>
-
-                {/* Score Controls */}
-                <div className="pt-2 border-t border-blue-500/20 flex flex-col gap-2">
-                  <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
-                    Revisi Skor Putaran 1:
-                  </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => setRevisedLeg1ScoreB((prev) => Math.max(0, Number((prev - 5).toFixed(2))))}
-                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
-                    >
-                      -5
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRevisedLeg1ScoreB((prev) => Math.max(0, Number((prev - 1).toFixed(2))))}
-                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
-                    >
-                      -1
-                    </button>
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={revisedLeg1ScoreB}
-                      onChange={(e) => setRevisedLeg1ScoreB(Math.max(0, parseFloat(e.target.value) || 0))}
-                      className="w-24 px-2 py-1.5 text-center font-mono text-xl font-black rounded-xl bg-zinc-950 border border-blue-500/50 text-amber-400 focus:outline-none focus:border-blue-400"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setRevisedLeg1ScoreB((prev) => Number((prev + 1).toFixed(2)))}
-                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
-                    >
-                      +1
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRevisedLeg1ScoreB((prev) => Number((prev + 5).toFixed(2)))}
-                      className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
-                    >
-                      +5
-                    </button>
+                    {finishedCorners.p1Blue ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold">
+                        Finish: {finishedCorners.p1Blue}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                        Waktu Habis
+                      </span>
+                    )}
                   </div>
-                  {revisedLeg1ScoreB !== (match.scoreBLeg1 || 0) && (
-                    <span className="text-[10px] text-amber-400">
-                      *Skor direvisi dari {match.scoreBLeg1 || 0} PTS
-                    </span>
-                  )}
-                </div>
 
-                {renderLeg1CategoryBreakdown("B")}
-              </div>
+                  <div className="space-y-0.5">
+                    <h4 className="text-base font-black text-white truncate">{match.teamB}</h4>
+                    <p className="text-xs text-zinc-400 truncate">{instB || "Tim B"}</p>
+                  </div>
+
+                  {/* Score Controls */}
+                  <div className="pt-2 border-t border-blue-500/20 flex flex-col gap-2">
+                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider">
+                      Revisi Skor Putaran 1:
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setRevisedLeg1ScoreB((prev) => Math.max(0, Number((prev - 5).toFixed(2))))}
+                        className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                      >
+                        -5
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRevisedLeg1ScoreB((prev) => Math.max(0, Number((prev - 1).toFixed(2))))}
+                        className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                      >
+                        -1
+                      </button>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={revisedLeg1ScoreB}
+                        onChange={(e) => setRevisedLeg1ScoreB(Math.max(0, parseFloat(e.target.value) || 0))}
+                        className="w-24 px-2 py-1.5 text-center font-mono text-xl font-black rounded-xl bg-zinc-950 border border-blue-500/50 text-amber-400 focus:outline-none focus:border-blue-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setRevisedLeg1ScoreB((prev) => Number((prev + 1).toFixed(2)))}
+                        className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                      >
+                        +1
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setRevisedLeg1ScoreB((prev) => Number((prev + 5).toFixed(2)))}
+                        className="px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-bold cursor-pointer"
+                      >
+                        +5
+                      </button>
+                    </div>
+                    {revisedLeg1ScoreB !== (match.scoreBLeg1 || 0) && (
+                      <span className="text-[10px] text-amber-400">
+                        *Skor direvisi dari {match.scoreBLeg1 || 0} PTS
+                      </span>
+                    )}
+                  </div>
+
+                  {renderLeg1CategoryBreakdown("B")}
+                </div>
+              )}
             </div>
 
             {/* Tab Log Riwayat Putaran 1 */}
@@ -3975,15 +3978,17 @@ export default function ArenaBattleMatchPage() {
                   >
                     {match.teamA} ({p1History.filter((i) => i.teamName === match.teamA || i.corner === "red").length})
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setLeg1LogFilter("B")}
-                    className={`px-2 py-0.5 rounded-md cursor-pointer ${
-                      leg1LogFilter === "B" ? "bg-blue-500 text-white font-bold" : "text-zinc-400 hover:text-white"
-                    }`}
-                  >
-                    {match.teamB} ({p1History.filter((i) => i.teamName === match.teamB || i.corner === "blue").length})
-                  </button>
+                  {!isSingle && (
+                    <button
+                      type="button"
+                      onClick={() => setLeg1LogFilter("B")}
+                      className={`px-2 py-0.5 rounded-md cursor-pointer ${
+                        leg1LogFilter === "B" ? "bg-blue-500 text-white font-bold" : "text-zinc-400 hover:text-white"
+                      }`}
+                    >
+                      {match.teamB} ({p1History.filter((i) => i.teamName === match.teamB || i.corner === "blue").length})
+                    </button>
+                  )}
                 </div>
               </div>
 
