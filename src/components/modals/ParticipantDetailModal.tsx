@@ -32,9 +32,11 @@ export function ParticipantDetailModal({
           <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 font-semibold">
             {participant.category}
           </span>
-          <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-300">
-            Status: {participant.status}
-          </span>
+          {participant.status === "Gugur" && (
+            <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-400 font-semibold">
+              Gugur
+            </span>
+          )}
         </div>
       }
       title={participant.name}

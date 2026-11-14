@@ -2274,33 +2274,19 @@ export default function PengaturanPage() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs text-zinc-400 mb-1">Kategori Lomba</label>
-                    <select
-                      value={newParticipant.category}
-                      onChange={(e) => setNewParticipant({ ...newParticipant, category: e.target.value })}
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
-                    >
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs text-zinc-400 mb-1">Status Awal</label>
-                    <select
-                      value={newParticipant.status}
-                      onChange={(e) => setNewParticipant({ ...newParticipant, status: e.target.value as ParticipantStatus })}
-                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
-                    >
-                      <option value="Aktif">Aktif</option>
-                      <option value="Finalis">Finalis</option>
-                      <option value="Gugur">Gugur</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-xs text-zinc-400 mb-1">Kategori Lomba</label>
+                  <select
+                    value={newParticipant.category}
+                    onChange={(e) => setNewParticipant({ ...newParticipant, category: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <button

@@ -113,7 +113,6 @@ export default function NextArenaDashboard() {
 
   // Filters & Sorting
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua Kategori");
-  const [selectedStatus, setSelectedStatus] = useState<string>("Semua Status");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<"total" | "babak3" | "babak2" | "babak1" | "name">("total");
   const [selectedLeaderboardStage, setSelectedLeaderboardStage] = useState<number | "all">(0);
@@ -808,8 +807,6 @@ export default function NextArenaDashboard() {
       .filter((p) => {
         const matchesCategory =
           selectedCategory === "Semua Kategori" || p.category === selectedCategory;
-        const matchesStatus =
-          selectedStatus === "Semua Status" || p.status === selectedStatus;
         const q = searchQuery.toLowerCase().trim();
         const matchesSearch =
           !q ||
@@ -817,7 +814,7 @@ export default function NextArenaDashboard() {
           p.institution.toLowerCase().includes(q) ||
           p.code.toLowerCase().includes(q) ||
           p.city.toLowerCase().includes(q);
-        return matchesCategory && matchesStatus && matchesSearch;
+        return matchesCategory && matchesSearch;
       })
       .sort((a, b) => {
         if (sortBy === "total") {
@@ -834,7 +831,7 @@ export default function NextArenaDashboard() {
         }
         return a.name.localeCompare(b.name);
       });
-  }, [leaderboardRankedParticipants, selectedCategory, selectedStatus, searchQuery, sortBy, fastestFinishMap]);
+  }, [leaderboardRankedParticipants, selectedCategory, searchQuery, sortBy, fastestFinishMap]);
 
   // Top 3 for Podium
   const podiumParticipants = useMemo(() => {
@@ -1651,32 +1648,6 @@ export default function NextArenaDashboard() {
     document.body.removeChild(link);
   };
 
-  const getStatusBadge = (status: ParticipantStatus) => {
-    switch (status) {
-      case "Finalis":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.15)]">
-            <Sparkles className="w-3 h-3 text-amber-400" />
-            Finalis
-          </span>
-        );
-      case "Aktif":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-            <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-            Aktif
-          </span>
-        );
-      case "Gugur":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-zinc-800/90 text-zinc-400 border border-zinc-700">
-            <XCircle className="w-3 h-3 text-zinc-500" />
-            Gugur
-          </span>
-        );
-    }
-  };
-
   const getCategoryBadge = (category: CompetitionCategory) => {
     const palette = [
       "bg-cyan-500/10 text-cyan-300 border-cyan-500/25",
@@ -2007,7 +1978,12 @@ export default function NextArenaDashboard() {
                               <Trophy className="w-3.5 h-3.5 mr-1.5" />
                               RANK #{rankPosition}
                             </span>
-                            {getStatusBadge(item.status)}
+                            {item.status === "Gugur" && (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+                                <XCircle className="w-3 h-3" />
+                                Gugur
+                              </span>
+                            )}
                           </div>
 
                           <button
@@ -2242,17 +2218,6 @@ export default function NextArenaDashboard() {
 
                     <div className="flex items-center gap-2 self-end lg:self-auto">
                       <select
-                        value={selectedStatus}
-                        onChange={(e) => setSelectedStatus(e.target.value)}
-                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 focus:outline-none focus:border-cyan-500"
-                      >
-                        <option value="Semua Status">Semua Status</option>
-                        <option value="Finalis">Status: Finalis</option>
-                        <option value="Aktif">Status: Aktif</option>
-                        <option value="Gugur">Status: Gugur</option>
-                      </select>
-
-                      <select
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                         className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-xs text-zinc-300 focus:outline-none focus:border-cyan-500"
@@ -2275,7 +2240,6 @@ export default function NextArenaDashboard() {
                         <th className="py-3.5 pl-6 pr-3 w-24">Rank</th>
                         <th className="py-3.5 px-3">Peserta / Tim & Instansi</th>
                         <th className="py-3.5 px-3">Kategori Lomba</th>
-                        <th className="py-3.5 px-3">Status</th>
                         <th className="py-3.5 px-3 text-center">Skor</th>
                         <th className="py-3.5 px-4 text-right">Ranking Point</th>
                         <th className="py-3.5 pl-3 pr-6 text-right">Aksi</th>
@@ -2284,7 +2248,7 @@ export default function NextArenaDashboard() {
                     <tbody className="divide-y divide-zinc-800/60 text-sm">
                       {filteredParticipants.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="py-16 text-center text-zinc-400">
+                          <td colSpan={6} className="py-16 text-center text-zinc-400">
                             {selectedLeaderboardStage !== "all" && targetLeaderboardStageIdx !== null && targetLeaderboardStageIdx > 0 ? (
                               <div className="flex flex-col items-center justify-center gap-3">
                                 <GitBranch className="w-10 h-10 text-cyan-400/60" />
@@ -2391,14 +2355,24 @@ export default function NextArenaDashboard() {
                               {/* PARTICIPANT INFO */}
                               <td className="py-4 px-3">
                                 <div className="min-w-0">
-                                  <button
-                                    onClick={() => setDetailParticipantId(p.id)}
-                                    className="font-bold text-white hover:text-cyan-300 transition-colors truncate text-left block cursor-pointer"
-                                  >
-                                    {p.name}
-                                  </button>
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <button
+                                      onClick={() => setDetailParticipantId(p.id)}
+                                      className="font-bold text-white hover:text-cyan-300 transition-colors truncate text-left block cursor-pointer"
+                                    >
+                                      {p.name}
+                                    </button>
+                                    {p.status === "Gugur" && (
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-500/15 text-rose-400 border border-rose-500/30 shrink-0">
+                                        Gugur
+                                      </span>
+                                    )}
+                                  </div>
                                   <div className="text-xs text-zinc-400 mt-0.5 truncate">
                                     {p.institution}
+                                    {p.status !== "Gugur" && tournamentStages[p.currentStageIdx ?? 0] && tournamentStages.length > 1
+                                      ? ` • ${tournamentStages[p.currentStageIdx ?? 0]?.name}`
+                                      : ""}
                                   </div>
                                 </div>
                               </td>
@@ -2406,18 +2380,6 @@ export default function NextArenaDashboard() {
                               {/* CATEGORY */}
                               <td className="py-4 px-3 whitespace-nowrap">
                                 {getCategoryBadge(p.category)}
-                              </td>
-
-                              {/* STATUS */}
-                              <td className="py-4 px-3 whitespace-nowrap">
-                                <div className="flex flex-col gap-1 items-start">
-                                  {getStatusBadge(p.status)}
-                                  {p.status !== "Gugur" && tournamentStages[p.currentStageIdx ?? 0] && tournamentStages.length > 1 && (
-                                    <span className="text-[10px] font-mono text-zinc-400">
-                                      {tournamentStages[p.currentStageIdx ?? 0]?.name}
-                                    </span>
-                                  )}
-                                </div>
                               </td>
 
                               {/* SKOR (BERDASARKAN BABAK YANG SEDANG DIPILIH) */}

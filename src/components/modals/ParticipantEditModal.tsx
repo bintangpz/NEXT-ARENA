@@ -154,39 +154,20 @@ export function ParticipantEditModal({
           </div>
         </div>
 
-        {/* Row 3: Kategori & Status */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1">Kategori Lomba</label>
-            <select
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1">Status Peserta</label>
-            <select
-              value={formData.status}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  status: e.target.value as ParticipantStatus,
-                })
-              }
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
-            >
-              <option value="Finalis">Finalis</option>
-              <option value="Aktif">Aktif</option>
-              <option value="Gugur">Gugur</option>
-            </select>
-          </div>
+        {/* Row 3: Kategori */}
+        <div>
+          <label className="block text-xs text-zinc-400 mb-1">Kategori Lomba</label>
+          <select
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Row 4: Skor Babak 1, 2, 3 */}
