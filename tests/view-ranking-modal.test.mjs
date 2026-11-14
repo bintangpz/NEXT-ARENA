@@ -163,10 +163,10 @@ describe("View Ranking Feature & Auto-Scrolling Modal Test Suite", () => {
   });
 
   test("Requirement 5: Complete participant ranking display with points and stage breakdown", () => {
-    // Shows participant name, institution, and code
+    // Shows participant name and institution; code is intentionally hidden
     assert.match(modalContent, /\{p\.name\}/);
     assert.match(modalContent, /\{p\.institution\}/);
-    assert.match(modalContent, /\{p\.code\}/);
+    assert.doesNotMatch(modalContent, /\{p\.code\}/);
 
     // Shows total points formatted
     assert.match(modalContent, /p\.totalPoints/);

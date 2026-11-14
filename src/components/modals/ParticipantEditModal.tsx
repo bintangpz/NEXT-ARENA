@@ -119,27 +119,16 @@ export function ParticipantEditModal({
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Row 1: Nama Tim & Kode */}
-        <div className="grid grid-cols-3 gap-3">
-          <div className="col-span-2">
-            <label className="block text-xs text-zinc-400 mb-1">Nama Peserta / Tim *</label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1">Kode NXT</label>
-            <input
-              type="text"
-              value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm font-mono text-white focus:outline-none focus:border-cyan-500"
-            />
-          </div>
+        {/* Row 1: Nama Tim */}
+        <div>
+          <label className="block text-xs text-zinc-400 mb-1">Nama Peserta / Tim *</label>
+          <input
+            type="text"
+            required
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white focus:outline-none focus:border-cyan-500"
+          />
         </div>
 
         {/* Row 2: Instansi & Kota */}

@@ -601,8 +601,7 @@ export function ViewRankingModal({
       <div className="relative z-10 shrink-0 bg-zinc-950/95 border-b border-zinc-800 px-6 py-3">
         <div className="max-w-[1700px] mx-auto grid grid-cols-12 gap-4 items-center text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">
           <div className="col-span-2 sm:col-span-1 text-center">Rank</div>
-          <div className="col-span-2 sm:col-span-1 text-center">Kode</div>
-          <div className="col-span-5 sm:col-span-4">Peserta / Tim & Instansi</div>
+          <div className="col-span-7 sm:col-span-7 md:col-span-5">Peserta / Tim & Instansi</div>
           <div className="hidden sm:block sm:col-span-2 text-center">Kategori</div>
           <div className="hidden md:block md:col-span-2 text-center">
             {selectedStage === "all"
@@ -688,15 +687,8 @@ export function ViewRankingModal({
                     </div>
                   </div>
 
-                  {/* KODE TIM */}
-                  <div className="col-span-2 sm:col-span-1 text-center">
-                    <span className="font-mono text-xs sm:text-sm font-bold text-zinc-400 bg-zinc-900/90 px-2 py-1 rounded-lg border border-zinc-800">
-                      {p.code}
-                    </span>
-                  </div>
-
                   {/* NAMA TIM & INSTANSI */}
-                  <div className="col-span-5 sm:col-span-4 min-w-0 pr-2">
+                  <div className="col-span-7 sm:col-span-7 md:col-span-5 min-w-0 pr-2">
                     <div className="flex items-center gap-2">
                       <span className="text-base sm:text-lg font-black text-white truncate block">
                         {p.name}

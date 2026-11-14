@@ -2358,9 +2358,6 @@ export default function PengaturanPage() {
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-white text-sm truncate">{p.name}</p>
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                            {p.code}
-                          </span>
                         </div>
                         <p className="text-xs text-zinc-400 truncate">
                           {p.institution} • {p.category}
@@ -3162,7 +3159,7 @@ export default function PengaturanPage() {
                                   <option value="">-- Pilih Tim Sudut Merah --</option>
                                   {qualifiedBracketParticipants.map((p) => (
                                     <option key={p.id} value={p.name}>
-                                      {p.code ? `[${p.code}] ` : ""}{p.name} {p.institution ? `(${p.institution})` : ""}
+                                      {p.name} {p.institution ? `(${p.institution})` : ""}
                                     </option>
                                   ))}
                                   {editTeamA && !qualifiedBracketParticipants.some((p) => p.name === editTeamA) && (
@@ -3184,7 +3181,7 @@ export default function PengaturanPage() {
                                   <option value="- (Tanding Tunggal)">- (Tanding Tunggal / Bye) -</option>
                                   {qualifiedBracketParticipants.map((p) => (
                                     <option key={p.id} value={p.name} disabled={p.name === editTeamA}>
-                                      {p.code ? `[${p.code}] ` : ""}{p.name} {p.institution ? `(${p.institution})` : ""}
+                                      {p.name} {p.institution ? `(${p.institution})` : ""}
                                     </option>
                                   ))}
                                   {editTeamB && editTeamB !== "- (Tanding Tunggal)" && !qualifiedBracketParticipants.some((p) => p.name === editTeamB) && (
@@ -5772,7 +5769,6 @@ export default function PengaturanPage() {
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
                         )}
                         <span className="truncate max-w-[140px] font-semibold">{p.name}</span>
-                        {p.code && <span className="text-zinc-500 text-[10px]">[{p.code}]</span>}
                       </span>
                     );
                   })}
@@ -5831,7 +5827,7 @@ export default function PengaturanPage() {
                           <option value="">-- Pilih Tim Sudut Merah --</option>
                           {qualifiedBracketParticipants.map((p) => (
                             <option key={p.id} value={p.name}>
-                              {p.code ? `[${p.code}] ` : ""}{p.name} {p.institution ? `(${p.institution})` : ""}
+                              {p.name} {p.institution ? `(${p.institution})` : ""}
                             </option>
                           ))}
                           {pair.teamA && !qualifiedBracketParticipants.some((p) => p.name === pair.teamA) && (
@@ -5862,7 +5858,7 @@ export default function PengaturanPage() {
                           <option value="- (Tanding Tunggal)">- (Tanding Tunggal / Bye) -</option>
                           {qualifiedBracketParticipants.map((p) => (
                             <option key={p.id} value={p.name} disabled={p.name === pair.teamA}>
-                              {p.code ? `[${p.code}] ` : ""}{p.name} {p.institution ? `(${p.institution})` : ""}
+                              {p.name} {p.institution ? `(${p.institution})` : ""}
                             </option>
                           ))}
                           {pair.teamB && pair.teamB !== "- (Tanding Tunggal)" && !qualifiedBracketParticipants.some((p) => p.name === pair.teamB) && (
