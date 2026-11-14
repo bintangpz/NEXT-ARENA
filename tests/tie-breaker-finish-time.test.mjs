@@ -83,18 +83,19 @@ describe("Finish Time Tie-Breaker Test Suite", () => {
     assert.strictEqual(finishedVsUnfinished.decidedBy, "finish_time");
   });
 
-  it("Breaks tied 2x Main (Tukar Sisi) scores by combined finish times across both legs", () => {
-    // Team A: P1 Red = 01:30.00, P2 Blue = 01:20.00 => 02:50.00 (170s)
-    // Team B: P1 Blue = 01:25.00, P2 Red = 01:40.00 => 03:05.00 (185s)
+  it("Breaks tied 2x Main (Tukar Sisi) average scores by fastest single finish across Putaran 1 or Putaran 2", () => {
+    // Team A: P1 Red = 02:10.00, P2 Blue = 01:18.20 (sum 03:28.20, fastest 01:18.20)
+    // Team B: P1 Blue = 01:25.00, P2 Red = 01:30.00 (sum 02:55.00, fastest 01:25.00)
+    // Fastest between P1 and P2 wins -> Team A wins with 01:18.20 < 01:25.00
     const res = resolveMatchWinner({
       scoreA: 25,
       scoreB: 25,
       is2xMode: true,
       finishedCorners: {
-        p1Red: "01:30.00",
+        p1Red: "02:10.00",
         p1Blue: "01:25.00",
-        p2Red: "01:40.00",
-        p2Blue: "01:20.00",
+        p2Red: "01:30.00",
+        p2Blue: "01:18.20",
       },
       teamA: "GARUDA A",
       teamB: "RAJAWALI B",
@@ -102,8 +103,12 @@ describe("Finish Time Tie-Breaker Test Suite", () => {
 
     assert.strictEqual(res.winner, "A");
     assert.strictEqual(res.decidedBy, "finish_time");
-    assert.strictEqual(res.teamAFinishFormatted, "02:50.00");
-    assert.strictEqual(res.teamBFinishFormatted, "03:05.00");
+    assert.strictEqual(res.teamAFinishFormatted, "01:18.20");
+    assert.strictEqual(res.teamBFinishFormatted, "01:25.00");
+    assert.strictEqual(res.teamALeg1Formatted, "02:10.00");
+    assert.strictEqual(res.teamALeg2Formatted, "01:18.20");
+    assert.strictEqual(res.teamBLeg1Formatted, "01:25.00");
+    assert.strictEqual(res.teamBLeg2Formatted, "01:30.00");
   });
 
   it("Keeps match as tie when both points and finish times are identical or unplayed", () => {

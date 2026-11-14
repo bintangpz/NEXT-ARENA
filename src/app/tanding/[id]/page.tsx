@@ -3872,6 +3872,8 @@ export default function ArenaBattleMatchPage() {
                       name: match.teamA,
                       leg1: match.scoreALeg1 || 0,
                       leg2: match.scoreALeg2 || 0,
+                      leg1Time: winnerResolution.teamALeg1Formatted,
+                      leg2Time: winnerResolution.teamALeg2Formatted,
                       finalScore: match.scoreA || 0,
                       finishTimeFormatted: winnerResolution.teamAFinishFormatted,
                       label: is2x ? "Tim A" : "Sudut Merah",
@@ -3885,6 +3887,8 @@ export default function ArenaBattleMatchPage() {
                             name: match.teamB,
                             leg1: match.scoreBLeg1 || 0,
                             leg2: match.scoreBLeg2 || 0,
+                            leg1Time: winnerResolution.teamBLeg1Formatted,
+                            leg2Time: winnerResolution.teamBLeg2Formatted,
                             finalScore: match.scoreB || 0,
                             finishTimeFormatted: winnerResolution.teamBFinishFormatted,
                             label: is2x ? "Tim B" : "Sudut Biru",
@@ -3912,35 +3916,66 @@ export default function ArenaBattleMatchPage() {
                           <span className="text-sm font-black text-white block truncate">
                             {teamInfo.name}
                           </span>
-                          {(is2x || teamInfo.finishTimeFormatted) && (
-                            <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[10px] text-zinc-400">
-                              {is2x && (
-                                <>
-                                  <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800">
-                                    P1: <strong className="text-white">{teamInfo.leg1}</strong>
-                                  </span>
-                                  <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-cyan-500/30">
-                                    P2: <strong className="text-cyan-300">{teamInfo.leg2}</strong>
-                                  </span>
-                                </>
-                              )}
-                              {teamInfo.finishTimeFormatted && (
-                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
-                                  ⏱ Finish: <strong>{teamInfo.finishTimeFormatted}</strong>
-                                </span>
-                              )}
-                            </div>
-                          )}
                         </div>
-                        <div className="text-right shrink-0">
-                          <span className="text-[9px] uppercase text-zinc-400 block">
-                            {is2x ? "Nilai Akhir (Rata-Rata)" : "Nilai Akhir"}
-                          </span>
-                          <span className="text-xl sm:text-2xl font-black text-amber-400">
-                            {teamInfo.finalScore} PTS
-                          </span>
-                        </div>
+                        {!is2x ? (
+                          <div className="text-right shrink-0">
+                            <span className="text-[9px] uppercase text-zinc-400 block">
+                              Nilai Akhir
+                            </span>
+                            <span className="text-xl sm:text-2xl font-black text-amber-400">
+                              {teamInfo.finalScore} PTS
+                            </span>
+                            {teamInfo.finishTimeFormatted && (
+                              <span className="block text-[10px] text-emerald-300 font-bold mt-0.5">
+                                ⏱ Finish: {teamInfo.finishTimeFormatted}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          teamInfo.finishTimeFormatted && (
+                            <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[10px] font-bold shrink-0">
+                              ⏱ Tercepat: {teamInfo.finishTimeFormatted}
+                            </span>
+                          )
+                        )}
                       </div>
+
+                      {/* Ringkasan Besar Skor Tiap Putaran & Rata-Rata Akhir (2x Main) */}
+                      {is2x && (
+                        <div className="grid grid-cols-3 gap-2">
+                          <div className="p-2 rounded-xl bg-zinc-900/90 border border-zinc-800 text-center">
+                            <span className="text-[9px] uppercase text-zinc-400 font-bold block">
+                              Putaran 1
+                            </span>
+                            <span className="text-base sm:text-lg font-black text-white block leading-tight mt-0.5">
+                              {teamInfo.leg1}
+                            </span>
+                            <span className="text-[9px] text-zinc-500 block">
+                              {teamInfo.leg1Time ? `⏱ ${teamInfo.leg1Time}` : "PTS"}
+                            </span>
+                          </div>
+                          <div className="p-2 rounded-xl bg-zinc-900/90 border border-cyan-500/30 text-center">
+                            <span className="text-[9px] uppercase text-cyan-300 font-bold block">
+                              Putaran 2
+                            </span>
+                            <span className="text-base sm:text-lg font-black text-cyan-300 block leading-tight mt-0.5">
+                              {teamInfo.leg2}
+                            </span>
+                            <span className="text-[9px] text-cyan-400/70 block">
+                              {teamInfo.leg2Time ? `⏱ ${teamInfo.leg2Time}` : "PTS"}
+                            </span>
+                          </div>
+                          <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/40 text-center">
+                            <span className="text-[9px] uppercase text-amber-300 font-bold block leading-tight">
+                              Nilai Akhir (Rata-Rata)
+                            </span>
+                            <span className="text-base sm:text-lg font-black text-amber-400 block leading-tight mt-0.5">
+                              {teamInfo.finalScore}
+                            </span>
+                            <span className="text-[9px] text-amber-300/80 block">PTS</span>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Rincian Per Kategori Skor (Point, Cekpoint, Finish, Bonus, Retry) */}
                       <div className="space-y-1">

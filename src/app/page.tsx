@@ -257,7 +257,7 @@ export default function NextArenaDashboard() {
         const ch = new BroadcastChannel("next_arena_sync");
         ch.postMessage({ type, payload });
         ch.close();
-      } catch (e) {}
+      } catch (e) { }
     }
   };
 
@@ -401,7 +401,7 @@ export default function NextArenaDashboard() {
             return parsed[0]?.name || prev;
           });
         }
-      } catch (e) {}
+      } catch (e) { }
     }
     if (s.active_round) setActiveRound(s.active_round);
     if (s.match_turns) setMatchTurns(s.match_turns as any);
@@ -409,7 +409,7 @@ export default function NextArenaDashboard() {
       try {
         const parsed = typeof s.round_match_turns === "string" ? JSON.parse(s.round_match_turns) : s.round_match_turns;
         setRoundMatchTurns(parsed);
-      } catch (e) {}
+      } catch (e) { }
     }
     if (s.timer_mode) setTimerMode(s.timer_mode);
     if (s.timer_phase) setTimerPhase(s.timer_phase);
@@ -460,7 +460,7 @@ export default function NextArenaDashboard() {
         if (Array.isArray(parsed) && parsed.length > 0) {
           setCustomPointRules(parsed);
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // Fokus Tampilan Monitor Utama otomatis mengikuti pilihan mode atau default view
@@ -483,8 +483,8 @@ export default function NextArenaDashboard() {
         s.default_monitor_view === "bracket" || s.stage_model === "bracket"
           ? "bracket"
           : s.default_monitor_view === "judging" || s.stage_model === "judging"
-          ? "judging"
-          : "leaderboard";
+            ? "judging"
+            : "leaderboard";
 
       const syncKey = `${s.stage_model || ""}_${s.default_monitor_view || ""}`;
       if (lastSyncedModelRef.current !== syncKey || isInitialLoadRef.current) {
@@ -534,7 +534,7 @@ export default function NextArenaDashboard() {
             applySettings(json.settings, false);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }, 4000);
     return () => clearInterval(interval);
   }, []);
@@ -565,7 +565,7 @@ export default function NextArenaDashboard() {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
-      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+      if (ctx.state === "suspended") ctx.resume().catch(() => { });
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -586,9 +586,9 @@ export default function NextArenaDashboard() {
       osc.start(now);
       osc.stop(now + 0.12);
       setTimeout(() => {
-        try { ctx.close(); } catch {}
+        try { ctx.close(); } catch { }
       }, 150);
-    } catch {}
+    } catch { }
   };
 
   // Keyboard Hotkey Listener for Live Match Scoring on Monitor
@@ -1166,12 +1166,12 @@ export default function NextArenaDashboard() {
       prev.map((m) =>
         m.id === matchId
           ? {
-              ...m,
-              scoreA: newScoreA,
-              scoreB: newScoreB,
-              winner: winner || undefined,
-              status: status as any,
-            }
+            ...m,
+            scoreA: newScoreA,
+            scoreB: newScoreB,
+            winner: winner || undefined,
+            status: status as any,
+          }
           : m
       )
     );
@@ -1223,12 +1223,12 @@ export default function NextArenaDashboard() {
       prev.map((m) =>
         m.id === matchId
           ? {
-              ...m,
-              scoreA: newScoreA,
-              scoreB: newScoreB,
-              winner: winner || undefined,
-              status: status as any,
-            }
+            ...m,
+            scoreA: newScoreA,
+            scoreB: newScoreB,
+            winner: winner || undefined,
+            status: status as any,
+          }
           : m
       )
     );
@@ -1298,17 +1298,17 @@ export default function NextArenaDashboard() {
       prev.map((m) =>
         m.id === matchId
           ? {
-              ...m,
-              currentLeg: leg,
-              scoreALeg1,
-              scoreBLeg1,
-              scoreALeg2,
-              scoreBLeg2,
-              scoreA: newScoreA,
-              scoreB: newScoreB,
-              winner: winner || undefined,
-              status: status as any,
-            }
+            ...m,
+            currentLeg: leg,
+            scoreALeg1,
+            scoreBLeg1,
+            scoreALeg2,
+            scoreBLeg2,
+            scoreA: newScoreA,
+            scoreB: newScoreB,
+            winner: winner || undefined,
+            status: status as any,
+          }
           : m
       )
     );
@@ -1381,16 +1381,16 @@ export default function NextArenaDashboard() {
       prev.map((m) =>
         m.id === matchId
           ? {
-              ...m,
-              scoreALeg1,
-              scoreBLeg1,
-              scoreALeg2,
-              scoreBLeg2,
-              scoreA: newScoreA,
-              scoreB: newScoreB,
-              winner: winner || undefined,
-              status: status as any,
-            }
+            ...m,
+            scoreALeg1,
+            scoreBLeg1,
+            scoreALeg2,
+            scoreBLeg2,
+            scoreA: newScoreA,
+            scoreB: newScoreB,
+            winner: winner || undefined,
+            status: status as any,
+          }
           : m
       )
     );
@@ -1522,7 +1522,7 @@ export default function NextArenaDashboard() {
     if (Boolean(shutterMatch)) return;
     try {
       router.prefetch(`/tanding/${match.id}`);
-    } catch {}
+    } catch { }
     handleSetMatchStatus(match.id, "Berlangsung");
     setShutterMatch(match);
   };
@@ -1605,11 +1605,11 @@ export default function NextArenaDashboard() {
           ? "red"
           : "blue"
         : isTeamA
-        ? "blue"
-        : "red"
+          ? "blue"
+          : "red"
       : isTeamA
-      ? "red"
-      : "blue";
+        ? "red"
+        : "blue";
 
     return {
       swTime,
@@ -1793,55 +1793,53 @@ export default function NextArenaDashboard() {
                 type="button"
                 onClick={() => setIsBigTimerOpen(true)}
                 title="Buka Layar Penuh Stopwatch Arena"
-                className={`flex items-center gap-2 px-3 py-1 rounded-xl font-mono text-xs font-bold transition-all shadow-sm ${
-                  timerPhase === "preparation"
+                className={`flex items-center gap-2 px-3 py-1 rounded-xl font-mono text-xs font-bold transition-all shadow-sm ${timerPhase === "preparation"
                     ? "bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse"
                     : timerPhase === "prep_ended"
-                    ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/50 animate-bounce"
-                    : timerPhase === "match"
-                    ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-                    : timerPhase === "paused"
-                    ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                    : timerPhase === "countdown"
-                    ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 animate-pulse"
-                    : timerPhase === "finished"
-                    ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                    : "bg-[#0a172c] border border-cyan-900/40 text-zinc-300"
-                }`}
+                      ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/50 animate-bounce"
+                      : timerPhase === "match"
+                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                        : timerPhase === "paused"
+                          ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                          : timerPhase === "countdown"
+                            ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 animate-pulse"
+                            : timerPhase === "finished"
+                              ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                              : "bg-[#0a172c] border border-cyan-900/40 text-zinc-300"
+                  }`}
               >
                 <span
-                  className={`w-2 h-2 rounded-full ${
-                    isTimerRunning
+                  className={`w-2 h-2 rounded-full ${isTimerRunning
                       ? timerPhase === "preparation"
                         ? "bg-amber-400 animate-ping"
                         : timerPhase === "countdown"
-                        ? "bg-cyan-400 animate-ping"
-                        : "bg-emerald-400 animate-ping"
+                          ? "bg-cyan-400 animate-ping"
+                          : "bg-emerald-400 animate-ping"
                       : "bg-zinc-600"
-                  }`}
+                    }`}
                 />
                 <span className="text-[10px] uppercase font-sans font-semibold tracking-wider text-zinc-400 hidden sm:inline">
                   {timerPhase === "preparation"
                     ? "Persiapan"
                     : timerPhase === "prep_ended"
-                    ? "Siap Start"
-                    : timerPhase === "countdown"
-                    ? "Hitung Mundur"
-                    : timerPhase === "match"
-                    ? "Stopwatch"
-                    : timerPhase === "paused"
-                    ? "Jeda"
-                    : timerPhase === "finished"
-                    ? "Selesai"
-                    : "Timer"}
+                      ? "Siap Start"
+                      : timerPhase === "countdown"
+                        ? "Hitung Mundur"
+                        : timerPhase === "match"
+                          ? "Stopwatch"
+                          : timerPhase === "paused"
+                            ? "Jeda"
+                            : timerPhase === "finished"
+                              ? "Selesai"
+                              : "Timer"}
                   :
                 </span>
                 <span className="text-sm font-black text-white font-mono">
                   {timerPhase === "countdown"
                     ? timerSeconds
                     : timerPhase === "match" || timerPhase === "finished"
-                    ? getStopwatchParts(timerElapsedMs).formatted
-                    : formatTimerDisplay(timerSeconds)}
+                      ? getStopwatchParts(timerElapsedMs).formatted
+                      : formatTimerDisplay(timerSeconds)}
                 </span>
                 <Maximize2 className="w-3 h-3 text-zinc-400 hover:text-white ml-0.5" />
               </button>
@@ -1859,33 +1857,30 @@ export default function NextArenaDashboard() {
           <nav className="hidden lg:flex items-center bg-[#0a172c]/90 p-1.5 rounded-xl border border-cyan-800/40 shadow-inner">
             <button
               onClick={() => setActiveTab("leaderboard")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === "leaderboard"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === "leaderboard"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
                   : "text-zinc-400 hover:text-zinc-200"
-              }`}
+                }`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span>Klasemen & Peserta</span>
             </button>
             <button
               onClick={() => setActiveTab("bracket")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === "bracket"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === "bracket"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
                   : "text-zinc-400 hover:text-zinc-200"
-              }`}
+                }`}
             >
               <GitBranch className="w-3.5 h-3.5" />
               <span>Bagan Pertandingan</span>
             </button>
             <button
               onClick={() => setActiveTab("judging")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                activeTab === "judging"
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${activeTab === "judging"
                   ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md shadow-cyan-500/25"
                   : "text-zinc-400 hover:text-zinc-200"
-              }`}
+                }`}
             >
               <ClipboardCheck className="w-3.5 h-3.5" />
               <span>Matriks Kriteria Juri</span>
@@ -1928,27 +1923,24 @@ export default function NextArenaDashboard() {
         <div className="flex lg:hidden items-center justify-around border-t border-cyan-900/40 bg-[#060e1c]/95 px-2 py-1.5">
           <button
             onClick={() => setActiveTab("leaderboard")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${
-              activeTab === "leaderboard" ? "text-cyan-400 bg-cyan-500/10" : "text-zinc-400"
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === "leaderboard" ? "text-cyan-400 bg-cyan-500/10" : "text-zinc-400"
+              }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
             <span>Klasemen</span>
           </button>
           <button
             onClick={() => setActiveTab("bracket")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${
-              activeTab === "bracket" ? "text-cyan-400 bg-cyan-500/10" : "text-zinc-400"
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === "bracket" ? "text-cyan-400 bg-cyan-500/10" : "text-zinc-400"
+              }`}
           >
             <GitBranch className="w-3.5 h-3.5" />
             <span>Bracket</span>
           </button>
           <button
             onClick={() => setActiveTab("judging")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${
-              activeTab === "judging" ? "text-cyan-400 bg-cyan-500/10" : "text-zinc-400"
-            }`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${activeTab === "judging" ? "text-cyan-400 bg-cyan-500/10" : "text-zinc-400"
+              }`}
           >
             <ClipboardCheck className="w-3.5 h-3.5" />
             <span>Kriteria Juri</span>
@@ -2055,144 +2047,144 @@ export default function NextArenaDashboard() {
             {podiumParticipants.length > 0 && (
               <section className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-2 h-6 rounded-full bg-gradient-to-b from-amber-400 via-cyan-400 to-blue-600" />
-                  <h2 className="text-lg sm:text-xl font-bold tracking-wide text-white uppercase">
-                    Top 3 Podium Klasemen
-                  </h2>
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-2 h-6 rounded-full bg-gradient-to-b from-amber-400 via-cyan-400 to-blue-600" />
+                    <h2 className="text-lg sm:text-xl font-bold tracking-wide text-white uppercase">
+                      Top 3 Podium Klasemen
+                    </h2>
+                  </div>
+                  <span className="text-xs text-zinc-400">
+                    Klik nama tim untuk melihat profil anggota & rincian kriteria penilaian juri
+                  </span>
                 </div>
-                <span className="text-xs text-zinc-400">
-                  Klik nama tim untuk melihat profil anggota & rincian kriteria penilaian juri
-                </span>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
-                {podiumParticipants.map((item, idx) => {
-                  const rankPosition = idx + 1;
-                  const isFirst = rankPosition === 1;
-                  const isSecond = rankPosition === 2;
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+                  {podiumParticipants.map((item, idx) => {
+                    const rankPosition = idx + 1;
+                    const isFirst = rankPosition === 1;
+                    const isSecond = rankPosition === 2;
 
-                  const borderStyle = isFirst
-                    ? "border-amber-400/50 bg-gradient-to-b from-amber-500/15 via-[#0c1a30] to-[#060e1c] shadow-[0_0_35px_rgba(245,158,11,0.2)]"
-                    : isSecond
-                    ? "border-cyan-400/40 bg-gradient-to-b from-cyan-500/15 via-[#0c1a30] to-[#060e1c] shadow-[0_0_30px_rgba(0,163,255,0.15)]"
-                    : "border-sky-400/35 bg-gradient-to-b from-sky-500/10 via-[#0c1a30] to-[#060e1c]";
+                    const borderStyle = isFirst
+                      ? "border-amber-400/50 bg-gradient-to-b from-amber-500/15 via-[#0c1a30] to-[#060e1c] shadow-[0_0_35px_rgba(245,158,11,0.2)]"
+                      : isSecond
+                        ? "border-cyan-400/40 bg-gradient-to-b from-cyan-500/15 via-[#0c1a30] to-[#060e1c] shadow-[0_0_30px_rgba(0,163,255,0.15)]"
+                        : "border-sky-400/35 bg-gradient-to-b from-sky-500/10 via-[#0c1a30] to-[#060e1c]";
 
-                  const badgeStyle = isFirst
-                    ? "bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-zinc-950 shadow-lg shadow-amber-500/25"
-                    : isSecond
-                    ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-white shadow-lg shadow-cyan-500/25"
-                    : "bg-gradient-to-r from-sky-400 to-blue-600 text-white";
+                    const badgeStyle = isFirst
+                      ? "bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 text-zinc-950 shadow-lg shadow-amber-500/25"
+                      : isSecond
+                        ? "bg-gradient-to-r from-cyan-400 to-blue-500 text-white shadow-lg shadow-cyan-500/25"
+                        : "bg-gradient-to-r from-sky-400 to-blue-600 text-white";
 
-                  return (
-                    <div
-                      key={item.id}
-                      className={`relative rounded-2xl border p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${borderStyle}`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between gap-2 mb-4">
-                          <span
-                            className={`inline-flex items-center justify-center px-3 py-1 rounded-lg text-xs font-extrabold tracking-wider uppercase ${badgeStyle}`}
-                          >
-                            <Trophy className="w-3.5 h-3.5 mr-1.5" />
-                            RANK #{rankPosition}
-                          </span>
-                          {getStatusBadge(item.status)}
-                        </div>
+                    return (
+                      <div
+                        key={item.id}
+                        className={`relative rounded-2xl border p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 hover:-translate-y-1 ${borderStyle}`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-4">
+                            <span
+                              className={`inline-flex items-center justify-center px-3 py-1 rounded-lg text-xs font-extrabold tracking-wider uppercase ${badgeStyle}`}
+                            >
+                              <Trophy className="w-3.5 h-3.5 mr-1.5" />
+                              RANK #{rankPosition}
+                            </span>
+                            {getStatusBadge(item.status)}
+                          </div>
 
-                        <button
-                          onClick={() => setDetailParticipantId(item.id)}
-                          className="text-left group/title"
-                        >
-                          <h3 className="text-xl font-bold text-white group-hover/title:text-cyan-400 transition-colors tracking-tight">
-                            {item.name}
-                          </h3>
-                        </button>
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
-                          <Building2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                          <span className="truncate">{item.institution}</span>
-                        </div>
-
-                        <div className="mt-3 flex items-center justify-between">
-                          {getCategoryBadge(item.category)}
                           <button
                             onClick={() => setDetailParticipantId(item.id)}
-                            className="text-xs text-zinc-400 hover:text-cyan-300 inline-flex items-center gap-1"
+                            className="text-left group/title"
                           >
-                            <Eye className="w-3.5 h-3.5" />
-                            <span>Profil Tim</span>
+                            <h3 className="text-xl font-bold text-white group-hover/title:text-cyan-400 transition-colors tracking-tight">
+                              {item.name}
+                            </h3>
                           </button>
+                          <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
+                            <Building2 className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                            <span className="truncate">{item.institution}</span>
+                          </div>
+
+                          <div className="mt-3 flex items-center justify-between">
+                            {getCategoryBadge(item.category)}
+                            <button
+                              onClick={() => setDetailParticipantId(item.id)}
+                              className="text-xs text-zinc-400 hover:text-cyan-300 inline-flex items-center gap-1"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Profil Tim</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="mt-6 pt-4 border-t border-zinc-800/80 space-y-3">
+                          <div className="grid grid-cols-3 gap-2 text-center">
+                            <div className="bg-zinc-900/90 rounded-lg p-2 border border-zinc-800/70">
+                              <span className="block text-[10px] uppercase tracking-wider text-zinc-400">
+                                Babak 1
+                              </span>
+                              <span className="font-mono text-sm font-semibold text-zinc-200">
+                                {item.scores.babak1}
+                              </span>
+                            </div>
+                            <div className="bg-zinc-900/90 rounded-lg p-2 border border-zinc-800/70">
+                              <span className="block text-[10px] uppercase tracking-wider text-zinc-400">
+                                Babak 2
+                              </span>
+                              <span className="font-mono text-sm font-semibold text-zinc-200">
+                                {item.scores.babak2}
+                              </span>
+                            </div>
+                            <div className="bg-zinc-900/90 rounded-lg p-2 border border-cyan-500/30">
+                              <span className="block text-[10px] uppercase tracking-wider text-cyan-400">
+                                Babak 3
+                              </span>
+                              <span className="font-mono text-sm font-semibold text-cyan-300">
+                                {item.scores.babak3}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-end justify-between pt-1">
+                            <div>
+                              <span className="text-[11px] uppercase tracking-wider text-zinc-400 block">
+                                Total Ranking Point
+                              </span>
+                              <span className="text-2xl sm:text-3xl font-black font-mono bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 bg-clip-text text-transparent">
+                                {item.totalPoints.toLocaleString("id-ID")}
+                              </span>
+                              <span className="text-xs text-zinc-400 ml-1 font-mono">PTS</span>
+                            </div>
+
+                            {(() => {
+                              const activeBonus = customPointRules.find(
+                                (r) => r.enabled && r.points > 0
+                              ) || {
+                                label: "Bonus Cepat",
+                                points: 50,
+                              };
+                              return (
+                                <button
+                                  onClick={() =>
+                                    handleQuickAdjustPoint(
+                                      item.id,
+                                      activeBonus.points,
+                                      `${activeBonus.label} (+${activeBonus.points})`
+                                    )
+                                  }
+                                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition-colors"
+                                >
+                                  +{activeBonus.points} {activeBonus.label}
+                                </button>
+                              );
+                            })()}
+                          </div>
                         </div>
                       </div>
-
-                      <div className="mt-6 pt-4 border-t border-zinc-800/80 space-y-3">
-                        <div className="grid grid-cols-3 gap-2 text-center">
-                          <div className="bg-zinc-900/90 rounded-lg p-2 border border-zinc-800/70">
-                            <span className="block text-[10px] uppercase tracking-wider text-zinc-400">
-                              Babak 1
-                            </span>
-                            <span className="font-mono text-sm font-semibold text-zinc-200">
-                              {item.scores.babak1}
-                            </span>
-                          </div>
-                          <div className="bg-zinc-900/90 rounded-lg p-2 border border-zinc-800/70">
-                            <span className="block text-[10px] uppercase tracking-wider text-zinc-400">
-                              Babak 2
-                            </span>
-                            <span className="font-mono text-sm font-semibold text-zinc-200">
-                              {item.scores.babak2}
-                            </span>
-                          </div>
-                          <div className="bg-zinc-900/90 rounded-lg p-2 border border-cyan-500/30">
-                            <span className="block text-[10px] uppercase tracking-wider text-cyan-400">
-                              Babak 3
-                            </span>
-                            <span className="font-mono text-sm font-semibold text-cyan-300">
-                              {item.scores.babak3}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-end justify-between pt-1">
-                          <div>
-                            <span className="text-[11px] uppercase tracking-wider text-zinc-400 block">
-                              Total Ranking Point
-                            </span>
-                            <span className="text-2xl sm:text-3xl font-black font-mono bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 bg-clip-text text-transparent">
-                              {item.totalPoints.toLocaleString("id-ID")}
-                            </span>
-                            <span className="text-xs text-zinc-400 ml-1 font-mono">PTS</span>
-                          </div>
-
-                          {(() => {
-                            const activeBonus = customPointRules.find(
-                              (r) => r.enabled && r.points > 0
-                            ) || {
-                              label: "Bonus Cepat",
-                              points: 50,
-                            };
-                            return (
-                              <button
-                                onClick={() =>
-                                  handleQuickAdjustPoint(
-                                    item.id,
-                                    activeBonus.points,
-                                    `${activeBonus.label} (+${activeBonus.points})`
-                                  )
-                                }
-                                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 transition-colors"
-                              >
-                                +{activeBonus.points} {activeBonus.label}
-                              </button>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
+                    );
+                  })}
+                </div>
+              </section>
             )}
 
             {/* MAIN CONTAINER: DAFTAR PESERTA & RANKING TABLE */}
@@ -2270,17 +2262,15 @@ export default function NextArenaDashboard() {
                               setSelectedLeaderboardStage(sIdx);
                               setShowAllInStage(false);
                             }}
-                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer whitespace-nowrap ${
-                              isSelected
+                            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer whitespace-nowrap ${isSelected
                                 ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-400/50 shadow-md shadow-cyan-500/25"
                                 : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
-                            }`}
+                              }`}
                           >
                             <span>{displayName}</span>
                             <span
-                              className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${
-                                isSelected ? "bg-black/30 text-white" : "bg-zinc-800 text-zinc-400"
-                              }`}
+                              className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase ${isSelected ? "bg-black/30 text-white" : "bg-zinc-800 text-zinc-400"
+                                }`}
                             >
                               {stage.model === "ranking" ? "Ranking" : "Gugur"}
                             </span>
@@ -2294,11 +2284,10 @@ export default function NextArenaDashboard() {
                           setSelectedLeaderboardStage("all");
                           setShowAllInStage(true);
                         }}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer whitespace-nowrap ${
-                          selectedLeaderboardStage === "all"
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border cursor-pointer whitespace-nowrap ${selectedLeaderboardStage === "all"
                             ? "bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 text-white border-cyan-400/50 shadow-md shadow-cyan-500/25"
                             : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
-                        }`}
+                          }`}
                       >
                         <span>Semua Babak (Total)</span>
                       </button>
@@ -2314,11 +2303,10 @@ export default function NextArenaDashboard() {
                           <button
                             key={cat}
                             onClick={() => setSelectedCategory(cat)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-                              active
+                            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${active
                                 ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold shadow-sm shadow-cyan-500/20"
                                 : "bg-zinc-900 text-zinc-400 hover:text-zinc-200 border border-zinc-800"
-                            }`}
+                              }`}
                           >
                             {cat}
                           </button>
@@ -2437,23 +2425,21 @@ export default function NextArenaDashboard() {
                           return (
                             <tr
                               key={p.id}
-                              className={`group transition-colors hover:bg-[#0c1c38]/40 ${
-                                p.status === "Gugur" ? "opacity-60" : ""
-                              }`}
+                              className={`group transition-colors hover:bg-[#0c1c38]/40 ${p.status === "Gugur" ? "opacity-60" : ""
+                                }`}
                             >
                               {/* RANK + DELTA */}
                               <td className="py-4 pl-6 pr-3 whitespace-nowrap">
                                 <div className="flex items-center gap-2.5">
                                   <span
-                                    className={`w-8 h-8 rounded-lg font-mono font-bold text-sm flex items-center justify-center ${
-                                      p.currentRank === 1
+                                    className={`w-8 h-8 rounded-lg font-mono font-bold text-sm flex items-center justify-center ${p.currentRank === 1
                                         ? "bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-zinc-950 shadow-md shadow-amber-500/20"
                                         : p.currentRank === 2
-                                        ? "bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-md shadow-cyan-500/20"
-                                        : p.currentRank === 3
-                                        ? "bg-gradient-to-br from-sky-400 to-indigo-600 text-white"
-                                        : "bg-[#060e1c] text-cyan-200/80 border border-cyan-900/40"
-                                    }`}
+                                          ? "bg-gradient-to-br from-cyan-400 to-blue-500 text-white shadow-md shadow-cyan-500/20"
+                                          : p.currentRank === 3
+                                            ? "bg-gradient-to-br from-sky-400 to-indigo-600 text-white"
+                                            : "bg-[#060e1c] text-cyan-200/80 border border-cyan-900/40"
+                                      }`}
                                   >
                                     #{p.currentRank}
                                   </span>
@@ -2543,11 +2529,10 @@ export default function NextArenaDashboard() {
                               <td className="py-4 px-4 text-right whitespace-nowrap">
                                 <div className="flex flex-col items-end">
                                   <span
-                                    className={`font-mono text-lg font-extrabold ${
-                                      isTop3
+                                    className={`font-mono text-lg font-extrabold ${isTop3
                                         ? "bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 bg-clip-text text-transparent"
                                         : "text-white"
-                                    }`}
+                                      }`}
                                   >
                                     {p.totalPoints.toLocaleString("id-ID")}
                                   </span>
@@ -2583,7 +2568,7 @@ export default function NextArenaDashboard() {
                                     </button>
                                   )}
 
-                                   {/* Tombol Lanjut ke Babak Selanjutnya / Batal Lanjut */}
+                                  {/* Tombol Lanjut ke Babak Selanjutnya / Batal Lanjut */}
                                   {(() => {
                                     if (p.status === "Gugur") return null;
                                     if (tournamentStages.length <= 1) return null;
@@ -2613,7 +2598,7 @@ export default function NextArenaDashboard() {
                                       if (currentIdx === tabIdx) {
                                         const nextIdx = tabIdx + 1;
                                         const hasNextStage = nextIdx < tournamentStages.length;
-                                        
+
                                         // Jika ada babak berikutnya -> Tampilkan tombol Lanjut ke Babak Selanjutnya
                                         if (hasNextStage) {
                                           const nextStage = tournamentStages[nextIdx];
@@ -2775,729 +2760,592 @@ export default function NextArenaDashboard() {
                     </div>
                   </div>
 
-              {/* Round Navigation Pills & Format Main Indicator */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-cyan-900/40">
-                <div className="flex flex-wrap items-center gap-2">
-                  {tournamentStages.map((stage) => {
-                    const matchCount = bracketMatches.filter((m) => m.round === stage.name).length;
-                    const isActive = selectedBracketRound === stage.name;
-                    return (
-                      <button
-                        key={stage.id}
-                        type="button"
-                        onClick={() => setSelectedBracketRound(stage.name)}
-                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${
-                          isActive
-                            ? "bg-cyan-500/15 border-cyan-500 text-cyan-300 shadow-sm shadow-cyan-500/20"
-                            : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
-                        }`}
-                      >
-                        <span>{stage.name}</span>
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-zinc-800/80 text-zinc-300 border border-zinc-700/50">
-                          {stage.model === "ranking" ? "Ranking" : "Gugur"}
-                        </span>
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                          {stage.turns || "1x"}
-                        </span>
-                        <span
-                          className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${
-                            stage.resetPoints !== false
-                              ? "bg-amber-500/10 text-amber-300 border border-amber-500/30"
-                              : "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
-                          }`}
-                        >
-                          {stage.resetPoints !== false ? "Reset 0" : "Bawa Poin"}
-                        </span>
-                        <span
-                          className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${
-                            isActive ? "bg-cyan-500/30 text-cyan-200" : "bg-zinc-800 text-zinc-400"
-                          }`}
-                        >
-                          {matchCount} Laga
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            {/* List Laga Display */}
-            {(() => {
-              const currentMatches = bracketMatches.filter((m) => m.round === selectedBracketRound);
-
-              if (currentMatches.length === 0) {
-                return (
-                  <div className="py-12 text-center rounded-2xl bg-[#0a172c]/90 border border-cyan-900/40 p-6 sm:p-8 space-y-6 shadow-xl">
-                    <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mx-auto">
-                      <GitBranch className="w-8 h-8" />
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-lg font-bold text-white">Belum Ada Jadwal Laga ({selectedBracketRound})</p>
-                      <p className="text-xs text-zinc-400 max-w-md mx-auto">
-                        Jadwal pertandingan diacak dan dikelola melalui menu Pengaturan Turnamen.
-                      </p>
-                    </div>
-
-                    {/* Daftar Tim Lolos ke Babak Ini */}
-                    {qualifiedBracketParticipants.length > 0 ? (
-                      <div className="max-w-4xl mx-auto pt-2 text-left">
-                        <div className="flex items-center justify-between pb-2 border-b border-cyan-900/40 text-xs font-mono">
-                          <span className="text-cyan-400 font-bold uppercase tracking-wider">
-                            Daftar Tim Lolos ke {selectedBracketRound} ({qualifiedBracketParticipants.length} Tim):
-                          </span>
-                          <span className="text-zinc-500 text-[11px]">
-                            Menunggu Jadwal Diacak di Pengaturan
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-3">
-                          {qualifiedBracketParticipants.map((p, idx) => (
-                            <div
-                              key={p.id}
-                              className="p-3.5 rounded-xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-between shadow-sm"
+                  {/* Round Navigation Pills & Format Main Indicator */}
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-cyan-900/40">
+                    <div className="flex flex-wrap items-center gap-2">
+                      {tournamentStages.map((stage) => {
+                        const matchCount = bracketMatches.filter((m) => m.round === stage.name).length;
+                        const isActive = selectedBracketRound === stage.name;
+                        return (
+                          <button
+                            key={stage.id}
+                            type="button"
+                            onClick={() => setSelectedBracketRound(stage.name)}
+                            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 border ${isActive
+                                ? "bg-cyan-500/15 border-cyan-500 text-cyan-300 shadow-sm shadow-cyan-500/20"
+                                : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
+                              }`}
+                          >
+                            <span>{stage.name}</span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold uppercase bg-zinc-800/80 text-zinc-300 border border-zinc-700/50">
+                              {stage.model === "ranking" ? "Ranking" : "Gugur"}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                              {stage.turns || "1x"}
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-bold ${stage.resetPoints !== false
+                                  ? "bg-amber-500/10 text-amber-300 border border-amber-500/30"
+                                  : "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
+                                }`}
                             >
-                              <div className="flex items-center gap-2.5 min-w-0">
-                                <span className="w-6 h-6 rounded-lg bg-cyan-500/15 text-cyan-400 font-mono text-xs font-bold flex items-center justify-center shrink-0">
-                                  {idx + 1}
-                                </span>
-                                <div className="truncate">
-                                  <p className="font-bold text-white text-xs truncate">{p.name}</p>
-                                  <p className="text-[10px] text-zinc-400 truncate">{p.institution}</p>
-                                </div>
-                              </div>
-                              <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">
-                                Lolos
+                              {stage.resetPoints !== false ? "Reset 0" : "Bawa Poin"}
+                            </span>
+                            <span
+                              className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono ${isActive ? "bg-cyan-500/30 text-cyan-200" : "bg-zinc-800 text-zinc-400"
+                                }`}
+                            >
+                              {matchCount} Laga
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* List Laga Display */}
+                {(() => {
+                  const currentMatches = bracketMatches.filter((m) => m.round === selectedBracketRound);
+
+                  if (currentMatches.length === 0) {
+                    return (
+                      <div className="py-12 text-center rounded-2xl bg-[#0a172c]/90 border border-cyan-900/40 p-6 sm:p-8 space-y-6 shadow-xl">
+                        <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 mx-auto">
+                          <GitBranch className="w-8 h-8" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-lg font-bold text-white">Belum Ada Jadwal Laga ({selectedBracketRound})</p>
+                          <p className="text-xs text-zinc-400 max-w-md mx-auto">
+                            Jadwal pertandingan diacak dan dikelola melalui menu Pengaturan Turnamen.
+                          </p>
+                        </div>
+
+                        {/* Daftar Tim Lolos ke Babak Ini */}
+                        {qualifiedBracketParticipants.length > 0 ? (
+                          <div className="max-w-4xl mx-auto pt-2 text-left">
+                            <div className="flex items-center justify-between pb-2 border-b border-cyan-900/40 text-xs font-mono">
+                              <span className="text-cyan-400 font-bold uppercase tracking-wider">
+                                Daftar Tim Lolos ke {selectedBracketRound} ({qualifiedBracketParticipants.length} Tim):
+                              </span>
+                              <span className="text-zinc-500 text-[11px]">
+                                Menunggu Jadwal Diacak di Pengaturan
                               </span>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800/80 max-w-md mx-auto">
-                        <p className="text-xs text-zinc-400">
-                          Belum ada peserta yang dinyatakan lolos ke {selectedBracketRound}. Buka tab <strong>Daftar Peserta &amp; Klasemen</strong> untuk meloloskan tim.
-                        </p>
-                      </div>
-                    )}
-
-                    <div>
-                      <Link
-                        href="/pengaturan"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
-                      >
-                        <Settings className="w-4 h-4 text-cyan-400" />
-                        <span>Buka Pengaturan Bagan</span>
-                      </Link>
-                    </div>
-                  </div>
-                );
-              }
-
-              return (
-                <div className="space-y-4">
-                  {/* Summary Header Pill */}
-                  <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#0a172c]/80 border border-cyan-900/40 text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      <span className="font-bold text-white">
-                        {selectedBracketRound}:
-                      </span>
-                      <span className="text-zinc-400">
-                        {qualifiedBracketParticipants.length} Tim Lolos
-                      </span>
-                    </div>
-                    <span className="font-mono text-cyan-400 font-bold">
-                      {currentMatches.length} Laga Terjadwal
-                    </span>
-                  </div>
-
-                  {currentMatches.map((match) => {
-                    const instA = participants.find((p) => p.name === match.teamA)?.institution;
-                    const instB = participants.find((p) => p.name === match.teamB)?.institution;
-                    const isSingle = match.teamB === "- (Tanding Tunggal)";
-
-                    const is2x = getMatchTurnsForRound(match.round) === "2x";
-                    const activeLeg = (match.currentLeg || 1) as 1 | 2;
-                    const isSwapped = is2x && activeLeg === 2;
-
-                    // Corner team mappings:
-                    // In 1x mode: Red = Team A, Blue = Team B
-                    // In 2x mode Leg 1: Red = Team A, Blue = Team B
-                    // In 2x mode Leg 2: Red = Team B, Blue = Team A (TUKAR SISI!)
-                    const redTeamKey: "A" | "B" = isSwapped ? "B" : "A";
-                    const blueTeamKey: "A" | "B" = isSwapped ? "A" : "B";
-
-                    const redTeamName = isSwapped ? match.teamB : match.teamA;
-                    const redInst = isSwapped ? instB : instA;
-                    const redScore = is2x
-                      ? (isSwapped ? match.scoreBLeg2 ?? 0 : match.scoreALeg1 ?? 0)
-                      : match.scoreA;
-
-                    const blueTeamName = isSwapped ? match.teamA : match.teamB;
-                    const blueInst = isSwapped ? instA : instB;
-                    const blueScore = is2x
-                      ? (isSwapped ? match.scoreALeg2 ?? 0 : match.scoreBLeg1 ?? 0)
-                      : match.scoreB;
-
-                    return (
-                      <div
-                        key={match.id}
-                        className="bg-[#0a172c]/90 border border-cyan-900/40 hover:border-cyan-500/40 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4 transition-all"
-                      >
-                        {/* Match Header */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-cyan-900/30">
-                          <div className="flex items-center gap-2.5">
-                            <span className="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 font-mono font-extrabold text-xs tracking-wider border border-cyan-500/40">
-                              {match.matchLabel}
-                            </span>
-                            <span className="text-xs text-zinc-400 font-medium">
-                              {match.category || "Transporter SMP"} • {isSingle ? "1 Tim (Tanding Tunggal)" : is2x ? "2x Main (Tukar Sisi)" : "1x Main (Langsung Data)"}
-                            </span>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-2">
-                            {/* Tombol Lihat Log Poin Laga */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setDashboardLogViewMode("split");
-                                setLogBreakdownLeg("all");
-                                setViewLogMatch(match);
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white font-mono text-xs font-bold transition-all shadow-sm cursor-pointer"
-                              title="Lihat riwayat log poin untuk laga ini"
-                            >
-                              <ScrollText className="w-3.5 h-3.5 text-amber-400" />
-                              <span>Log Poin</span>
-                            </button>
-
-                            {/* Tombol Reset Laga & Hapus Log */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setResetMatchTarget(match);
-                                setResetWithLogs(true);
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-rose-950/40 border border-zinc-800 hover:border-rose-500/50 text-zinc-400 hover:text-rose-300 font-mono text-xs font-semibold transition-all shadow-sm cursor-pointer"
-                              title="Reset skor dan hapus log laga ini"
-                            >
-                              <RotateCcw className="w-3.5 h-3.5" />
-                              <span>Reset</span>
-                            </button>
-
-                            {/* Tombol Mulai Pertandingan dengan Animasi Shutter (sembunyi jika sudah Selesai) */}
-                            {match.status !== "Selesai" && (
-                              <button
-                                type="button"
-                                disabled={Boolean(shutterMatch)}
-                                onMouseEnter={() => {
-                                  try {
-                                    router.prefetch(`/tanding/${match.id}`);
-                                  } catch {}
-                                }}
-                                onClick={() => handleStartMatchWithShutter(match)}
-                                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-black text-xs hover:brightness-110 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(0,163,255,0.4)] animate-pulse hover:animate-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
-                                title="Buka Arena Tanding & Timer Stopwatch"
-                              >
-                                <Play className="w-3.5 h-3.5 fill-current" />
-                                <span>Mulai Tanding</span>
-                              </button>
-                            )}
-
-                            {/* Quick Status Pill */}
-                            <div className="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-xl border border-zinc-800 text-xs">
-                              {(match.status === "Selesai"
-                                ? (["Selesai"] as const)
-                                : (["Siap Tanding", "Berlangsung", "Selesai"] as const)
-                              ).map((st) => (
-                                <button
-                                  key={st}
-                                  type="button"
-                                  disabled={match.status === "Selesai"}
-                                  onClick={() => handleSetMatchStatus(match.id, st)}
-                                  className={`px-2 py-0.5 rounded-lg font-semibold transition-all ${
-                                    match.status === st
-                                      ? st === "Berlangsung"
-                                        ? "bg-cyan-500 text-zinc-950 font-bold shadow-md shadow-cyan-500/20"
-                                        : st === "Selesai"
-                                        ? "bg-emerald-500 text-zinc-950 font-bold cursor-default"
-                                        : "bg-amber-500 text-zinc-950 font-bold"
-                                      : "text-zinc-400 hover:text-white cursor-pointer"
-                                  }`}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-3">
+                              {qualifiedBracketParticipants.map((p, idx) => (
+                                <div
+                                  key={p.id}
+                                  className="p-3.5 rounded-xl bg-zinc-900/90 border border-zinc-800 hover:border-zinc-700 transition-all flex items-center justify-between shadow-sm"
                                 >
-                                  {st}
-                                </button>
+                                  <div className="flex items-center gap-2.5 min-w-0">
+                                    <span className="w-6 h-6 rounded-lg bg-cyan-500/15 text-cyan-400 font-mono text-xs font-bold flex items-center justify-center shrink-0">
+                                      {idx + 1}
+                                    </span>
+                                    <div className="truncate">
+                                      <p className="font-bold text-white text-xs truncate">{p.name}</p>
+                                      <p className="text-[10px] text-zinc-400 truncate">{p.institution}</p>
+                                    </div>
+                                  </div>
+                                  <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20 shrink-0">
+                                    Lolos
+                                  </span>
+                                </div>
                               ))}
                             </div>
                           </div>
-                        </div>
-
-                        {/* BODY TAMPILAN LAGA */}
-                        {is2x ? (
-                          /* TAMPILAN 2X MAIN: PUTARAN 1 & PUTARAN 2 DIMUNCULKAN BERTINGKAT SEKALIGUS (NO TAB) */
-                          <div className="space-y-4">
-                            {/* BLOK PUTARAN 1 */}
-                            <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-3">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-xs font-black uppercase flex items-center gap-1.5">
-                                  <span>⚔️ Putaran 1</span>
-                                </span>
-                                <span className="text-xs font-mono text-zinc-400">
-                                  {isSingle ? (
-                                    <>Skor P1: <strong className="text-white">{match.teamA} ({match.scoreALeg1 || 0})</strong> (Sudut Merah)</>
-                                  ) : (
-                                    <>Skor P1: <strong className="text-white">{match.teamA} ({match.scoreALeg1 || 0})</strong> vs <strong className="text-white">{match.teamB} ({match.scoreBLeg1 || 0})</strong></>
-                                  )}
-                                </span>
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {/* Sudut Merah Putaran 1: Team A */}
-                                <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-rose-500/30 space-y-2.5">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
-                                        <span className="text-[10px] font-mono font-bold text-rose-400 uppercase">
-                                          Sudut Merah
-                                        </span>
-                                      </div>
-                                      <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamA}</h5>
-                                      {instA && <span className="text-[11px] text-zinc-400 block truncate">{instA}</span>}
-                                    </div>
-
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
-                                      <input
-                                        type="number"
-                                        step="0.5"
-                                        value={match.scoreALeg1 || 0}
-                                        onChange={(e) => handleSetExactLegScore(match.id, "A", 1, parseFloat(e.target.value) || 0)}
-                                        className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Quick Score Delta Buttons */}
-                                  <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
-                                    {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
-                                      <button
-                                        key={rule.id}
-                                        type="button"
-                                        onClick={() => handleBracketLegScoreChange(match.id, "A", 1, rule.points, `${rule.points > 0 ? `+${rule.points}` : rule.points} ${rule.label}`)}
-                                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${
-                                          rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
-                                        }`}
-                                      >
-                                        {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
-                                      </button>
-                                    ))}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleBracketLegScoreChange(match.id, "A", 1, 1)}
-                                      className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
-                                    >+1</button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleBracketLegScoreChange(match.id, "A", 1, -1)}
-                                      className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
-                                    >-1</button>
-                                  </div>
-                                </div>
-
-                                {/* Sudut Biru Putaran 1: Team B atau Placeholder Tanding Tunggal */}
-                                {isSingle ? (
-                                  <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-dashed border-zinc-800 space-y-1.5 opacity-60">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="w-2 h-2 rounded-full bg-blue-500/50 shrink-0" />
-                                      <span className="text-[10px] font-mono font-bold text-blue-400 uppercase">
-                                        Sudut Biru • Sesi 1
-                                      </span>
-                                    </div>
-                                    <h5 className="text-sm font-bold text-zinc-500 italic mt-0.5">- (Tanding Tunggal)</h5>
-                                    <p className="text-[11px] text-zinc-500">Tanpa lawan di Putaran 1. Tim bermain di Sudut Merah.</p>
-                                  </div>
-                                ) : (
-                                  <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-blue-500/30 space-y-2.5">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="min-w-0">
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                                          <span className="text-[10px] font-mono font-bold text-blue-400 uppercase">
-                                            Sudut Biru
-                                          </span>
-                                        </div>
-                                        <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamB}</h5>
-                                        {instB && <span className="text-[11px] text-zinc-400 block truncate">{instB}</span>}
-                                      </div>
-
-                                      <div className="flex items-center gap-2 shrink-0">
-                                        <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
-                                        <input
-                                          type="number"
-                                          step="0.5"
-                                          value={match.scoreBLeg1 || 0}
-                                          onChange={(e) => handleSetExactLegScore(match.id, "B", 1, parseFloat(e.target.value) || 0)}
-                                          className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
-                                        />
-                                      </div>
-                                    </div>
-
-                                    {/* Quick Score Delta Buttons */}
-                                    <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
-                                      {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
-                                        <button
-                                          key={rule.id}
-                                          type="button"
-                                          onClick={() => handleBracketLegScoreChange(match.id, "B", 1, rule.points, `${rule.points > 0 ? `+${rule.points}` : rule.points} ${rule.label}`)}
-                                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${
-                                            rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
-                                          }`}
-                                        >
-                                          {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
-                                        </button>
-                                      ))}
-                                      <button
-                                        type="button"
-                                        onClick={() => handleBracketLegScoreChange(match.id, "B", 1, 1)}
-                                        className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
-                                      >+1</button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleBracketLegScoreChange(match.id, "B", 1, -1)}
-                                        className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
-                                      >-1</button>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* BLOK PUTARAN 2 (TUKAR SISI) */}
-                            <div className="p-4 rounded-xl bg-zinc-950/60 border border-cyan-500/30 space-y-3">
-                              <div className="flex flex-wrap items-center justify-between gap-2">
-                                <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-black uppercase flex items-center gap-1.5">
-                                  <ArrowLeftRight className="w-3.5 h-3.5" />
-                                  <span>Putaran 2 (Tukar Sisi Arena)</span>
-                                </span>
-                                <span className="text-xs font-mono text-zinc-400">
-                                  {isSingle ? (
-                                    <>Skor P2: <strong className="text-white">{match.teamA} ({match.scoreALeg2 || 0})</strong> (Sudut Biru • Tukar Sisi)</>
-                                  ) : (
-                                    <>Skor P2: <strong className="text-white">{match.teamB} ({match.scoreBLeg2 || 0})</strong> vs <strong className="text-white">{match.teamA} ({match.scoreALeg2 || 0})</strong></>
-                                  )}
-                                </span>
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {/* Sudut Merah Putaran 2: Team B (Sisi Ditukar) atau Placeholder Tanding Tunggal */}
-                                {isSingle ? (
-                                  <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-dashed border-zinc-800 space-y-1.5 opacity-60">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="w-2 h-2 rounded-full bg-rose-500/50 shrink-0" />
-                                      <span className="text-[10px] font-mono font-bold text-rose-400 uppercase">
-                                        Sudut Merah • Sesi 2
-                                      </span>
-                                    </div>
-                                    <h5 className="text-sm font-bold text-zinc-500 italic mt-0.5">- (Tanding Tunggal)</h5>
-                                    <p className="text-[11px] text-zinc-500">Tanpa lawan di Putaran 2. Tim bermain di Sudut Biru (Tukar Sisi).</p>
-                                  </div>
-                                ) : (
-                                  <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-rose-500/30 space-y-2.5">
-                                    <div className="flex items-start justify-between gap-2">
-                                      <div className="min-w-0">
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
-                                          <span className="text-[10px] font-mono font-bold text-rose-400 uppercase">
-                                            Sudut Merah • Tukar Sisi
-                                          </span>
-                                        </div>
-                                        <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamB}</h5>
-                                        {instB && <span className="text-[11px] text-zinc-400 block truncate">{instB}</span>}
-                                      </div>
-
-                                      <div className="flex items-center gap-2 shrink-0">
-                                        <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
-                                        <input
-                                          type="number"
-                                          step="0.5"
-                                          value={match.scoreBLeg2 || 0}
-                                          onChange={(e) => handleSetExactLegScore(match.id, "B", 2, parseFloat(e.target.value) || 0)}
-                                          className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
-                                        />
-                                      </div>
-                                    </div>
-
-                                    {/* Quick Score Delta Buttons */}
-                                    <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
-                                      {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
-                                        <button
-                                          key={rule.id}
-                                          type="button"
-                                          onClick={() => handleBracketLegScoreChange(match.id, "B", 2, rule.points, `${rule.points > 0 ? `+${rule.points}` : rule.points} ${rule.label}`)}
-                                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${
-                                            rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
-                                          }`}
-                                        >
-                                          {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
-                                        </button>
-                                      ))}
-                                      <button
-                                        type="button"
-                                        onClick={() => handleBracketLegScoreChange(match.id, "B", 2, 1)}
-                                        className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
-                                      >+1</button>
-                                      <button
-                                        type="button"
-                                        onClick={() => handleBracketLegScoreChange(match.id, "B", 2, -1)}
-                                        className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
-                                      >-1</button>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Sudut Biru Putaran 2: Team A (Sisi Ditukar) */}
-                                <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-blue-500/30 space-y-2.5">
-                                  <div className="flex items-start justify-between gap-2">
-                                    <div className="min-w-0">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
-                                        <span className="text-[10px] font-mono font-bold text-blue-400 uppercase">
-                                          Sudut Biru • Tukar Sisi
-                                        </span>
-                                      </div>
-                                      <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamA}</h5>
-                                      {instA && <span className="text-[11px] text-zinc-400 block truncate">{instA}</span>}
-                                    </div>
-
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
-                                      <input
-                                        type="number"
-                                        step="0.5"
-                                        value={match.scoreALeg2 || 0}
-                                        onChange={(e) => handleSetExactLegScore(match.id, "A", 2, parseFloat(e.target.value) || 0)}
-                                        className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Quick Score Delta Buttons */}
-                                  <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
-                                    {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
-                                      <button
-                                        key={rule.id}
-                                        type="button"
-                                        onClick={() => handleBracketLegScoreChange(match.id, "A", 2, rule.points, `${rule.points > 0 ? `+${rule.points}` : rule.points} ${rule.label}`)}
-                                        className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${
-                                          rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
-                                        }`}
-                                      >
-                                        {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
-                                      </button>
-                                    ))}
-                                    <button
-                                      type="button"
-                                      onClick={() => handleBracketLegScoreChange(match.id, "A", 2, 1)}
-                                      className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
-                                    >+1</button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleBracketLegScoreChange(match.id, "A", 2, -1)}
-                                      className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
-                                    >-1</button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* REKAPITULASI RATA-RATA AKHIR RESMI */}
-                            <div className="p-3 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-                              <span className="text-zinc-400 font-bold">
-                                Skor Akhir Resmi Laga (Rata-rata: (P1 + P2) / 2):
-                              </span>
-                              <div className="flex items-center gap-3">
-                                <span className={`px-2.5 py-1 rounded-lg border font-bold ${
-                                  match.winner === "A" ? "bg-rose-500/20 text-rose-300 border-rose-500/50" : "bg-zinc-950 text-white border-zinc-800"
-                                }`}>
-                                  {match.teamA}: <strong className="text-amber-400 text-sm">{match.scoreA} PTS</strong>
-                                </span>
-                                <span className="text-zinc-600 font-bold">VS</span>
-                                <span className={`px-2.5 py-1 rounded-lg border font-bold ${
-                                  match.winner === "B" ? "bg-blue-500/20 text-blue-300 border-blue-500/50" : "bg-zinc-950 text-white border-zinc-800"
-                                }`}>
-                                  {match.teamB}: <strong className="text-amber-400 text-sm">{match.scoreB} PTS</strong>
-                                </span>
-                              </div>
-                            </div>
-                          </div>
                         ) : (
-                          /* STANDARD 1X MAIN / SINGLE */
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
-                            {!isSingle && (
-                              <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-[#060e1c] border-2 border-cyan-800/60 items-center justify-center text-[11px] font-black text-cyan-400 shadow-lg">
-                                VS
+                          <div className="p-4 rounded-xl bg-zinc-900/60 border border-zinc-800/80 max-w-md mx-auto">
+                            <p className="text-xs text-zinc-400">
+                              Belum ada peserta yang dinyatakan lolos ke {selectedBracketRound}. Buka tab <strong>Daftar Peserta &amp; Klasemen</strong> untuk meloloskan tim.
+                            </p>
+                          </div>
+                        )}
+
+                        <div>
+                          <Link
+                            href="/pengaturan"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 hover:text-white text-xs font-semibold transition-all cursor-pointer"
+                          >
+                            <Settings className="w-4 h-4 text-cyan-400" />
+                            <span>Buka Pengaturan Bagan</span>
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="space-y-4">
+                      {/* Summary Header Pill */}
+                      <div className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#0a172c]/80 border border-cyan-900/40 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span className="font-bold text-white">
+                            {selectedBracketRound}:
+                          </span>
+                          <span className="text-zinc-400">
+                            {qualifiedBracketParticipants.length} Tim Lolos
+                          </span>
+                        </div>
+                        <span className="font-mono text-cyan-400 font-bold">
+                          {currentMatches.length} Laga Terjadwal
+                        </span>
+                      </div>
+
+                      {currentMatches.map((match) => {
+                        const instA = participants.find((p) => p.name === match.teamA)?.institution;
+                        const instB = participants.find((p) => p.name === match.teamB)?.institution;
+                        const isSingle = match.teamB === "- (Tanding Tunggal)";
+
+                        const is2x = getMatchTurnsForRound(match.round) === "2x";
+                        const activeLeg = (match.currentLeg || 1) as 1 | 2;
+                        const isSwapped = is2x && activeLeg === 2;
+
+                        // Corner team mappings:
+                        // In 1x mode: Red = Team A, Blue = Team B
+                        // In 2x mode Leg 1: Red = Team A, Blue = Team B
+                        // In 2x mode Leg 2: Red = Team B, Blue = Team A (TUKAR SISI!)
+                        const redTeamKey: "A" | "B" = isSwapped ? "B" : "A";
+                        const blueTeamKey: "A" | "B" = isSwapped ? "A" : "B";
+
+                        const redTeamName = isSwapped ? match.teamB : match.teamA;
+                        const redInst = isSwapped ? instB : instA;
+                        const redScore = is2x
+                          ? (isSwapped ? match.scoreBLeg2 ?? 0 : match.scoreALeg1 ?? 0)
+                          : match.scoreA;
+
+                        const blueTeamName = isSwapped ? match.teamA : match.teamB;
+                        const blueInst = isSwapped ? instA : instB;
+                        const blueScore = is2x
+                          ? (isSwapped ? match.scoreALeg2 ?? 0 : match.scoreBLeg1 ?? 0)
+                          : match.scoreB;
+
+                        return (
+                          <div
+                            key={match.id}
+                            className="bg-[#0a172c]/90 border border-cyan-900/40 hover:border-cyan-500/40 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4 transition-all"
+                          >
+                            {/* Match Header */}
+                            <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-cyan-900/30">
+                              <div className="flex items-center gap-2.5">
+                                <span className="px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 font-mono font-extrabold text-xs tracking-wider border border-cyan-500/40">
+                                  {match.matchLabel}
+                                </span>
+                                <span className="text-xs text-zinc-400 font-medium">
+                                  {match.category || "Transporter SMP"} • {isSingle ? "1 Tim (Tanding Tunggal)" : is2x ? "2x Main (Tukar Sisi)" : "1x Main (Langsung Data)"}
+                                </span>
                               </div>
-                            )}
 
-                              {/* Team Corner (Red) */}
-                            <div
-                              className={`p-4 rounded-xl border space-y-3 transition-all ${
-                                match.status === "Selesai" &&
-                                (match.winner
-                                  ? match.winner === redTeamKey
-                                  : isSwapped
-                                  ? match.scoreB > match.scoreA
-                                  : match.scoreA > match.scoreB)
-                                  ? "bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/10"
-                                  : "bg-zinc-900/70 border-zinc-800"
-                              }`}
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
-                                    <span className="text-[10px] font-bold text-rose-400 tracking-wider uppercase font-mono">
-                                      {isSwapped
-                                        ? "SUDUT MERAH • PUTARAN 2 (TUKAR SISI)"
-                                        : is2x
-                                        ? "SUDUT MERAH • PUTARAN 1"
-                                        : "SUDUT MERAH"}
-                                    </span>
-                                  </div>
-                                  <h4 className="text-base sm:text-lg font-black text-white truncate mt-0.5">
-                                    {redTeamName}
-                                  </h4>
-                                  {redInst && <p className="text-xs text-zinc-400 truncate">{redInst}</p>}
-                                  {is2x && (
-                                    <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
-                                      P1: {isSwapped ? (match.scoreBLeg1 || 0) : (match.scoreALeg1 || 0)} | P2: {isSwapped ? (match.scoreBLeg2 || 0) : (match.scoreALeg2 || 0)} | Total: <strong className="text-zinc-300">{isSwapped ? match.scoreB : match.scoreA}</strong>
-                                    </p>
-                                  )}
-                                </div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                {/* Tombol Lihat Log Poin Laga */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDashboardLogViewMode("split");
+                                    setLogBreakdownLeg("all");
+                                    setViewLogMatch(match);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white font-mono text-xs font-bold transition-all shadow-sm cursor-pointer"
+                                  title="Lihat riwayat log poin untuk laga ini"
+                                >
+                                  <ScrollText className="w-3.5 h-3.5 text-amber-400" />
+                                  <span>Log Poin</span>
+                                </button>
 
-                                <div className="flex flex-col items-end shrink-0">
-                                  <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">
-                                    {is2x ? `Skor P${activeLeg}` : "Skor Laga"}
-                                  </span>
-                                  <input
-                                    type="number"
-                                    step="0.5"
-                                    value={redScore}
-                                    onChange={(e) => {
-                                      const val = parseFloat(e.target.value) || 0;
-                                      if (is2x) {
-                                        handleSetExactLegScore(match.id, redTeamKey, activeLeg, val);
-                                      } else {
-                                        handleSetExactScore(match.id, "A", val);
-                                      }
+                                {/* Tombol Reset Laga & Hapus Log */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setResetMatchTarget(match);
+                                    setResetWithLogs(true);
+                                  }}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-rose-950/40 border border-zinc-800 hover:border-rose-500/50 text-zinc-400 hover:text-rose-300 font-mono text-xs font-semibold transition-all shadow-sm cursor-pointer"
+                                  title="Reset skor dan hapus log laga ini"
+                                >
+                                  <RotateCcw className="w-3.5 h-3.5" />
+                                  <span>Reset</span>
+                                </button>
+
+                                {/* Tombol Mulai Pertandingan dengan Animasi Shutter (sembunyi jika sudah Selesai) */}
+                                {match.status !== "Selesai" && (
+                                  <button
+                                    type="button"
+                                    disabled={Boolean(shutterMatch)}
+                                    onMouseEnter={() => {
+                                      try {
+                                        router.prefetch(`/tanding/${match.id}`);
+                                      } catch { }
                                     }}
-                                    className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-cyan-500 shadow-inner"
-                                  />
-                                </div>
-                              </div>
+                                    onClick={() => handleStartMatchWithShutter(match)}
+                                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-black text-xs hover:brightness-110 hover:scale-[1.02] active:scale-95 transition-all shadow-[0_0_20px_rgba(0,163,255,0.4)] animate-pulse hover:animate-none cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                                    title="Buka Arena Tanding & Timer Stopwatch"
+                                  >
+                                    <Play className="w-3.5 h-3.5 fill-current" />
+                                    <span>Mulai Tanding</span>
+                                  </button>
+                                )}
 
-                              {/* Point Rules Shortcuts */}
-                              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-800/60">
-                                {customPointRules
-                                  .filter((r) => r.enabled)
-                                  .map((rule) => (
+                                {/* Quick Status Pill */}
+                                <div className="flex items-center gap-1 bg-zinc-900/90 p-1 rounded-xl border border-zinc-800 text-xs">
+                                  {(match.status === "Selesai"
+                                    ? (["Selesai"] as const)
+                                    : (["Siap Tanding", "Berlangsung", "Selesai"] as const)
+                                  ).map((st) => (
                                     <button
-                                      key={rule.id}
+                                      key={st}
                                       type="button"
-                                      onClick={() => {
-                                        if (is2x) {
-                                          handleBracketLegScoreChange(match.id, redTeamKey, activeLeg, rule.points);
-                                        } else {
-                                          handleBracketScoreChange(match.id, "A", rule.points);
-                                        }
-                                      }}
-                                      className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition-all flex items-center gap-1 ${
-                                        rule.points > 0
-                                          ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
-                                          : "bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border-rose-500/30"
-                                      }`}
+                                      disabled={match.status === "Selesai"}
+                                      onClick={() => handleSetMatchStatus(match.id, st)}
+                                      className={`px-2 py-0.5 rounded-lg font-semibold transition-all ${match.status === st
+                                          ? st === "Berlangsung"
+                                            ? "bg-cyan-500 text-zinc-950 font-bold shadow-md shadow-cyan-500/20"
+                                            : st === "Selesai"
+                                              ? "bg-emerald-500 text-zinc-950 font-bold cursor-default"
+                                              : "bg-amber-500 text-zinc-950 font-bold"
+                                          : "text-zinc-400 hover:text-white cursor-pointer"
+                                        }`}
                                     >
-                                      {rule.hotkeyRed && (
-                                        <kbd className="px-1.5 py-0.5 rounded bg-rose-950/90 text-rose-300 border border-rose-500/40 text-[9px] font-black shadow-sm">
-                                          {rule.hotkeyRed}
-                                        </kbd>
-                                      )}
-                                      <span>
-                                        {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
-                                      </span>
+                                      {st}
                                     </button>
                                   ))}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (is2x) {
-                                      handleBracketLegScoreChange(match.id, redTeamKey, activeLeg, 1);
-                                    } else {
-                                      handleBracketScoreChange(match.id, "A", 1);
-                                    }
-                                  }}
-                                  className="px-2 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono font-bold"
-                                >
-                                  +1
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    if (is2x) {
-                                      handleBracketLegScoreChange(match.id, redTeamKey, activeLeg, -1);
-                                    } else {
-                                      handleBracketScoreChange(match.id, "A", -1);
-                                    }
-                                  }}
-                                  className="px-2 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-xs font-mono font-bold"
-                                >
-                                  -1
-                                </button>
+                                </div>
                               </div>
                             </div>
 
-                            {/* Team Corner (Blue) */}
-                            <div
-                              className={`p-4 rounded-xl border space-y-3 transition-all ${
-                                match.status === "Selesai" &&
-                                (match.winner
-                                  ? match.winner === blueTeamKey
-                                  : isSwapped
-                                  ? match.scoreA > match.scoreB
-                                  : match.scoreB > match.scoreA)
-                                  ? "bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/10"
-                                  : isSingle
-                                  ? "bg-zinc-950/40 border-zinc-800/50 border-dashed flex items-center justify-center text-zinc-500 text-xs italic"
-                                  : "bg-zinc-900/70 border-zinc-800"
-                              }`}
-                            >
-                              {isSingle ? (
-                                <div className="py-6 text-center space-y-1">
-                                  <span className="text-xs font-semibold text-zinc-400 block">- Tanding Tunggal (Solo) -</span>
-                                  <span className="text-[11px] text-zinc-500">Jumlah tim ganjil, bertanding tanpa lawan langsung</span>
+                            {/* BODY TAMPILAN LAGA */}
+                            {is2x ? (
+                              /* TAMPILAN 2X MAIN: PUTARAN 1 & PUTARAN 2 DIMUNCULKAN BERTINGKAT SEKALIGUS (NO TAB) */
+                              <div className="space-y-4">
+                                {/* BLOK PUTARAN 1 */}
+                                <div className="p-4 rounded-xl bg-zinc-950/60 border border-zinc-800/80 space-y-3">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="px-2.5 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 font-mono text-xs font-black uppercase flex items-center gap-1.5">
+                                      <span>⚔️ Putaran 1</span>
+                                    </span>
+                                    <span className="text-xs font-mono text-zinc-400">
+                                      {isSingle ? (
+                                        <>Skor P1: <strong className="text-white">{match.teamA} ({match.scoreALeg1 || 0})</strong> (Sudut Merah)</>
+                                      ) : (
+                                        <>Skor P1: <strong className="text-white">{match.teamA} ({match.scoreALeg1 || 0})</strong> vs <strong className="text-white">{match.teamB} ({match.scoreBLeg1 || 0})</strong></>
+                                      )}
+                                    </span>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {/* Sudut Merah Putaran 1: Team A */}
+                                    <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-rose-500/30 space-y-2.5">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                                            <span className="text-[10px] font-mono font-bold text-rose-400 uppercase">
+                                              Sudut Merah
+                                            </span>
+                                          </div>
+                                          <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamA}</h5>
+                                          {instA && <span className="text-[11px] text-zinc-400 block truncate">{instA}</span>}
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
+                                          <input
+                                            type="number"
+                                            step="0.5"
+                                            value={match.scoreALeg1 || 0}
+                                            onChange={(e) => handleSetExactLegScore(match.id, "A", 1, parseFloat(e.target.value) || 0)}
+                                            className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {/* Quick Score Delta Buttons */}
+                                      <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
+                                        {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
+                                          <button
+                                            key={rule.id}
+                                            type="button"
+                                            onClick={() => handleBracketLegScoreChange(match.id, "A", 1, rule.points, `${rule.points > 0 ? `+${rule.points}` : rule.points} ${rule.label}`)}
+                                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                                              }`}
+                                          >
+                                            {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
+                                          </button>
+                                        ))}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleBracketLegScoreChange(match.id, "A", 1, 1)}
+                                          className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
+                                        >+1</button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleBracketLegScoreChange(match.id, "A", 1, -1)}
+                                          className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
+                                        >-1</button>
+                                      </div>
+                                    </div>
+
+                                    {/* Sudut Biru Putaran 1: Team B atau Placeholder Tanding Tunggal */}
+                                    {isSingle ? (
+                                      <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-dashed border-zinc-800 space-y-1.5 opacity-60">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="w-2 h-2 rounded-full bg-blue-500/50 shrink-0" />
+                                          <span className="text-[10px] font-mono font-bold text-blue-400 uppercase">
+                                            Sudut Biru • Sesi 1
+                                          </span>
+                                        </div>
+                                        <h5 className="text-sm font-bold text-zinc-500 italic mt-0.5">- (Tanding Tunggal)</h5>
+                                        <p className="text-[11px] text-zinc-500">Tanpa lawan di Putaran 1. Tim bermain di Sudut Merah.</p>
+                                      </div>
+                                    ) : (
+                                      <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-blue-500/30 space-y-2.5">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="min-w-0">
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                                              <span className="text-[10px] font-mono font-bold text-blue-400 uppercase">
+                                                Sudut Biru
+                                              </span>
+                                            </div>
+                                            <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamB}</h5>
+                                            {instB && <span className="text-[11px] text-zinc-400 block truncate">{instB}</span>}
+                                          </div>
+
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
+                                            <input
+                                              type="number"
+                                              step="0.5"
+                                              value={match.scoreBLeg1 || 0}
+                                              onChange={(e) => handleSetExactLegScore(match.id, "B", 1, parseFloat(e.target.value) || 0)}
+                                              className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        {/* Quick Score Delta Buttons */}
+                                        <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
+                                          {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
+                                            <button
+                                              key={rule.id}
+                                              type="button"
+                                              onClick={() => handleBracketLegScoreChange(match.id, "B", 1, rule.points, `${rule.points > 0 ? `+${rule.points}` : rule.points} ${rule.label}`)}
+                                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                                                }`}
+                                            >
+                                              {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
+                                            </button>
+                                          ))}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleBracketLegScoreChange(match.id, "B", 1, 1)}
+                                            className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
+                                          >+1</button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleBracketLegScoreChange(match.id, "B", 1, -1)}
+                                            className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
+                                          >-1</button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                              ) : (
-                                <>
+
+                                {/* BLOK PUTARAN 2 (TUKAR SISI) */}
+                                <div className="p-4 rounded-xl bg-zinc-950/60 border border-cyan-500/30 space-y-3">
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 font-mono text-xs font-black uppercase flex items-center gap-1.5">
+                                      <ArrowLeftRight className="w-3.5 h-3.5" />
+                                      <span>Putaran 2 (Tukar Sisi Arena)</span>
+                                    </span>
+                                    <span className="text-xs font-mono text-zinc-400">
+                                      {isSingle ? (
+                                        <>Skor P2: <strong className="text-white">{match.teamA} ({match.scoreALeg2 || 0})</strong> (Sudut Biru • Tukar Sisi)</>
+                                      ) : (
+                                        <>Skor P2: <strong className="text-white">{match.teamB} ({match.scoreBLeg2 || 0})</strong> vs <strong className="text-white">{match.teamA} ({match.scoreALeg2 || 0})</strong></>
+                                      )}
+                                    </span>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {/* Sudut Merah Putaran 2: Team B (Sisi Ditukar) atau Placeholder Tanding Tunggal */}
+                                    {isSingle ? (
+                                      <div className="p-3.5 rounded-xl bg-zinc-950/40 border border-dashed border-zinc-800 space-y-1.5 opacity-60">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="w-2 h-2 rounded-full bg-rose-500/50 shrink-0" />
+                                          <span className="text-[10px] font-mono font-bold text-rose-400 uppercase">
+                                            Sudut Merah • Sesi 2
+                                          </span>
+                                        </div>
+                                        <h5 className="text-sm font-bold text-zinc-500 italic mt-0.5">- (Tanding Tunggal)</h5>
+                                        <p className="text-[11px] text-zinc-500">Tanpa lawan di Putaran 2. Tim bermain di Sudut Biru (Tukar Sisi).</p>
+                                      </div>
+                                    ) : (
+                                      <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-rose-500/30 space-y-2.5">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="min-w-0">
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
+                                              <span className="text-[10px] font-mono font-bold text-rose-400 uppercase">
+                                                Sudut Merah • Tukar Sisi
+                                              </span>
+                                            </div>
+                                            <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamB}</h5>
+                                            {instB && <span className="text-[11px] text-zinc-400 block truncate">{instB}</span>}
+                                          </div>
+
+                                          <div className="flex items-center gap-2 shrink-0">
+                                            <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
+                                            <input
+                                              type="number"
+                                              step="0.5"
+                                              value={match.scoreBLeg2 || 0}
+                                              onChange={(e) => handleSetExactLegScore(match.id, "B", 2, parseFloat(e.target.value) || 0)}
+                                              className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        {/* Quick Score Delta Buttons */}
+                                        <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
+                                          {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
+                                            <button
+                                              key={rule.id}
+                                              type="button"
+                                              onClick={() => handleBracketLegScoreChange(match.id, "B", 2, rule.points, `${rule.points > 0 ? `+${rule.points}` : rule.points} ${rule.label}`)}
+                                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                                                }`}
+                                            >
+                                              {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
+                                            </button>
+                                          ))}
+                                          <button
+                                            type="button"
+                                            onClick={() => handleBracketLegScoreChange(match.id, "B", 2, 1)}
+                                            className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
+                                          >+1</button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleBracketLegScoreChange(match.id, "B", 2, -1)}
+                                            className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
+                                          >-1</button>
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* Sudut Biru Putaran 2: Team A (Sisi Ditukar) */}
+                                    <div className="p-3.5 rounded-xl bg-zinc-900/80 border border-blue-500/30 space-y-2.5">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+                                            <span className="text-[10px] font-mono font-bold text-blue-400 uppercase">
+                                              Sudut Biru • Tukar Sisi
+                                            </span>
+                                          </div>
+                                          <h5 className="text-sm font-black text-white truncate mt-0.5">{match.teamA}</h5>
+                                          {instA && <span className="text-[11px] text-zinc-400 block truncate">{instA}</span>}
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <span className="text-[10px] font-mono text-zinc-400">Skor:</span>
+                                          <input
+                                            type="number"
+                                            step="0.5"
+                                            value={match.scoreALeg2 || 0}
+                                            onChange={(e) => handleSetExactLegScore(match.id, "A", 2, parseFloat(e.target.value) || 0)}
+                                            className="w-16 px-1.5 py-1 text-center font-mono text-base font-black rounded-lg bg-zinc-950 text-amber-400 border border-zinc-700"
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {/* Quick Score Delta Buttons */}
+                                      <div className="flex flex-wrap gap-1 pt-1.5 border-t border-zinc-800/60">
+                                        {customPointRules.filter((r) => r.enabled).slice(0, 4).map((rule) => (
+                                          <button
+                                            key={rule.id}
+                                            type="button"
+                                            onClick={() => handleBracketLegScoreChange(match.id, "A", 2, rule.points, `${rule.points > 0 ? `+${rule.points}` : rule.points} ${rule.label}`)}
+                                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border transition-all ${rule.points > 0 ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30" : "bg-rose-500/10 text-rose-300 border-rose-500/30"
+                                              }`}
+                                          >
+                                            {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
+                                          </button>
+                                        ))}
+                                        <button
+                                          type="button"
+                                          onClick={() => handleBracketLegScoreChange(match.id, "A", 2, 1)}
+                                          className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-200 text-[10px] font-mono font-bold"
+                                        >+1</button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleBracketLegScoreChange(match.id, "A", 2, -1)}
+                                          className="px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] font-mono font-bold"
+                                        >-1</button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* REKAPITULASI RATA-RATA AKHIR RESMI */}
+                                <div className="p-3 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+                                  <span className="text-zinc-400 font-bold">
+                                    Skor Akhir Resmi Laga (Rata-rata: (P1 + P2) / 2):
+                                  </span>
+                                  <div className="flex items-center gap-3">
+                                    <span className={`px-2.5 py-1 rounded-lg border font-bold ${match.winner === "A" ? "bg-rose-500/20 text-rose-300 border-rose-500/50" : "bg-zinc-950 text-white border-zinc-800"
+                                      }`}>
+                                      {match.teamA}: <strong className="text-amber-400 text-sm">{match.scoreA} PTS</strong>
+                                    </span>
+                                    <span className="text-zinc-600 font-bold">VS</span>
+                                    <span className={`px-2.5 py-1 rounded-lg border font-bold ${match.winner === "B" ? "bg-blue-500/20 text-blue-300 border-blue-500/50" : "bg-zinc-950 text-white border-zinc-800"
+                                      }`}>
+                                      {match.teamB}: <strong className="text-amber-400 text-sm">{match.scoreB} PTS</strong>
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              /* STANDARD 1X MAIN / SINGLE */
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
+                                {!isSingle && (
+                                  <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-[#060e1c] border-2 border-cyan-800/60 items-center justify-center text-[11px] font-black text-cyan-400 shadow-lg">
+                                    VS
+                                  </div>
+                                )}
+
+                                {/* Team Corner (Red) */}
+                                <div
+                                  className={`p-4 rounded-xl border space-y-3 transition-all ${match.status === "Selesai" &&
+                                      (match.winner
+                                        ? match.winner === redTeamKey
+                                        : isSwapped
+                                          ? match.scoreB > match.scoreA
+                                          : match.scoreA > match.scoreB)
+                                      ? "bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/10"
+                                      : "bg-zinc-900/70 border-zinc-800"
+                                    }`}
+                                >
                                   <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
                                       <div className="flex items-center gap-1.5">
-                                        <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
-                                        <span className="text-[10px] font-bold text-blue-400 tracking-wider uppercase font-mono">
+                                        <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
+                                        <span className="text-[10px] font-bold text-rose-400 tracking-wider uppercase font-mono">
                                           {isSwapped
-                                            ? "SUDUT BIRU • PUTARAN 2 (TUKAR SISI)"
+                                            ? "SUDUT MERAH • PUTARAN 2 (TUKAR SISI)"
                                             : is2x
-                                            ? "SUDUT BIRU • PUTARAN 1"
-                                            : "SUDUT BIRU"}
+                                              ? "SUDUT MERAH • PUTARAN 1"
+                                              : "SUDUT MERAH"}
                                         </span>
                                       </div>
                                       <h4 className="text-base sm:text-lg font-black text-white truncate mt-0.5">
-                                        {blueTeamName}
+                                        {redTeamName}
                                       </h4>
-                                      {blueInst && <p className="text-xs text-zinc-400 truncate">{blueInst}</p>}
+                                      {redInst && <p className="text-xs text-zinc-400 truncate">{redInst}</p>}
                                       {is2x && (
                                         <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
-                                          P1: {isSwapped ? (match.scoreALeg1 || 0) : (match.scoreBLeg1 || 0)} | P2: {isSwapped ? (match.scoreALeg2 || 0) : (match.scoreBLeg2 || 0)} | Total: <strong className="text-zinc-300">{isSwapped ? match.scoreA : match.scoreB}</strong>
+                                          P1: {isSwapped ? (match.scoreBLeg1 || 0) : (match.scoreALeg1 || 0)} | P2: {isSwapped ? (match.scoreBLeg2 || 0) : (match.scoreALeg2 || 0)} | Total: <strong className="text-zinc-300">{isSwapped ? match.scoreB : match.scoreA}</strong>
                                         </p>
                                       )}
                                     </div>
@@ -3509,13 +3357,13 @@ export default function NextArenaDashboard() {
                                       <input
                                         type="number"
                                         step="0.5"
-                                        value={blueScore}
+                                        value={redScore}
                                         onChange={(e) => {
                                           const val = parseFloat(e.target.value) || 0;
                                           if (is2x) {
-                                            handleSetExactLegScore(match.id, blueTeamKey, activeLeg, val);
+                                            handleSetExactLegScore(match.id, redTeamKey, activeLeg, val);
                                           } else {
-                                            handleSetExactScore(match.id, "B", val);
+                                            handleSetExactScore(match.id, "A", val);
                                           }
                                         }}
                                         className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-cyan-500 shadow-inner"
@@ -3533,20 +3381,19 @@ export default function NextArenaDashboard() {
                                           type="button"
                                           onClick={() => {
                                             if (is2x) {
-                                              handleBracketLegScoreChange(match.id, blueTeamKey, activeLeg, rule.points);
+                                              handleBracketLegScoreChange(match.id, redTeamKey, activeLeg, rule.points);
                                             } else {
-                                              handleBracketScoreChange(match.id, "B", rule.points);
+                                              handleBracketScoreChange(match.id, "A", rule.points);
                                             }
                                           }}
-                                          className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition-all flex items-center gap-1 ${
-                                            rule.points > 0
+                                          className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition-all flex items-center gap-1 ${rule.points > 0
                                               ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
                                               : "bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border-rose-500/30"
-                                          }`}
+                                            }`}
                                         >
-                                          {rule.hotkeyBlue && (
-                                            <kbd className="px-1.5 py-0.5 rounded bg-blue-950/90 text-blue-300 border border-blue-500/40 text-[9px] font-black shadow-sm">
-                                              {rule.hotkeyBlue}
+                                          {rule.hotkeyRed && (
+                                            <kbd className="px-1.5 py-0.5 rounded bg-rose-950/90 text-rose-300 border border-rose-500/40 text-[9px] font-black shadow-sm">
+                                              {rule.hotkeyRed}
                                             </kbd>
                                           )}
                                           <span>
@@ -3558,9 +3405,9 @@ export default function NextArenaDashboard() {
                                       type="button"
                                       onClick={() => {
                                         if (is2x) {
-                                          handleBracketLegScoreChange(match.id, blueTeamKey, activeLeg, 1);
+                                          handleBracketLegScoreChange(match.id, redTeamKey, activeLeg, 1);
                                         } else {
-                                          handleBracketScoreChange(match.id, "B", 1);
+                                          handleBracketScoreChange(match.id, "A", 1);
                                         }
                                       }}
                                       className="px-2 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono font-bold"
@@ -3571,9 +3418,9 @@ export default function NextArenaDashboard() {
                                       type="button"
                                       onClick={() => {
                                         if (is2x) {
-                                          handleBracketLegScoreChange(match.id, blueTeamKey, activeLeg, -1);
+                                          handleBracketLegScoreChange(match.id, redTeamKey, activeLeg, -1);
                                         } else {
-                                          handleBracketScoreChange(match.id, "B", -1);
+                                          handleBracketScoreChange(match.id, "A", -1);
                                         }
                                       }}
                                       className="px-2 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-xs font-mono font-bold"
@@ -3581,17 +3428,141 @@ export default function NextArenaDashboard() {
                                       -1
                                     </button>
                                   </div>
-                                </>
-                              )}
-                            </div>
+                                </div>
+
+                                {/* Team Corner (Blue) */}
+                                <div
+                                  className={`p-4 rounded-xl border space-y-3 transition-all ${match.status === "Selesai" &&
+                                      (match.winner
+                                        ? match.winner === blueTeamKey
+                                        : isSwapped
+                                          ? match.scoreA > match.scoreB
+                                          : match.scoreB > match.scoreA)
+                                      ? "bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/10"
+                                      : isSingle
+                                        ? "bg-zinc-950/40 border-zinc-800/50 border-dashed flex items-center justify-center text-zinc-500 text-xs italic"
+                                        : "bg-zinc-900/70 border-zinc-800"
+                                    }`}
+                                >
+                                  {isSingle ? (
+                                    <div className="py-6 text-center space-y-1">
+                                      <span className="text-xs font-semibold text-zinc-400 block">- Tanding Tunggal (Solo) -</span>
+                                      <span className="text-[11px] text-zinc-500">Jumlah tim ganjil, bertanding tanpa lawan langsung</span>
+                                    </div>
+                                  ) : (
+                                    <>
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
+                                            <span className="text-[10px] font-bold text-blue-400 tracking-wider uppercase font-mono">
+                                              {isSwapped
+                                                ? "SUDUT BIRU • PUTARAN 2 (TUKAR SISI)"
+                                                : is2x
+                                                  ? "SUDUT BIRU • PUTARAN 1"
+                                                  : "SUDUT BIRU"}
+                                            </span>
+                                          </div>
+                                          <h4 className="text-base sm:text-lg font-black text-white truncate mt-0.5">
+                                            {blueTeamName}
+                                          </h4>
+                                          {blueInst && <p className="text-xs text-zinc-400 truncate">{blueInst}</p>}
+                                          {is2x && (
+                                            <p className="text-[11px] text-zinc-500 font-mono mt-0.5">
+                                              P1: {isSwapped ? (match.scoreALeg1 || 0) : (match.scoreBLeg1 || 0)} | P2: {isSwapped ? (match.scoreALeg2 || 0) : (match.scoreBLeg2 || 0)} | Total: <strong className="text-zinc-300">{isSwapped ? match.scoreA : match.scoreB}</strong>
+                                            </p>
+                                          )}
+                                        </div>
+
+                                        <div className="flex flex-col items-end shrink-0">
+                                          <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">
+                                            {is2x ? `Skor P${activeLeg}` : "Skor Laga"}
+                                          </span>
+                                          <input
+                                            type="number"
+                                            step="0.5"
+                                            value={blueScore}
+                                            onChange={(e) => {
+                                              const val = parseFloat(e.target.value) || 0;
+                                              if (is2x) {
+                                                handleSetExactLegScore(match.id, blueTeamKey, activeLeg, val);
+                                              } else {
+                                                handleSetExactScore(match.id, "B", val);
+                                              }
+                                            }}
+                                            className="w-20 px-2 py-1 text-center font-mono text-lg font-black rounded-xl bg-zinc-950 text-amber-400 border border-zinc-700 focus:outline-none focus:border-cyan-500 shadow-inner"
+                                          />
+                                        </div>
+                                      </div>
+
+                                      {/* Point Rules Shortcuts */}
+                                      <div className="flex flex-wrap gap-1.5 pt-2 border-t border-zinc-800/60">
+                                        {customPointRules
+                                          .filter((r) => r.enabled)
+                                          .map((rule) => (
+                                            <button
+                                              key={rule.id}
+                                              type="button"
+                                              onClick={() => {
+                                                if (is2x) {
+                                                  handleBracketLegScoreChange(match.id, blueTeamKey, activeLeg, rule.points);
+                                                } else {
+                                                  handleBracketScoreChange(match.id, "B", rule.points);
+                                                }
+                                              }}
+                                              className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold border transition-all flex items-center gap-1 ${rule.points > 0
+                                                  ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                                  : "bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border-rose-500/30"
+                                                }`}
+                                            >
+                                              {rule.hotkeyBlue && (
+                                                <kbd className="px-1.5 py-0.5 rounded bg-blue-950/90 text-blue-300 border border-blue-500/40 text-[9px] font-black shadow-sm">
+                                                  {rule.hotkeyBlue}
+                                                </kbd>
+                                              )}
+                                              <span>
+                                                {rule.points > 0 ? `+${rule.points}` : rule.points} {rule.label}
+                                              </span>
+                                            </button>
+                                          ))}
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (is2x) {
+                                              handleBracketLegScoreChange(match.id, blueTeamKey, activeLeg, 1);
+                                            } else {
+                                              handleBracketScoreChange(match.id, "B", 1);
+                                            }
+                                          }}
+                                          className="px-2 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono font-bold"
+                                        >
+                                          +1
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (is2x) {
+                                              handleBracketLegScoreChange(match.id, blueTeamKey, activeLeg, -1);
+                                            } else {
+                                              handleBracketScoreChange(match.id, "B", -1);
+                                            }
+                                          }}
+                                          className="px-2 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-xs font-mono font-bold"
+                                        >
+                                          -1
+                                        </button>
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </>
             )}
           </section>
@@ -3636,75 +3607,75 @@ export default function NextArenaDashboard() {
                     </tr>
                   ) : (
                     globallyRankedParticipants.map((p) => {
-                    const crit = p.criteria || {
-                      teknis: 200,
-                      inovasi: 200,
-                      kecepatan: 200,
-                      presentasi: 200,
-                    };
-                    return (
-                      <tr key={p.id} className="hover:bg-[#0c1c38]/40">
-                        <td className="py-4 pl-6 pr-3">
-                          <div className="flex items-center gap-3">
-                            <span className="w-7 h-7 rounded-lg bg-[#060e1c] border border-cyan-900/40 font-mono text-xs font-bold flex items-center justify-center text-cyan-400">
-                              #{p.currentRank}
-                            </span>
-                            <div>
-                              <p className="font-bold text-white">{p.name}</p>
-                              <p className="text-xs text-zinc-400">{p.institution}</p>
-                            </div>
-                          </div>
-                        </td>
-
-                        {(["teknis", "inovasi", "kecepatan", "presentasi"] as const).map(
-                          (field) => (
-                            <td key={field} className="py-4 px-3 text-center">
-                              <div className="inline-flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1">
-                                <button
-                                  onClick={() =>
-                                    handleUpdateCriteria(p.id, field, crit[field] - 10)
-                                  }
-                                  className="px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs font-mono text-zinc-300"
-                                >
-                                  -10
-                                </button>
-                                <input
-                                  type="number"
-                                  min={0}
-                                  max={250}
-                                  value={crit[field]}
-                                  onChange={(e) =>
-                                    handleUpdateCriteria(p.id, field, Number(e.target.value))
-                                  }
-                                  className="w-14 text-center bg-transparent font-mono text-sm font-bold text-white focus:outline-none"
-                                />
-                                <button
-                                  onClick={() =>
-                                    handleUpdateCriteria(p.id, field, crit[field] + 10)
-                                  }
-                                  className="px-1.5 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-xs font-mono text-cyan-300"
-                                >
-                                  +10
-                                </button>
+                      const crit = p.criteria || {
+                        teknis: 200,
+                        inovasi: 200,
+                        kecepatan: 200,
+                        presentasi: 200,
+                      };
+                      return (
+                        <tr key={p.id} className="hover:bg-[#0c1c38]/40">
+                          <td className="py-4 pl-6 pr-3">
+                            <div className="flex items-center gap-3">
+                              <span className="w-7 h-7 rounded-lg bg-[#060e1c] border border-cyan-900/40 font-mono text-xs font-bold flex items-center justify-center text-cyan-400">
+                                #{p.currentRank}
+                              </span>
+                              <div>
+                                <p className="font-bold text-white">{p.name}</p>
+                                <p className="text-xs text-zinc-400">{p.institution}</p>
                               </div>
-                            </td>
-                          )
-                        )}
-
-                        <td className="py-4 px-4 text-right font-mono font-bold text-cyan-400">
-                          {p.scores.babak3} PTS
-                        </td>
-                        <td className="py-4 pl-3 pr-6 text-right font-mono text-base font-extrabold text-amber-400">
-                          <div>{p.totalPoints.toLocaleString("id-ID")} PTS</div>
-                          {fastestFinishMap[(p.name || "").trim().toLowerCase()] && (
-                            <div className="text-[10px] font-bold text-emerald-400">
-                              ⏱ {fastestFinishMap[(p.name || "").trim().toLowerCase()].bestFormatted}
                             </div>
+                          </td>
+
+                          {(["teknis", "inovasi", "kecepatan", "presentasi"] as const).map(
+                            (field) => (
+                              <td key={field} className="py-4 px-3 text-center">
+                                <div className="inline-flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1">
+                                  <button
+                                    onClick={() =>
+                                      handleUpdateCriteria(p.id, field, crit[field] - 10)
+                                    }
+                                    className="px-1.5 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-xs font-mono text-zinc-300"
+                                  >
+                                    -10
+                                  </button>
+                                  <input
+                                    type="number"
+                                    min={0}
+                                    max={250}
+                                    value={crit[field]}
+                                    onChange={(e) =>
+                                      handleUpdateCriteria(p.id, field, Number(e.target.value))
+                                    }
+                                    className="w-14 text-center bg-transparent font-mono text-sm font-bold text-white focus:outline-none"
+                                  />
+                                  <button
+                                    onClick={() =>
+                                      handleUpdateCriteria(p.id, field, crit[field] + 10)
+                                    }
+                                    className="px-1.5 py-0.5 rounded bg-cyan-500/20 hover:bg-cyan-500/30 text-xs font-mono text-cyan-300"
+                                  >
+                                    +10
+                                  </button>
+                                </div>
+                              </td>
+                            )
                           )}
-                        </td>
-                      </tr>
-                    );
-                  })
+
+                          <td className="py-4 px-4 text-right font-mono font-bold text-cyan-400">
+                            {p.scores.babak3} PTS
+                          </td>
+                          <td className="py-4 pl-3 pr-6 text-right font-mono text-base font-extrabold text-amber-400">
+                            <div>{p.totalPoints.toLocaleString("id-ID")} PTS</div>
+                            {fastestFinishMap[(p.name || "").trim().toLowerCase()] && (
+                              <div className="text-[10px] font-bold text-emerald-400">
+                                ⏱ {fastestFinishMap[(p.name || "").trim().toLowerCase()].bestFormatted}
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -3778,11 +3749,10 @@ export default function NextArenaDashboard() {
               type="button"
               onClick={() => setSoundEnabled(!soundEnabled)}
               title={soundEnabled ? "Audio Arena Aktif (Klik untuk matikan)" : "Audio Arena Mati (Klik untuk aktifkan)"}
-              className={`p-3 rounded-2xl border transition-all shadow-xl ${
-                soundEnabled
+              className={`p-3 rounded-2xl border transition-all shadow-xl ${soundEnabled
                   ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
                   : "bg-zinc-900 border-zinc-800 text-zinc-500 hover:text-zinc-300"
-              }`}
+                }`}
             >
               {soundEnabled ? <Volume2 className="w-6 h-6 text-amber-400" /> : <VolumeX className="w-6 h-6 text-zinc-500" />}
             </button>
@@ -3804,13 +3774,12 @@ export default function NextArenaDashboard() {
 
             <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full border border-cyan-900/40 bg-[#0a172c]/90 text-sm sm:text-base font-bold font-mono tracking-widest uppercase shadow-2xl">
               <span
-                className={`w-3.5 h-3.5 rounded-full ${
-                  isTimerRunning
+                className={`w-3.5 h-3.5 rounded-full ${isTimerRunning
                     ? timerPhase === "preparation"
                       ? "bg-amber-400 animate-ping"
                       : "bg-emerald-400 animate-ping"
                     : "bg-zinc-600"
-                }`}
+                  }`}
               />
               {timerPhase === "preparation" ? (
                 <span className="text-amber-400">WAKTU PERSIAPAN (PREPARATION)</span>
@@ -3898,16 +3867,14 @@ export default function NextArenaDashboard() {
       {pointToast && (
         <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 fade-in duration-200">
           <div
-            className={`px-4 py-3 rounded-2xl border shadow-2xl flex items-center gap-3 backdrop-blur-md ${
-              pointToast.isPositive
+            className={`px-4 py-3 rounded-2xl border shadow-2xl flex items-center gap-3 backdrop-blur-md ${pointToast.isPositive
                 ? "bg-emerald-950/90 border-emerald-500/50 text-emerald-200 shadow-emerald-900/30"
                 : "bg-rose-950/90 border-rose-500/50 text-rose-200 shadow-rose-900/30"
-            }`}
+              }`}
           >
             <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center font-black font-mono text-sm shrink-0 ${
-                pointToast.isPositive ? "bg-emerald-500 text-zinc-950" : "bg-rose-500 text-white"
-              }`}
+              className={`w-8 h-8 rounded-xl flex items-center justify-center font-black font-mono text-sm shrink-0 ${pointToast.isPositive ? "bg-emerald-500 text-zinc-950" : "bg-rose-500 text-white"
+                }`}
             >
               {pointToast.isPositive ? "+" : "-"}
             </div>
@@ -3967,11 +3934,10 @@ export default function NextArenaDashboard() {
                     setDashboardLogViewMode("split");
                     if (viewMatchIs2x) setLogBreakdownLeg("all");
                   }}
-                  className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-                    dashboardLogViewMode === "split"
+                  className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "split"
                       ? "bg-amber-400 text-zinc-950 shadow"
                       : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
-                  }`}
+                    }`}
                 >
                   Dua Sesi Terpisah {viewMatchIs2x ? "(Sesi 1 & Sesi 2)" : "(Tim A & B)"}
                 </button>
@@ -3984,11 +3950,10 @@ export default function NextArenaDashboard() {
                         setDashboardLogViewMode("p1");
                         setLogBreakdownLeg(1);
                       }}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-                        dashboardLogViewMode === "p1"
+                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p1"
                           ? "bg-amber-500 text-zinc-950 shadow"
                           : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
-                      }`}
+                        }`}
                     >
                       🟡 Sesi 1 / Putaran 1 ({p1MatchLogs.length})
                     </button>
@@ -3998,11 +3963,10 @@ export default function NextArenaDashboard() {
                         setDashboardLogViewMode("p2");
                         setLogBreakdownLeg(2);
                       }}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-                        dashboardLogViewMode === "p2"
+                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p2"
                           ? "bg-cyan-500 text-zinc-950 shadow"
                           : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
-                      }`}
+                        }`}
                     >
                       🔷 Sesi 2 / Putaran 2 ({p2MatchLogs.length})
                     </button>
@@ -4012,22 +3976,20 @@ export default function NextArenaDashboard() {
                     <button
                       type="button"
                       onClick={() => setDashboardLogViewMode("p1")}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-                        dashboardLogViewMode === "p1"
+                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p1"
                           ? "bg-rose-500 text-white shadow"
                           : "bg-zinc-900 text-rose-300 hover:text-white border border-zinc-800"
-                      }`}
+                        }`}
                     >
                       🔴 {resolvedViewLogMatch.teamA} ({matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase()).length})
                     </button>
                     <button
                       type="button"
                       onClick={() => setDashboardLogViewMode("p2")}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-                        dashboardLogViewMode === "p2"
+                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p2"
                           ? "bg-blue-500 text-white shadow"
                           : "bg-zinc-900 text-blue-300 hover:text-white border border-zinc-800"
-                      }`}
+                        }`}
                     >
                       🔵 {resolvedViewLogMatch.teamB} ({matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase()).length})
                     </button>
@@ -4040,11 +4002,10 @@ export default function NextArenaDashboard() {
                     setDashboardLogViewMode("all");
                     if (viewMatchIs2x) setLogBreakdownLeg("all");
                   }}
-                  className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
-                    dashboardLogViewMode === "all"
+                  className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "all"
                       ? "bg-zinc-700 text-white shadow"
                       : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
-                  }`}
+                    }`}
                 >
                   Semua ({matchLogs.length})
                 </button>
@@ -4081,17 +4042,17 @@ export default function NextArenaDashboard() {
                   },
                   ...(!isSingleLogMatch
                     ? [
-                        {
-                          key: "B" as const,
-                          name: resolvedViewLogMatch.teamB,
-                          leg1: resolvedViewLogMatch.scoreBLeg1 || 0,
-                          leg2: resolvedViewLogMatch.scoreBLeg2 || 0,
-                          finalScore: resolvedViewLogMatch.scoreB || 0,
-                          label: viewMatchIs2x ? "Tim B" : "Sudut Biru",
-                          accentBorder: "border-blue-500/30 bg-blue-500/5",
-                          accentText: "text-blue-400",
-                        },
-                      ]
+                      {
+                        key: "B" as const,
+                        name: resolvedViewLogMatch.teamB,
+                        leg1: resolvedViewLogMatch.scoreBLeg1 || 0,
+                        leg2: resolvedViewLogMatch.scoreBLeg2 || 0,
+                        finalScore: resolvedViewLogMatch.scoreB || 0,
+                        label: viewMatchIs2x ? "Tim B" : "Sudut Biru",
+                        accentBorder: "border-blue-500/30 bg-blue-500/5",
+                        accentText: "text-blue-400",
+                      },
+                    ]
                     : []),
                 ];
 
@@ -4114,11 +4075,10 @@ export default function NextArenaDashboard() {
                               key={String(tab.id)}
                               type="button"
                               onClick={() => setLogBreakdownLeg(tab.id)}
-                              className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
-                                logBreakdownLeg === tab.id
+                              className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${logBreakdownLeg === tab.id
                                   ? "bg-cyan-500 text-zinc-950"
                                   : "text-zinc-400 hover:text-white"
-                              }`}
+                                }`}
                             >
                               {tab.label}
                             </button>
@@ -4186,13 +4146,12 @@ export default function NextArenaDashboard() {
                                         {row.count}x
                                       </span>
                                       <span
-                                        className={`min-w-[56px] text-right font-black ${
-                                          row.totalPts > 0
+                                        className={`min-w-[56px] text-right font-black ${row.totalPts > 0
                                             ? "text-emerald-400"
                                             : row.totalPts < 0
-                                            ? "text-rose-400"
-                                            : "text-zinc-500"
-                                        }`}
+                                              ? "text-rose-400"
+                                              : "text-zinc-500"
+                                          }`}
                                       >
                                         {subtotalText} PTS
                                       </span>
@@ -4273,11 +4232,10 @@ export default function NextArenaDashboard() {
                                   {parsed.clockTime}
                                 </span>
                                 <span
-                                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
-                                    parsed.corner === "red"
+                                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${parsed.corner === "red"
                                       ? "bg-rose-500/15 border-rose-500/40 text-rose-300"
                                       : "bg-blue-500/15 border-blue-500/40 text-blue-300"
-                                  }`}
+                                    }`}
                                 >
                                   {log.participantName}
                                 </span>
@@ -4286,11 +4244,10 @@ export default function NextArenaDashboard() {
                                 </span>
                               </div>
                               <span
-                                className={`px-2 py-0.5 rounded font-bold text-[11px] border shrink-0 ${
-                                  log.delta > 0
+                                className={`px-2 py-0.5 rounded font-bold text-[11px] border shrink-0 ${log.delta > 0
                                     ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
                                     : "bg-rose-500/15 border-rose-500/40 text-rose-300"
-                                }`}
+                                  }`}
                               >
                                 {log.delta > 0 ? `+${log.delta}` : log.delta}
                               </span>
@@ -4354,11 +4311,10 @@ export default function NextArenaDashboard() {
                                   {parsed.clockTime}
                                 </span>
                                 <span
-                                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
-                                    parsed.corner === "red"
+                                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${parsed.corner === "red"
                                       ? "bg-rose-500/15 border-rose-500/40 text-rose-300"
                                       : "bg-blue-500/15 border-blue-500/40 text-blue-300"
-                                  }`}
+                                    }`}
                                 >
                                   {log.participantName}
                                 </span>
@@ -4367,11 +4323,10 @@ export default function NextArenaDashboard() {
                                 </span>
                               </div>
                               <span
-                                className={`px-2 py-0.5 rounded font-bold text-[11px] border shrink-0 ${
-                                  log.delta > 0
+                                className={`px-2 py-0.5 rounded font-bold text-[11px] border shrink-0 ${log.delta > 0
                                     ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
                                     : "bg-rose-500/15 border-rose-500/40 text-rose-300"
-                                }`}
+                                  }`}
                               >
                                 {log.delta > 0 ? `+${log.delta}` : log.delta}
                               </span>
@@ -4390,10 +4345,10 @@ export default function NextArenaDashboard() {
                       ? p1MatchLogs
                       : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase())
                     : dashboardLogViewMode === "p2"
-                    ? viewMatchIs2x
-                      ? p2MatchLogs
-                      : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase())
-                    : matchLogs
+                      ? viewMatchIs2x
+                        ? p2MatchLogs
+                        : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase())
+                      : matchLogs
                   ).map((log) => {
                     const parsed = parsePointLogItem(log, resolvedViewLogMatch, viewMatchIs2x);
                     return (
@@ -4411,21 +4366,19 @@ export default function NextArenaDashboard() {
                           </span>
                           {viewMatchIs2x && (
                             <span
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                                parsed.leg === 1
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${parsed.leg === 1
                                   ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
                                   : "bg-cyan-500/15 border-cyan-500/40 text-cyan-300"
-                              }`}
+                                }`}
                             >
                               SESI {parsed.leg} (P{parsed.leg})
                             </span>
                           )}
                           <span
-                            className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${
-                              parsed.corner === "red"
+                            className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${parsed.corner === "red"
                                 ? "bg-rose-500/15 border-rose-500/40 text-rose-300"
                                 : "bg-blue-500/15 border-blue-500/40 text-blue-300"
-                            }`}
+                              }`}
                           >
                             {log.participantName}
                           </span>
@@ -4435,11 +4388,10 @@ export default function NextArenaDashboard() {
                         </div>
 
                         <span
-                          className={`px-2.5 py-1 rounded-lg font-mono font-black text-xs border ${
-                            log.delta > 0
+                          className={`px-2.5 py-1 rounded-lg font-mono font-black text-xs border ${log.delta > 0
                               ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-300"
                               : "bg-rose-500/15 border-rose-500/40 text-rose-300"
-                          }`}
+                            }`}
                         >
                           {log.delta > 0 ? `+${log.delta}` : log.delta} PTS
                         </span>

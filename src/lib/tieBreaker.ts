@@ -21,6 +21,10 @@ export interface MatchWinnerResolution {
   teamBFinishMs: number | null;
   teamAFinishFormatted: string | null;
   teamBFinishFormatted: string | null;
+  teamALeg1Formatted: string | null;
+  teamALeg2Formatted: string | null;
+  teamBLeg1Formatted: string | null;
+  teamBLeg2Formatted: string | null;
   teamALegsFinished: number;
   teamBLegsFinished: number;
 }
@@ -154,15 +158,19 @@ export function resolveMatchWinner(params: {
   );
 
   const teamAFinishMs =
-    timesA.length > 0 ? timesA.reduce((sum, v) => sum + v, 0) : null;
+    timesA.length > 0 ? Math.min(...timesA) : null;
   const teamBFinishMs =
-    timesB.length > 0 ? timesB.reduce((sum, v) => sum + v, 0) : null;
+    timesB.length > 0 ? Math.min(...timesB) : null;
 
   const baseResult = {
     teamAFinishMs,
     teamBFinishMs,
     teamAFinishFormatted: formatStopwatchTimeMs(teamAFinishMs),
     teamBFinishFormatted: formatStopwatchTimeMs(teamBFinishMs),
+    teamALeg1Formatted: formatStopwatchTimeMs(legMsA[1]),
+    teamALeg2Formatted: effectiveIs2x ? formatStopwatchTimeMs(legMsA[2]) : null,
+    teamBLeg1Formatted: formatStopwatchTimeMs(legMsB[1]),
+    teamBLeg2Formatted: effectiveIs2x ? formatStopwatchTimeMs(legMsB[2]) : null,
     teamALegsFinished: timesA.length,
     teamBLegsFinished: timesB.length,
   };
@@ -178,13 +186,12 @@ export function resolveMatchWinner(params: {
     return { ...baseResult, winner: null, decidedBy: "tie" };
   }
 
-  // Same points: team finishing more legs wins, otherwise smaller total finish duration wins
-  if (timesA.length !== timesB.length) {
-    return {
-      ...baseResult,
-      winner: timesA.length > timesB.length ? "A" : "B",
-      decidedBy: "finish_time",
-    };
+  // Same points: take the fastest single-leg finish time across Putaran 1 or Putaran 2
+  if (teamAFinishMs !== null && teamBFinishMs === null) {
+    return { ...baseResult, winner: "A", decidedBy: "finish_time" };
+  }
+  if (teamBFinishMs !== null && teamAFinishMs === null) {
+    return { ...baseResult, winner: "B", decidedBy: "finish_time" };
   }
 
   if (teamAFinishMs !== null && teamBFinishMs !== null && teamAFinishMs !== teamBFinishMs) {
