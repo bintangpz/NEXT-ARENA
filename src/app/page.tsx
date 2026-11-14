@@ -128,7 +128,7 @@ export default function NextArenaDashboard() {
   const [viewLogMatch, setViewLogMatch] = useState<BracketMatch | null>(null);
   const [resetMatchTarget, setResetMatchTarget] = useState<BracketMatch | null>(null);
   const [resetWithLogs, setResetWithLogs] = useState<boolean>(true);
-  const [dashboardLogViewMode, setDashboardLogViewMode] = useState<"split" | "p1" | "p2" | "all">("split");
+  const [dashboardLogViewMode, setDashboardLogViewMode] = useState<"p1" | "p2">("p1");
   const [logBreakdownLeg, setLogBreakdownLeg] = useState<1 | 2 | "all">("all");
 
   // Babak, Model & Timer States
@@ -2868,8 +2868,8 @@ export default function NextArenaDashboard() {
                                 <button
                                   type="button"
                                   onClick={() => {
-                                    setDashboardLogViewMode("split");
-                                    setLogBreakdownLeg("all");
+                                    setDashboardLogViewMode("p1");
+                                    setLogBreakdownLeg(is2x ? 1 : "all");
                                     setViewLogMatch(match);
                                   }}
                                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white font-mono text-xs font-bold transition-all shadow-sm cursor-pointer"
@@ -3735,92 +3735,42 @@ export default function NextArenaDashboard() {
               </button>
             </div>
 
-            {/* Sub-toolbar: Pilihan View Mode Terpisah & Tombol Hapus Log */}
+            {/* Sub-toolbar: Pilihan Sesi 1 / Sesi 2 (Merah vs Biru) & Tombol Hapus Log */}
             <div className="px-5 py-3 bg-zinc-950/60 border-b border-zinc-800/60 flex flex-wrap items-center justify-between gap-3">
-              {/* Tab Selector Mode Terpisah */}
-              <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDashboardLogViewMode("split");
-                    if (viewMatchIs2x) setLogBreakdownLeg("all");
-                  }}
-                  className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "split"
-                      ? "bg-amber-400 text-zinc-950 shadow"
-                      : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
-                    }`}
-                >
-                  Dua Sesi Terpisah {viewMatchIs2x ? "(Sesi 1 & Sesi 2)" : "(Tim A & B)"}
-                </button>
-
-                {viewMatchIs2x ? (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDashboardLogViewMode("p1");
-                        setLogBreakdownLeg(1);
-                      }}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p1"
-                          ? "bg-amber-500 text-zinc-950 shadow"
-                          : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
-                        }`}
-                    >
-                      🟡 Sesi 1 / Putaran 1 ({p1MatchLogs.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDashboardLogViewMode("p2");
-                        setLogBreakdownLeg(2);
-                      }}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p2"
-                          ? "bg-cyan-500 text-zinc-950 shadow"
-                          : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
-                        }`}
-                    >
-                      🔷 Sesi 2 / Putaran 2 ({p2MatchLogs.length})
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => setDashboardLogViewMode("p1")}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p1"
-                          ? "bg-rose-500 text-white shadow"
-                          : "bg-zinc-900 text-rose-300 hover:text-white border border-zinc-800"
-                        }`}
-                    >
-                      🔴 {resolvedViewLogMatch.teamA} ({matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase()).length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDashboardLogViewMode("p2")}
-                      className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p2"
-                          ? "bg-blue-500 text-white shadow"
-                          : "bg-zinc-900 text-blue-300 hover:text-white border border-zinc-800"
-                        }`}
-                    >
-                      🔵 {resolvedViewLogMatch.teamB} ({matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase()).length})
-                    </button>
-                  </>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDashboardLogViewMode("all");
-                    if (viewMatchIs2x) setLogBreakdownLeg("all");
-                  }}
-                  className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "all"
-                      ? "bg-zinc-700 text-white shadow"
-                      : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
-                    }`}
-                >
-                  Semua ({matchLogs.length})
-                </button>
-              </div>
+              {viewMatchIs2x ? (
+                <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDashboardLogViewMode("p1");
+                      setLogBreakdownLeg(1);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p1"
+                        ? "bg-amber-500 text-zinc-950 shadow"
+                        : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
+                      }`}
+                  >
+                    🟡 Sesi 1 / Putaran 1 ({p1MatchLogs.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDashboardLogViewMode("p2");
+                      setLogBreakdownLeg(2);
+                    }}
+                    className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${dashboardLogViewMode === "p2"
+                        ? "bg-cyan-500 text-zinc-950 shadow"
+                        : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800"
+                      }`}
+                  >
+                    🔷 Sesi 2 / Putaran 2 ({p2MatchLogs.length})
+                  </button>
+                </div>
+              ) : (
+                <span className="text-xs font-mono font-bold text-zinc-400">
+                  Log Sudut Merah &amp; Biru ({matchLogs.length} Log)
+                </span>
+              )}
 
               {matchLogs.length > 0 && (
                 <button
@@ -3987,212 +3937,133 @@ export default function NextArenaDashboard() {
                     Log otomatis tercatat saat pertandingan dimainkan di arena tanding atau bagan.
                   </p>
                 </div>
-              ) : dashboardLogViewMode === "split" ? (
-                /* DUA KOLOM TERPISAH (SESI 1 & SESI 2) */
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {/* Kolom 1 (Sesi 1 / Putaran 1 atau Tim A) */}
-                  <div className="bg-zinc-950/60 border border-amber-500/30 rounded-2xl p-4 flex flex-col space-y-3">
-                    <div className="flex items-center justify-between pb-2.5 border-b border-zinc-800">
-                      <div>
-                        <span className="font-bold text-amber-300 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-amber-400" />
-                          {viewMatchIs2x ? "SESI 1 • PUTARAN 1" : `TIM A • ${resolvedViewLogMatch.teamA}`}
-                        </span>
-                        {viewMatchIs2x && (
-                          <p className="text-[10px] text-zinc-400 mt-0.5">
-                            🔴 {resolvedViewLogMatch.teamA} ({resolvedViewLogMatch.scoreALeg1 || 0}) vs 🔵 {resolvedViewLogMatch.teamB} ({resolvedViewLogMatch.scoreBLeg1 || 0})
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">
-                        {viewMatchIs2x
-                          ? `${p1MatchLogs.length} Log`
-                          : `${matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase()).length} Log`}
-                      </span>
-                    </div>
-
-                    <div className="max-h-72 overflow-y-auto space-y-2 pr-1 divide-y divide-zinc-800/40">
-                      {(viewMatchIs2x
-                        ? p1MatchLogs
-                        : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase())
-                      ).length === 0 ? (
-                        <p className="text-zinc-600 py-6 text-center text-[11px]">Belum ada catatan log di Sesi 1.</p>
-                      ) : (
-                        (viewMatchIs2x
-                          ? p1MatchLogs
-                          : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase())
-                        ).map((log) => {
-                          const parsed = parsePointLogItem(log, resolvedViewLogMatch, viewMatchIs2x);
-                          return (
-                            <div
-                              key={log.id}
-                              className="pt-2 first:pt-0 flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-zinc-800/20"
-                            >
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span
-                                  className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-300 font-black text-[10px] flex items-center gap-1"
-                                  title="Waktu Stopwatch Pertandingan"
-                                >
-                                  <Clock className="w-2.5 h-2.5 text-amber-400" />
-                                  {parsed.swTime}
-                                </span>
-                                <span
-                                  className="text-[10px] text-zinc-500"
-                                  title="Jam Riil Aktivitas"
-                                >
-                                  {parsed.clockTime}
-                                </span>
-                                <span
-                                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${parsed.corner === "red"
-                                      ? "bg-rose-500/15 border-rose-500/40 text-rose-300"
-                                      : "bg-blue-500/15 border-blue-500/40 text-blue-300"
-                                    }`}
-                                >
-                                  {log.participantName}
-                                </span>
-                                <span className="text-zinc-200 font-sans text-[11px] font-medium">
-                                  {parsed.cleanAction}
-                                </span>
-                              </div>
-                              {renderSingleLogAction(resolvedViewLogMatch.id, log)}
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Kolom 2 (Sesi 2 / Putaran 2 Tukar Sisi atau Tim B) */}
-                  <div className="bg-zinc-950/60 border border-cyan-500/30 rounded-2xl p-4 flex flex-col space-y-3">
-                    <div className="flex items-center justify-between pb-2.5 border-b border-zinc-800">
-                      <div>
-                        <span className="font-bold text-cyan-400 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                          {viewMatchIs2x ? "SESI 2 • PUTARAN 2 (TUKAR SISI)" : `TIM B • ${resolvedViewLogMatch.teamB}`}
-                        </span>
-                        {viewMatchIs2x && (
-                          <p className="text-[10px] text-zinc-400 mt-0.5">
-                            🔴 {resolvedViewLogMatch.teamB} ({resolvedViewLogMatch.scoreBLeg2 || 0}) vs 🔵 {resolvedViewLogMatch.teamA} ({resolvedViewLogMatch.scoreALeg2 || 0})
-                          </p>
-                        )}
-                      </div>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
-                        {viewMatchIs2x
-                          ? `${p2MatchLogs.length} Log`
-                          : `${matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase()).length} Log`}
-                      </span>
-                    </div>
-
-                    <div className="max-h-72 overflow-y-auto space-y-2 pr-1 divide-y divide-zinc-800/40">
-                      {(viewMatchIs2x
-                        ? p2MatchLogs
-                        : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase())
-                      ).length === 0 ? (
-                        <p className="text-zinc-600 py-6 text-center text-[11px]">Belum ada catatan log di Sesi 2.</p>
-                      ) : (
-                        (viewMatchIs2x
-                          ? p2MatchLogs
-                          : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase())
-                        ).map((log) => {
-                          const parsed = parsePointLogItem(log, resolvedViewLogMatch, viewMatchIs2x);
-                          return (
-                            <div
-                              key={log.id}
-                              className="pt-2 first:pt-0 flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-zinc-800/20"
-                            >
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <span
-                                  className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-300 font-black text-[10px] flex items-center gap-1"
-                                  title="Waktu Stopwatch Pertandingan"
-                                >
-                                  <Clock className="w-2.5 h-2.5 text-amber-400" />
-                                  {parsed.swTime}
-                                </span>
-                                <span
-                                  className="text-[10px] text-zinc-500"
-                                  title="Jam Riil Aktivitas"
-                                >
-                                  {parsed.clockTime}
-                                </span>
-                                <span
-                                  className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${parsed.corner === "red"
-                                      ? "bg-rose-500/15 border-rose-500/40 text-rose-300"
-                                      : "bg-blue-500/15 border-blue-500/40 text-blue-300"
-                                    }`}
-                                >
-                                  {log.participantName}
-                                </span>
-                                <span className="text-zinc-200 font-sans text-[11px] font-medium">
-                                  {parsed.cleanAction}
-                                </span>
-                              </div>
-                              {renderSingleLogAction(resolvedViewLogMatch.id, log)}
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                </div>
               ) : (
-                /* DAFTAR LOG SESUAI TAB YANG DIPILIH */
-                <div className="space-y-2 divide-y divide-zinc-800/40 max-h-80 overflow-y-auto pr-1">
-                  {(dashboardLogViewMode === "p1"
-                    ? viewMatchIs2x
-                      ? p1MatchLogs
-                      : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase())
-                    : dashboardLogViewMode === "p2"
-                      ? viewMatchIs2x
-                        ? p2MatchLogs
-                        : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase())
-                      : matchLogs
-                  ).map((log) => {
-                    const parsed = parsePointLogItem(log, resolvedViewLogMatch, viewMatchIs2x);
-                    return (
-                      <div
-                        key={log.id}
-                        className="pt-2.5 first:pt-0 flex flex-wrap items-center justify-between gap-3 hover:bg-zinc-800/20 p-2 rounded-xl transition-colors"
-                      >
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="px-2 py-0.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-amber-300 font-black text-xs flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-amber-400" />
-                            {parsed.swTime}
-                          </span>
-                          <span className="text-[11px] text-zinc-400">
-                            {parsed.clockTime}
-                          </span>
-                          {viewMatchIs2x && (
-                            <span
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${parsed.leg === 1
-                                  ? "bg-amber-500/15 border-amber-500/40 text-amber-300"
-                                  : "bg-cyan-500/15 border-cyan-500/40 text-cyan-300"
-                                }`}
-                            >
-                              SESI {parsed.leg} (P{parsed.leg})
-                            </span>
-                          )}
-                          <span
-                            className={`px-2.5 py-0.5 rounded-md text-[11px] font-bold border ${parsed.corner === "red"
-                                ? "bg-rose-500/15 border-rose-500/40 text-rose-300"
-                                : "bg-blue-500/15 border-blue-500/40 text-blue-300"
-                              }`}
-                          >
-                            {log.participantName}
-                          </span>
-                          <span className="text-zinc-200 font-sans text-xs font-medium">
-                            {parsed.cleanAction}
-                          </span>
-                        </div>
+                /* TAMPILAN DUA KOLOM SUDUT MERAH & BIRU (PER SESI) */
+                (() => {
+                  const isSingleLogMatch = !resolvedViewLogMatch.teamB || resolvedViewLogMatch.teamB === "BYE";
+                  const sessionSourceLogs = viewMatchIs2x
+                    ? dashboardLogViewMode === "p2"
+                      ? p2MatchLogs
+                      : p1MatchLogs
+                    : matchLogs;
 
-                        {renderSingleLogAction(
-                          resolvedViewLogMatch.id,
-                          log,
-                          "px-2.5 py-1 rounded-lg font-mono font-black text-xs"
-                        )}
-                      </div>
+                  const redTeamName =
+                    viewMatchIs2x && dashboardLogViewMode === "p2"
+                      ? resolvedViewLogMatch.teamB
+                      : resolvedViewLogMatch.teamA;
+                  const blueTeamName =
+                    viewMatchIs2x && dashboardLogViewMode === "p2"
+                      ? resolvedViewLogMatch.teamA
+                      : resolvedViewLogMatch.teamB;
+
+                  const redScore = viewMatchIs2x
+                    ? dashboardLogViewMode === "p2"
+                      ? resolvedViewLogMatch.scoreBLeg2 || 0
+                      : resolvedViewLogMatch.scoreALeg1 || 0
+                    : resolvedViewLogMatch.scoreA || 0;
+                  const blueScore = viewMatchIs2x
+                    ? dashboardLogViewMode === "p2"
+                      ? resolvedViewLogMatch.scoreALeg2 || 0
+                      : resolvedViewLogMatch.scoreBLeg1 || 0
+                    : resolvedViewLogMatch.scoreB || 0;
+
+                  const filterTeamLogs = (name: string) =>
+                    sessionSourceLogs.filter(
+                      (l) => l.participantName?.toLowerCase() === (name || "").toLowerCase()
                     );
-                  })}
-                </div>
+
+                  const cornerColumns = [
+                    {
+                      cornerKey: "red" as const,
+                      title: `🔴 SUDUT MERAH • ${redTeamName}`,
+                      score: redScore,
+                      logs: filterTeamLogs(redTeamName),
+                      cardBorder: "border-rose-500/30",
+                      titleColor: "text-rose-400",
+                      badgeStyle: "bg-rose-500/15 text-rose-300 border-rose-500/30",
+                      emptyText: viewMatchIs2x
+                        ? `Belum ada catatan log Sudut Merah di Sesi ${dashboardLogViewMode === "p2" ? 2 : 1}.`
+                        : "Belum ada catatan log Sudut Merah.",
+                    },
+                    ...(!isSingleLogMatch
+                      ? [
+                          {
+                            cornerKey: "blue" as const,
+                            title: `🔵 SUDUT BIRU • ${blueTeamName}`,
+                            score: blueScore,
+                            logs: filterTeamLogs(blueTeamName),
+                            cardBorder: "border-blue-500/30",
+                            titleColor: "text-blue-400",
+                            badgeStyle: "bg-blue-500/15 text-blue-300 border-blue-500/30",
+                            emptyText: viewMatchIs2x
+                              ? `Belum ada catatan log Sudut Biru di Sesi ${dashboardLogViewMode === "p2" ? 2 : 1}.`
+                              : "Belum ada catatan log Sudut Biru.",
+                          },
+                        ]
+                      : []),
+                  ];
+
+                  return (
+                    <div className={`grid gap-5 ${isSingleLogMatch ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"}`}>
+                      {cornerColumns.map((col) => (
+                        <div
+                          key={col.cornerKey}
+                          className={`bg-zinc-950/60 border ${col.cardBorder} rounded-2xl p-4 flex flex-col space-y-3`}
+                        >
+                          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-zinc-800">
+                            <div className="min-w-0">
+                              <span className={`font-bold ${col.titleColor} block truncate`}>
+                                {col.title}
+                              </span>
+                              <p className="text-[10px] text-zinc-400 mt-0.5">
+                                Skor Sesi: <strong className="text-white">{col.score} PTS</strong>
+                              </p>
+                            </div>
+                            <span className={`text-[11px] px-2 py-0.5 rounded-md border shrink-0 ${col.badgeStyle}`}>
+                              {col.logs.length} Log
+                            </span>
+                          </div>
+
+                          <div className="max-h-72 overflow-y-auto space-y-2 pr-1 divide-y divide-zinc-800/40">
+                            {col.logs.length === 0 ? (
+                              <p className="text-zinc-600 py-6 text-center text-[11px]">{col.emptyText}</p>
+                            ) : (
+                              col.logs.map((log) => {
+                                const parsed = parsePointLogItem(log, resolvedViewLogMatch, viewMatchIs2x);
+                                return (
+                                  <div
+                                    key={log.id}
+                                    className="pt-2 first:pt-0 flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-zinc-800/20"
+                                  >
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span
+                                        className="px-1.5 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-300 font-black text-[10px] flex items-center gap-1"
+                                        title="Waktu Stopwatch Pertandingan"
+                                      >
+                                        <Clock className="w-2.5 h-2.5 text-amber-400" />
+                                        {parsed.swTime}
+                                      </span>
+                                      <span
+                                        className="text-[10px] text-zinc-500"
+                                        title="Jam Riil Aktivitas"
+                                      >
+                                        {parsed.clockTime}
+                                      </span>
+                                      <span className="text-zinc-200 font-sans text-[11px] font-medium">
+                                        {parsed.cleanAction}
+                                      </span>
+                                    </div>
+                                    {renderSingleLogAction(resolvedViewLogMatch.id, log)}
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()
               )}
             </div>
 
