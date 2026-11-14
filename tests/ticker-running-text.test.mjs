@@ -10,10 +10,12 @@ const rootDir = path.resolve(__dirname, "..");
 
 describe("Ticker Running Text & Remove Ubah Ticker Test Suite", () => {
   const pagePath = path.join(rootDir, "src/app/page.tsx");
+  const tickerComponentPath = path.join(rootDir, "src/components/LiveTickerBar.tsx");
   const cssPath = path.join(rootDir, "src/app/globals.css");
   const settingsPath = path.join(rootDir, "src/app/pengaturan/page.tsx");
 
   const pageContent = fs.readFileSync(pagePath, "utf-8");
+  const tickerComponentContent = fs.readFileSync(tickerComponentPath, "utf-8");
   const cssContent = fs.readFileSync(cssPath, "utf-8");
   const settingsContent = fs.readFileSync(settingsPath, "utf-8");
 
@@ -40,26 +42,34 @@ describe("Ticker Running Text & Remove Ubah Ticker Test Suite", () => {
     );
   });
 
-  test("Requirement 2: Dashboard ticker is now continuous running text (animate-marquee)", () => {
-    // Should contain animate-marquee in page.tsx
+  test("Requirement 2: Dashboard ticker is now continuous running text (animate-marquee) inside LiveTickerBar", () => {
+    // Dashboard should render LiveTickerBar with resolved announcement text
     assert.match(
       pageContent,
+      /<LiveTickerBar/,
+      "Dashboard should render LiveTickerBar component"
+    );
+    assert.match(
+      pageContent,
+      /announcement:\s*announcement\s*\|\|/,
+      "Dashboard should pass announcement fallback into ticker resolver"
+    );
+
+    // LiveTickerBar should contain animate-marquee and overflow-hidden
+    assert.match(
+      tickerComponentContent,
       /animate-marquee/,
-      "Dashboard ticker should use animate-marquee class for running text"
+      "LiveTickerBar should use animate-marquee class for running text"
     );
-
-    // Should render announcement inside the marquee
     assert.match(
-      pageContent,
-      /\{announcement\s*\|\|/,
-      "Ticker should render announcement text"
+      tickerComponentContent,
+      /text\s*\|\|\s*DEFAULT_TICKER_TEXT/,
+      "LiveTickerBar should render ticker text with DEFAULT_TICKER_TEXT fallback"
     );
-
-    // Should have overflow-hidden container
     assert.match(
-      pageContent,
+      tickerComponentContent,
       /overflow-hidden/,
-      "Ticker container should clip overflow"
+      "LiveTickerBar container should clip overflow"
     );
   });
 

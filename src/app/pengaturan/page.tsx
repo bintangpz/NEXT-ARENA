@@ -61,9 +61,11 @@ import {
   Edit3,
 } from "lucide-react";
 import { ArenaLogo } from "@/components/ArenaLogo";
+import { LiveTickerBar } from "@/components/LiveTickerBar";
 import { ConfirmModal } from "@/components/modals";
 import { playSound, stopSound, stopAllSounds, SoundEventType } from "@/lib/soundEffects";
 import { filterLogsForBracketMatch } from "@/lib/scoreBreakdown";
+import { resolveEffectiveTicker } from "@/lib/liveTicker";
 import { resolveMatchWinner } from "@/lib/tieBreaker";
 import {
   CATEGORIES as DEFAULT_CATEGORIES,
@@ -347,6 +349,9 @@ export default function PengaturanPage() {
 
   // Setting States
   const [announcement, setAnnouncement] = useState<string>("");
+  const [liveTicker, setLiveTicker] = useState<string>("");
+  const [liveTickerMatchId, setLiveTickerMatchId] = useState<string>("");
+  const [liveTickerMode, setLiveTickerMode] = useState<string>("default");
 
   // Timer & Stopwatch States (Mode Stopwatch + Fitur Persiapan)
   const [timerMode, setTimerMode] = useState<"stopwatch" | "countdown">("stopwatch");
@@ -664,6 +669,9 @@ export default function PengaturanPage() {
             } catch (e) {}
           }
           if (s.announcement) setAnnouncement(s.announcement);
+          if (s.live_ticker !== undefined) setLiveTicker(s.live_ticker);
+          if (s.live_ticker_match_id !== undefined) setLiveTickerMatchId(s.live_ticker_match_id);
+          if (s.live_ticker_mode !== undefined) setLiveTickerMode(s.live_ticker_mode);
           if (s.stage_model) setStageModel(s.stage_model as any);
           if (s.active_round) setActiveRound(s.active_round);
           if (s.round_title) setRoundTitle(s.round_title);
@@ -755,6 +763,9 @@ export default function PengaturanPage() {
       } else if (event.data?.type === "SETTINGS_SYNC" && event.data.payload) {
         const p = event.data.payload;
         if (p.announcement !== undefined) setAnnouncement(p.announcement);
+        if (p.live_ticker !== undefined) setLiveTicker(p.live_ticker);
+        if (p.live_ticker_match_id !== undefined) setLiveTickerMatchId(p.live_ticker_match_id);
+        if (p.live_ticker_mode !== undefined) setLiveTickerMode(p.live_ticker_mode);
       }
     };
     return () => {
@@ -2134,27 +2145,45 @@ export default function PengaturanPage() {
     }
   };
 
+  const effectiveTicker = useMemo(
+    () =>
+      resolveEffectiveTicker({
+        announcement: announcement || "Selamat datang di NEXT ARENA Tournament!",
+        liveTicker,
+        liveTickerMatchId,
+        liveTickerMode,
+        bracketMatches,
+      }),
+    [announcement, liveTicker, liveTickerMatchId, liveTickerMode, bracketMatches]
+  );
+
   return (
     <div className="min-h-screen flex flex-col text-zinc-100 bg-low-poly">
-      {/* Top Gradient Accent */}
-      <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-sky-400 to-amber-400" />
+      {/* Sticky Top Wrapper: Neon Accent + Live Ticker + Header */}
+      <div className="sticky top-0 z-30">
+        {/* Top Gradient Accent */}
+        <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-sky-400 to-amber-400" />
 
-      {/* Header */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#060e1c]/90 border-b border-cyan-900/40">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs font-semibold transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 text-cyan-400" />
-              <span>Kembali ke Monitor Arena</span>
-            </Link>
-            <div className="h-6 w-[1px] bg-zinc-800 hidden sm:block" />
-            <ArenaLogo size="sm" showTagline={false} />
+        {/* Live Broadcast Ticker */}
+        <LiveTickerBar text={effectiveTicker.text} mode={effectiveTicker.mode} />
+
+        {/* Header */}
+        <header className="backdrop-blur-xl bg-[#060e1c]/90 border-b border-cyan-900/40">
+          <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 text-xs font-semibold transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4 text-cyan-400" />
+                <span>Kembali ke Monitor Arena</span>
+              </Link>
+              <div className="h-6 w-[1px] bg-zinc-800 hidden sm:block" />
+              <ArenaLogo size="sm" showTagline={false} />
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      </div>
 
       {/* Main Container */}
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">

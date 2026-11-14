@@ -20,7 +20,6 @@ import {
   Building2,
   Zap,
   Download,
-  Megaphone,
   GitBranch,
   ClipboardCheck,
   LayoutDashboard,
@@ -52,7 +51,9 @@ import {
   Swords,
 } from "lucide-react";
 import { ArenaLogo } from "@/components/ArenaLogo";
+import { LiveTickerBar } from "@/components/LiveTickerBar";
 import { playSound, stopSound, stopAllSounds } from "@/lib/soundEffects";
+import { resolveEffectiveTicker } from "@/lib/liveTicker";
 import {
   computeMatchLogCategoryBreakdown,
   filterLogsForBracketMatch,
@@ -104,6 +105,9 @@ export default function NextArenaDashboard() {
   const [announcement, setAnnouncement] = useState<string>(
     "🔥 LIVE ARENA: Babak 3 Grand Final sedang berlangsung! Selamat bertanding seluruh tim finalis."
   );
+  const [liveTicker, setLiveTicker] = useState<string>("");
+  const [liveTickerMatchId, setLiveTickerMatchId] = useState<string>("");
+  const [liveTickerMode, setLiveTickerMode] = useState<string>("default");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
@@ -453,6 +457,9 @@ export default function NextArenaDashboard() {
     if (s.sound_start_loop !== undefined) setSoundStartLoop(s.sound_start_loop === "true");
     if (s.sound_finish_loop !== undefined) setSoundFinishLoop(s.sound_finish_loop === "true");
     if (s.announcement !== undefined) setAnnouncement(s.announcement);
+    if (s.live_ticker !== undefined) setLiveTicker(s.live_ticker);
+    if (s.live_ticker_match_id !== undefined) setLiveTickerMatchId(s.live_ticker_match_id);
+    if (s.live_ticker_mode !== undefined) setLiveTickerMode(s.live_ticker_mode);
 
     if (s.custom_point_rules) {
       try {
@@ -1746,110 +1753,93 @@ export default function NextArenaDashboard() {
     );
   };
 
+  const effectiveTicker = useMemo(
+    () =>
+      resolveEffectiveTicker({
+        announcement: announcement || "Selamat datang di NEXT ARENA Tournament!",
+        liveTicker,
+        liveTickerMatchId,
+        liveTickerMode,
+        bracketMatches,
+      }),
+    [announcement, liveTicker, liveTickerMatchId, liveTickerMode, bracketMatches]
+  );
+
   return (
     <div className="min-h-screen flex flex-col text-zinc-100">
-      {/* Top Neon Gradient Line */}
-      <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-sky-400 to-amber-400" />
+      {/* Sticky Top Wrapper: Neon Line + Live Broadcast Ticker + Top Navigation Bar */}
+      <div className="sticky top-0 z-30">
+        {/* Top Neon Gradient Line */}
+        <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-sky-400 to-amber-400" />
 
-      {/* Live Broadcast Ticker / Pengumuman Monitor */}
-      <div className="bg-[#060e1c] border-b border-cyan-900/40 px-4 sm:px-6 lg:px-8 py-2">
-        <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 text-[10px] font-bold uppercase tracking-wider shrink-0 shadow-sm">
-              <Megaphone className="w-3 h-3 text-cyan-400" />
-              INFO ARENA
-            </span>
-            <div className="group relative flex-1 min-w-0 overflow-hidden flex items-center select-none py-0.5">
-              {/* Fade Gradient Edges for Smooth Entry/Exit */}
-              <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#060e1c] to-transparent z-10" />
-              <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#060e1c] to-transparent z-10" />
-
-              {/* Running Text / Marquee Elements */}
-              <div className="flex shrink-0 items-center gap-8 pr-8 animate-marquee">
-                <span className="text-xs text-zinc-300 font-medium whitespace-nowrap">
-                  {announcement || "Selamat datang di NEXT ARENA Tournament!"}
-                </span>
-                <span className="text-cyan-400 font-bold text-xs shrink-0 select-none">✦</span>
-                <span className="text-xs text-zinc-300 font-medium whitespace-nowrap">
-                  {announcement || "Selamat datang di NEXT ARENA Tournament!"}
-                </span>
-                <span className="text-amber-400 font-bold text-xs shrink-0 select-none">✦</span>
-              </div>
-              <div className="flex shrink-0 items-center gap-8 pr-8 animate-marquee" aria-hidden="true">
-                <span className="text-xs text-zinc-300 font-medium whitespace-nowrap">
-                  {announcement || "Selamat datang di NEXT ARENA Tournament!"}
-                </span>
-                <span className="text-cyan-400 font-bold text-xs shrink-0 select-none">✦</span>
-                <span className="text-xs text-zinc-300 font-medium whitespace-nowrap">
-                  {announcement || "Selamat datang di NEXT ARENA Tournament!"}
-                </span>
-                <span className="text-amber-400 font-bold text-xs shrink-0 select-none">✦</span>
-              </div>
-            </div>
-          </div>
-          {showTimerOnMonitor && (
-            <div className="flex items-center gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsBigTimerOpen(true)}
-                title="Buka Layar Penuh Stopwatch Arena"
-                className={`flex items-center gap-2 px-3 py-1 rounded-xl font-mono text-xs font-bold transition-all shadow-sm ${timerPhase === "preparation"
-                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse"
-                    : timerPhase === "prep_ended"
-                      ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/50 animate-bounce"
-                      : timerPhase === "match"
-                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-                        : timerPhase === "paused"
-                          ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
-                          : timerPhase === "countdown"
-                            ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 animate-pulse"
-                            : timerPhase === "finished"
-                              ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
-                              : "bg-[#0a172c] border border-cyan-900/40 text-zinc-300"
-                  }`}
-              >
-                <span
-                  className={`w-2 h-2 rounded-full ${isTimerRunning
-                      ? timerPhase === "preparation"
-                        ? "bg-amber-400 animate-ping"
-                        : timerPhase === "countdown"
-                          ? "bg-cyan-400 animate-ping"
-                          : "bg-emerald-400 animate-ping"
-                      : "bg-zinc-600"
-                    }`}
-                />
-                <span className="text-[10px] uppercase font-sans font-semibold tracking-wider text-zinc-400 hidden sm:inline">
-                  {timerPhase === "preparation"
-                    ? "Persiapan"
-                    : timerPhase === "prep_ended"
-                      ? "Siap Start"
-                      : timerPhase === "countdown"
-                        ? "Hitung Mundur"
+        {/* Live Broadcast Ticker / Pengumuman Monitor */}
+        <LiveTickerBar
+          text={effectiveTicker.text}
+          mode={effectiveTicker.mode}
+          rightSlot={
+            showTimerOnMonitor ? (
+              <div className="flex items-center gap-3 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsBigTimerOpen(true)}
+                  title="Buka Layar Penuh Stopwatch Arena"
+                  className={`flex items-center gap-2 px-3 py-1 rounded-xl font-mono text-xs font-bold transition-all shadow-sm ${timerPhase === "preparation"
+                      ? "bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.2)] animate-pulse"
+                      : timerPhase === "prep_ended"
+                        ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/50 animate-bounce"
                         : timerPhase === "match"
-                          ? "Stopwatch"
+                          ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
                           : timerPhase === "paused"
-                            ? "Jeda"
-                            : timerPhase === "finished"
-                              ? "Selesai"
-                              : "Timer"}
-                  :
-                </span>
-                <span className="text-sm font-black text-white font-mono">
-                  {timerPhase === "countdown"
-                    ? timerSeconds
-                    : timerPhase === "match" || timerPhase === "finished"
-                      ? getStopwatchParts(timerElapsedMs).formatted
-                      : formatTimerDisplay(timerSeconds)}
-                </span>
-                <Maximize2 className="w-3 h-3 text-zinc-400 hover:text-white ml-0.5" />
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+                            ? "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                            : timerPhase === "countdown"
+                              ? "bg-cyan-500/25 text-cyan-300 border border-cyan-500/50 animate-pulse"
+                              : timerPhase === "finished"
+                                ? "bg-rose-500/20 text-rose-300 border border-rose-500/40"
+                                : "bg-[#0a172c] border border-cyan-900/40 text-zinc-300"
+                    }`}
+                >
+                  <span
+                    className={`w-2 h-2 rounded-full ${isTimerRunning
+                        ? timerPhase === "preparation"
+                          ? "bg-amber-400 animate-ping"
+                          : timerPhase === "countdown"
+                            ? "bg-cyan-400 animate-ping"
+                            : "bg-emerald-400 animate-ping"
+                        : "bg-zinc-600"
+                      }`}
+                  />
+                  <span className="text-[10px] uppercase font-sans font-semibold tracking-wider text-zinc-400 hidden sm:inline">
+                    {timerPhase === "preparation"
+                      ? "Persiapan"
+                      : timerPhase === "prep_ended"
+                        ? "Siap Start"
+                        : timerPhase === "countdown"
+                          ? "Hitung Mundur"
+                          : timerPhase === "match"
+                            ? "Stopwatch"
+                            : timerPhase === "paused"
+                              ? "Jeda"
+                              : timerPhase === "finished"
+                                ? "Selesai"
+                                : "Timer"}
+                    :
+                  </span>
+                  <span className="text-sm font-black text-white font-mono">
+                    {timerPhase === "countdown"
+                      ? timerSeconds
+                      : timerPhase === "match" || timerPhase === "finished"
+                        ? getStopwatchParts(timerElapsedMs).formatted
+                        : formatTimerDisplay(timerSeconds)}
+                  </span>
+                  <Maximize2 className="w-3 h-3 text-zinc-400 hover:text-white ml-0.5" />
+                </button>
+              </div>
+            ) : undefined
+          }
+        />
 
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-30 backdrop-blur-xl bg-[#060e1c]/90 border-b border-cyan-900/40">
+        {/* Top Navigation Bar */}
+        <header className="backdrop-blur-xl bg-[#060e1c]/90 border-b border-cyan-900/40">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
           <ArenaLogo size="md" />
 
@@ -1947,6 +1937,7 @@ export default function NextArenaDashboard() {
           </button>
         </div>
       </header>
+      </div>
 
       {/* Main Content Container */}
       <main className="flex-1 max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-8">

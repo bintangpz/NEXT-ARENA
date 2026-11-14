@@ -33,6 +33,7 @@ import {
   Flag,
 } from "lucide-react";
 import { ArenaLogo } from "@/components/ArenaLogo";
+import { LiveTickerBar } from "@/components/LiveTickerBar";
 import {
   BracketMatch,
   Participant,
@@ -41,6 +42,14 @@ import {
 } from "@/data/mockCompetition";
 import { playSound, stopAllSounds } from "@/lib/soundEffects";
 import { resolveMatchWinner } from "@/lib/tieBreaker";
+import {
+  buildLeg1ResultTicker,
+  buildMatchFinishedTicker,
+  buildWelcomeMatchTicker,
+  DEFAULT_TICKER_TEXT,
+  formatTickerScoreSummary,
+  type LiveTickerMode,
+} from "@/lib/liveTicker";
 
 export default function ArenaBattleMatchPage() {
   const params = useParams();
@@ -164,11 +173,14 @@ export default function ArenaBattleMatchPage() {
   }>({ A: {}, B: {} });
   const [showResetMatchModal, setShowResetMatchModal] = useState<boolean>(false);
   const [resetWithLogs, setResetWithLogs] = useState<boolean>(true);
+  const [announcement, setAnnouncement] = useState<string>("");
 
   // Unique sender ID to avoid processing self-broadcasts
   const SENDER_ID = useMemo(() => Math.random().toString(36).substring(2, 9), []);
   const hasInitializedRef = useRef<boolean>(false);
   const hasTriggeredMatchStartRef = useRef<boolean>(false);
+  const lastSyncedTickerRef = useRef<string>("");
+  const hasSyncedLiveTickerRef = useRef<boolean>(false);
 
   // Helper broadcast (tags senderId so current arena tab ignores its own echo)
   const broadcastSync = (type: string, payload?: any) => {
@@ -177,6 +189,39 @@ export default function ArenaBattleMatchPage() {
       channel.postMessage({ type, payload, senderId: SENDER_ID });
       channel.close();
     }
+  };
+
+  const syncLiveTickerToArena = (
+    liveTicker: string,
+    liveTickerMatchId: string,
+    liveTickerMode: LiveTickerMode,
+    useKeepalive: boolean = false
+  ) => {
+    const payload = {
+      live_ticker: liveTicker,
+      live_ticker_match_id: liveTickerMatchId,
+      live_ticker_mode: liveTickerMode,
+    };
+    if (liveTicker) {
+      hasSyncedLiveTickerRef.current = true;
+    } else {
+      hasSyncedLiveTickerRef.current = false;
+    }
+    broadcastSync("SETTINGS_SYNC", payload);
+    if (typeof fetch !== "undefined") {
+      fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        keepalive: useKeepalive,
+      }).catch(() => {});
+    }
+  };
+
+  const clearLiveTicker = (useKeepalive: boolean = false) => {
+    const emptyPayload = JSON.stringify({ text: "", matchId: "", mode: "default" });
+    lastSyncedTickerRef.current = emptyPayload;
+    syncLiveTickerToArena("", "", "default", useKeepalive);
   };
 
   const showArenaToast = (
@@ -283,6 +328,7 @@ export default function ArenaBattleMatchPage() {
           if (s.sound_prep_loop !== undefined) setSoundPrepLoop(s.sound_prep_loop === "true");
           if (s.prep_duration !== undefined) setPrepDuration(Number(s.prep_duration) || 10);
           if (s.match_limit !== undefined) setMatchLimit(Number(s.match_limit) || 300);
+          if (s.announcement !== undefined) setAnnouncement(s.announcement);
         }
 
         // Muat log histori poin dari SQLite jika ada
@@ -425,6 +471,11 @@ export default function ArenaBattleMatchPage() {
         if (event.data?.senderId === SENDER_ID) return;
         if (event.data?.type === "DATA_REFRESH") {
           loadData();
+        } else if (
+          event.data?.type === "SETTINGS_SYNC" &&
+          event.data.payload?.announcement !== undefined
+        ) {
+          setAnnouncement(event.data.payload.announcement);
         }
       };
       return () => channel.close();
@@ -2075,6 +2126,7 @@ export default function ArenaBattleMatchPage() {
           ]);
         }
         broadcastSync("DATA_REFRESH");
+        clearLiveTicker();
         showArenaToast({
           kind: "reset_match",
           title: "PERTANDINGAN BERHASIL DIRESET",
@@ -2323,7 +2375,143 @@ export default function ArenaBattleMatchPage() {
     );
   };
 
-  if (isLoading || !match) {
+  const isSingle = match?.teamB === "- (Tanding Tunggal)";
+  const winnerResolution = match
+    ? resolveMatchWinner({
+        scoreA: match.scoreA || 0,
+        scoreB: match.scoreB || 0,
+        is2xMode: is2x,
+        finishedCorners,
+        matchLogs: matchHistory
+          .filter((item) => item.corner !== "system" && item.actionLabel.toUpperCase().includes("FINISH"))
+          .map((item) => ({
+            participantName: item.teamName,
+            stageLabel: `${item.actionLabel} (Laga ${match.matchLabel} P${item.leg} @${item.timeFormatted})`,
+          })),
+        teamA: match.teamA,
+        teamB: match.teamB,
+      })
+    : null;
+  const winnerTeamName =
+    match && (match.winner === "A" ? match.teamA : match.winner === "B" ? match.teamB : null);
+
+  const battleTickerState = (() => {
+    const defaultText = (announcement || "").trim() || DEFAULT_TICKER_TEXT;
+    if (!match) {
+      return {
+        text: defaultText,
+        mode: "default" as LiveTickerMode,
+        syncText: "",
+        syncMatchId: "",
+        syncMode: "default" as LiveTickerMode,
+      };
+    }
+
+    if (showWinnerModal || (timerPhase === "finished" && hasSyncedLiveTickerRef.current)) {
+      const finishedText = buildMatchFinishedTicker({
+        matchLabel: match.matchLabel,
+        teamA: match.teamA,
+        teamB: match.teamB,
+        scoreA: match.scoreA || 0,
+        scoreB: match.scoreB || 0,
+        winnerName: winnerTeamName || null,
+        isSingle,
+        finishTimeA: winnerResolution?.teamAFinishFormatted,
+        finishTimeB: winnerResolution?.teamBFinishFormatted,
+      });
+      return {
+        text: finishedText,
+        mode: "finished" as LiveTickerMode,
+        syncText: "",
+        syncMatchId: "",
+        syncMode: "default" as LiveTickerMode,
+      };
+    }
+
+    if (is2x && (showLeg1Modal || (activeLeg === 2 && timerPhase === "idle"))) {
+      const p1ScoreA = showLeg1Modal ? revisedLeg1ScoreA : (match.scoreALeg1 || 0);
+      const p1ScoreB = showLeg1Modal ? revisedLeg1ScoreB : (match.scoreBLeg1 || 0);
+      const summaryA = formatTickerScoreSummary(getScoreCategoryBreakdown(1, "A", showLeg1Modal));
+      const summaryB = formatTickerScoreSummary(getScoreCategoryBreakdown(1, "B", showLeg1Modal));
+      const leg1Text = buildLeg1ResultTicker({
+        matchLabel: match.matchLabel,
+        teamA: match.teamA,
+        teamB: match.teamB,
+        scoreALeg1: p1ScoreA,
+        scoreBLeg1: p1ScoreB,
+        isSingle,
+        summaryA,
+        summaryB,
+        finishTimeA: finishedCorners.p1Red || winnerResolution?.teamALeg1Formatted || "",
+        finishTimeB: finishedCorners.p1Blue || winnerResolution?.teamBLeg1Formatted || "",
+      });
+      return {
+        text: leg1Text,
+        mode: "leg1_result" as LiveTickerMode,
+        syncText: leg1Text,
+        syncMatchId: match.id,
+        syncMode: "leg1_result" as LiveTickerMode,
+      };
+    }
+
+    if (timerPhase !== "idle" && timerPhase !== "finished") {
+      const welcomeText = buildWelcomeMatchTicker({
+        matchLabel: match.matchLabel,
+        round: match.round,
+        teamA: match.teamA,
+        teamB: match.teamB,
+        is2x,
+        leg: activeLeg,
+        isSingle,
+      });
+      return {
+        text: welcomeText,
+        mode: "welcome" as LiveTickerMode,
+        syncText: welcomeText,
+        syncMatchId: match.id,
+        syncMode: "welcome" as LiveTickerMode,
+      };
+    }
+
+    return {
+      text: defaultText,
+      mode: "default" as LiveTickerMode,
+      syncText: "",
+      syncMatchId: "",
+      syncMode: "default" as LiveTickerMode,
+    };
+  })();
+
+  const serializedTickerSync = JSON.stringify({
+    text: battleTickerState.syncText,
+    matchId: battleTickerState.syncMatchId,
+    mode: battleTickerState.syncMode,
+  });
+
+  useEffect(() => {
+    if (!match) return;
+    if (lastSyncedTickerRef.current === serializedTickerSync) return;
+    if (lastSyncedTickerRef.current === "" && battleTickerState.syncText === "") {
+      lastSyncedTickerRef.current = serializedTickerSync;
+      return;
+    }
+    lastSyncedTickerRef.current = serializedTickerSync;
+    syncLiveTickerToArena(
+      battleTickerState.syncText,
+      battleTickerState.syncMatchId,
+      battleTickerState.syncMode
+    );
+  }, [serializedTickerSync, match?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (hasSyncedLiveTickerRef.current) {
+        clearLiveTicker(true);
+      }
+    };
+  }, []);
+
+  if (isLoading || !match || !winnerResolution) {
     return (
       <div className="min-h-screen bg-[#060d1a] flex flex-col items-center justify-center space-y-4">
         <ArenaLogo size="lg" />
@@ -2332,26 +2520,8 @@ export default function ArenaBattleMatchPage() {
     );
   }
 
-  const isSingle = match.teamB === "- (Tanding Tunggal)";
-  const winnerResolution = resolveMatchWinner({
-    scoreA: match.scoreA || 0,
-    scoreB: match.scoreB || 0,
-    is2xMode: is2x,
-    finishedCorners,
-    matchLogs: matchHistory
-      .filter((item) => item.corner !== "system" && item.actionLabel.toUpperCase().includes("FINISH"))
-      .map((item) => ({
-        participantName: item.teamName,
-        stageLabel: `${item.actionLabel} (Laga ${match.matchLabel} P${item.leg} @${item.timeFormatted})`,
-      })),
-    teamA: match.teamA,
-    teamB: match.teamB,
-  });
-  const winnerTeamName =
-    match.winner === "A" ? match.teamA : match.winner === "B" ? match.teamB : null;
-
   return (
-    <div className="min-h-screen bg-[#060d1a] text-white flex flex-col justify-between selection:bg-cyan-500 selection:text-black relative overflow-x-hidden">
+    <div className="min-h-screen bg-[#060d1a] text-white flex flex-col justify-between selection:bg-cyan-500 selection:text-black relative overflow-x-clip">
       {/* Background Subtle Hex/Diamond Pattern */}
       <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#00a3ff_1px,transparent_1px)] [background-size:28px_28px] pointer-events-none" />
 
@@ -2359,7 +2529,7 @@ export default function ArenaBattleMatchPage() {
       {toastMsg && (
         <div
           key={toastMsg.key}
-          className="fixed top-20 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300"
+          className="fixed top-28 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-in fade-in slide-in-from-top-4 duration-300"
         >
           {toastMsg.kind === "switch_leg" ? (
             <div className={`px-6 py-4 rounded-3xl border backdrop-blur-2xl shadow-2xl flex items-center gap-4 ${
@@ -2445,53 +2615,62 @@ export default function ArenaBattleMatchPage() {
         </div>
       )}
 
-      {/* TOP HEADER BAR */}
-      <header className="px-4 sm:px-8 py-4 bg-[#060e1c]/95 border-b border-cyan-900/40 flex flex-wrap items-center justify-between gap-4 z-40 sticky top-0 backdrop-blur-xl shadow-xl">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/?tab=bracket"
-            className="px-3.5 py-2 rounded-xl bg-[#0a172c] hover:bg-[#0e2240] text-zinc-300 hover:text-white border border-cyan-900/40 text-xs font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Kembali ke Bagan</span>
-          </Link>
+      {/* STICKY TOP WRAPPER: Neon Accent + Live Broadcast Ticker + Arena Header */}
+      <div className="sticky top-0 z-40">
+        <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-sky-400 to-amber-400" />
+        <LiveTickerBar
+          text={battleTickerState.text}
+          mode={battleTickerState.mode}
+        />
+        {/* TOP HEADER BAR */}
+        <header className="px-4 sm:px-8 py-4 bg-[#060e1c]/95 border-b border-cyan-900/40 flex flex-wrap items-center justify-between gap-4 backdrop-blur-xl shadow-xl">
+          <div className="flex items-center gap-4">
+            <Link
+              href="/?tab=bracket"
+              onClick={() => clearLiveTicker(true)}
+              className="px-3.5 py-2 rounded-xl bg-[#0a172c] hover:bg-[#0e2240] text-zinc-300 hover:text-white border border-cyan-900/40 text-xs font-bold flex items-center gap-2 transition-all shadow-sm cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Kembali ke Bagan</span>
+            </Link>
 
-          <div className="h-6 w-px bg-cyan-900/40 hidden sm:block" />
+            <div className="h-6 w-px bg-cyan-900/40 hidden sm:block" />
 
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 font-mono font-black text-xs border border-cyan-500/40">
-                {match.matchLabel}
-              </span>
-              <span className="text-xs font-bold text-white tracking-wide">
-                {match.round} • {match.category || "Transporter SMP"}
-              </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-lg bg-cyan-500/20 text-cyan-300 font-mono font-black text-xs border border-cyan-500/40">
+                  {match.matchLabel}
+                </span>
+                <span className="text-xs font-bold text-white tracking-wide">
+                  {match.round} • {match.category || "Transporter SMP"}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right Header Controls */}
-        <div className="flex items-center gap-2.5">
+          {/* Right Header Controls */}
+          <div className="flex items-center gap-2.5">
 
-          <button
-            type="button"
-            onClick={() => setSoundEnabled((prev) => !prev)}
-            title={soundEnabled ? "Audio Aktif" : "Audio Nonaktif"}
-            className="p-2.5 rounded-xl bg-[#0a172c] hover:bg-[#0e2240] border border-cyan-900/40 text-zinc-400 hover:text-white transition-all"
-          >
-            {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4" />}
-          </button>
+            <button
+              type="button"
+              onClick={() => setSoundEnabled((prev) => !prev)}
+              title={soundEnabled ? "Audio Aktif" : "Audio Nonaktif"}
+              className="p-2.5 rounded-xl bg-[#0a172c] hover:bg-[#0e2240] border border-cyan-900/40 text-zinc-400 hover:text-white transition-all"
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4" />}
+            </button>
 
-          <button
-            type="button"
-            onClick={toggleFullscreen}
-            title="Layar Penuh (F11)"
-            className="p-2.5 rounded-xl bg-[#0a172c] hover:bg-[#0e2240] border border-cyan-900/40 text-zinc-400 hover:text-white transition-all"
-          >
-            {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </button>
-        </div>
-      </header>
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              title="Layar Penuh (F11)"
+              className="p-2.5 rounded-xl bg-[#0a172c] hover:bg-[#0e2240] border border-cyan-900/40 text-zinc-400 hover:text-white transition-all"
+            >
+              {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+          </div>
+        </header>
+      </div>
 
       {/* MAIN BATTLEFIELD & TIMER CONSOLE */}
       <main className="flex-1 p-4 sm:p-8 max-w-7xl mx-auto w-full flex flex-col justify-between gap-6 z-10">
@@ -4047,6 +4226,7 @@ export default function ArenaBattleMatchPage() {
             <div className="pt-1">
               <Link
                 href="/?tab=bracket"
+                onClick={() => clearLiveTicker(true)}
                 className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-400 text-zinc-950 font-black text-xs sm:text-sm hover:brightness-110 shadow-lg shadow-cyan-500/25 text-center flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <Check className="w-4 h-4 stroke-[3]" />
