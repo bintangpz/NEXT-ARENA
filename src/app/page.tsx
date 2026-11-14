@@ -3845,26 +3845,6 @@ export default function NextArenaDashboard() {
                                 <span className="text-sm font-black text-white block truncate">
                                   {teamInfo.name}
                                 </span>
-                                {viewMatchIs2x && (
-                                  <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[10px] text-zinc-400">
-                                    <span
-                                      className={`px-1.5 py-0.5 rounded border ${dashboardLogViewMode === "p1"
-                                          ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
-                                          : "bg-zinc-900 border-zinc-800 text-zinc-400"
-                                        }`}
-                                    >
-                                      P1: <strong className={dashboardLogViewMode === "p1" ? "text-amber-200" : "text-white"}>{teamInfo.leg1}</strong>
-                                    </span>
-                                    <span
-                                      className={`px-1.5 py-0.5 rounded border ${dashboardLogViewMode === "p2"
-                                          ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300"
-                                          : "bg-zinc-900 border-zinc-800 text-zinc-400"
-                                        }`}
-                                    >
-                                      P2: <strong className={dashboardLogViewMode === "p2" ? "text-cyan-200" : "text-cyan-300"}>{teamInfo.leg2}</strong>
-                                    </span>
-                                  </div>
-                                )}
                               </div>
                               <div className="text-right shrink-0">
                                 <span className="text-[9px] uppercase text-zinc-400 block">
