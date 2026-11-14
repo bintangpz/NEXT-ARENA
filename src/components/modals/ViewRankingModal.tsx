@@ -18,6 +18,10 @@ import {
   Crown,
   Layers,
 } from "lucide-react";
+import {
+  FastestFinishEntry,
+  getParticipantFastestFinishMs,
+} from "@/lib/tieBreaker";
 
 interface ViewRankingModalProps {
   isOpen: boolean;
@@ -27,6 +31,7 @@ interface ViewRankingModalProps {
   activeRound?: string;
   roundTitle?: string;
   initialStage?: number | "all";
+  fastestFinishMap?: Record<string, FastestFinishEntry>;
 }
 
 export function ViewRankingModal({
@@ -37,6 +42,7 @@ export function ViewRankingModal({
   activeRound = "babak1",
   roundTitle = "KLASEMEN PERTANDINGAN",
   initialStage,
+  fastestFinishMap = {},
 }: ViewRankingModalProps) {
   const [isAutoScrollActive, setIsAutoScrollActive] = useState<boolean>(true);
   const [isManualScrollPaused, setIsManualScrollPaused] = useState<boolean>(false);
@@ -137,7 +143,7 @@ export function ViewRankingModal({
       };
     });
 
-    // 4. Sort participants descending by display points, then raw score, then name
+    // 4. Sort participants descending by display points, then raw score, then fastest finish time, then name
     return withScores.sort((a, b) => {
       if (b.displayPoints !== a.displayPoints) {
         return b.displayPoints - a.displayPoints;
@@ -145,9 +151,14 @@ export function ViewRankingModal({
       if (b.stageRawScore !== a.stageRawScore) {
         return b.stageRawScore - a.stageRawScore;
       }
+      const finishA = getParticipantFastestFinishMs(a.name, fastestFinishMap);
+      const finishB = getParticipantFastestFinishMs(b.name, fastestFinishMap);
+      if (finishA !== finishB) {
+        return finishA - finishB;
+      }
       return a.name.localeCompare(b.name);
     });
-  }, [participants, selectedCategory, selectedStage, currentStageObj, stages]);
+  }, [participants, selectedCategory, selectedStage, currentStageObj, stages, fastestFinishMap]);
 
   // Handle ESC key to exit & spacebar to toggle auto-scroll
   useEffect(() => {
@@ -766,6 +777,11 @@ export function ViewRankingModal({
                           ? "POIN RESET BABAK"
                           : "AKUMULASI PTS"}
                       </span>
+                      {fastestFinishMap[(p.name || "").trim().toLowerCase()] && (
+                        <span className="text-[10px] font-mono font-bold text-emerald-400 mt-0.5">
+                          ⏱ {fastestFinishMap[(p.name || "").trim().toLowerCase()].bestFormatted}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

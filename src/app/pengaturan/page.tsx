@@ -63,6 +63,8 @@ import {
 import { ArenaLogo } from "@/components/ArenaLogo";
 import { ConfirmModal } from "@/components/modals";
 import { playSound, stopSound, stopAllSounds, SoundEventType } from "@/lib/soundEffects";
+import { filterLogsForBracketMatch } from "@/lib/scoreBreakdown";
+import { resolveMatchWinner } from "@/lib/tieBreaker";
 import {
   CATEGORIES as DEFAULT_CATEGORIES,
   CompetitionCategory,
@@ -948,14 +950,17 @@ export default function PengaturanPage() {
     const newScoreA = team === "A" ? Number((match.scoreA + delta).toFixed(1)) : match.scoreA;
     const newScoreB = team === "B" ? Number((match.scoreB + delta).toFixed(1)) : match.scoreB;
     const isPlayed = newScoreA !== 0 || newScoreB !== 0;
-    const winner: "A" | "B" | null = isPlayed
-      ? newScoreA > newScoreB
-        ? "A"
-        : newScoreB > newScoreA
-        ? "B"
-        : null
+    const winner = isPlayed
+      ? resolveMatchWinner({
+          scoreA: newScoreA,
+          scoreB: newScoreB,
+          is2xMode: false,
+          matchLogs: filterLogsForBracketMatch(pointLogs, match),
+          teamA: match.teamA,
+          teamB: match.teamB,
+        }).winner
       : null;
-    const status = isPlayed ? (newScoreA !== newScoreB ? "Selesai" : "Berlangsung") : "Siap Tanding";
+    const status = isPlayed ? (winner ? "Selesai" : "Berlangsung") : "Siap Tanding";
 
     setBracketMatches((prev) =>
       prev.map((m) => (m.id === matchId ? { ...m, scoreA: newScoreA, scoreB: newScoreB, winner: winner || undefined, status: status as any } : m))
@@ -990,14 +995,17 @@ export default function PengaturanPage() {
     const newScoreA = team === "A" ? score : match.scoreA;
     const newScoreB = team === "B" ? score : match.scoreB;
     const isPlayed = newScoreA !== 0 || newScoreB !== 0;
-    const winner: "A" | "B" | null = isPlayed
-      ? newScoreA > newScoreB
-        ? "A"
-        : newScoreB > newScoreA
-        ? "B"
-        : null
+    const winner = isPlayed
+      ? resolveMatchWinner({
+          scoreA: newScoreA,
+          scoreB: newScoreB,
+          is2xMode: false,
+          matchLogs: filterLogsForBracketMatch(pointLogs, match),
+          teamA: match.teamA,
+          teamB: match.teamB,
+        }).winner
       : null;
-    const status = isPlayed ? (newScoreA !== newScoreB ? "Selesai" : "Berlangsung") : "Siap Tanding";
+    const status = isPlayed ? (winner ? "Selesai" : "Berlangsung") : "Siap Tanding";
 
     setBracketMatches((prev) =>
       prev.map((m) => (m.id === matchId ? { ...m, scoreA: newScoreA, scoreB: newScoreB, winner: winner || undefined, status: status as any } : m))
@@ -1048,12 +1056,15 @@ export default function PengaturanPage() {
     const newScoreB = Number(((scoreBLeg1 + scoreBLeg2) / 2).toFixed(2));
 
     const isPlayed = newScoreA !== 0 || newScoreB !== 0;
-    const winner: "A" | "B" | null = isPlayed
-      ? newScoreA > newScoreB
-        ? "A"
-        : newScoreB > newScoreA
-        ? "B"
-        : null
+    const winner = isPlayed
+      ? resolveMatchWinner({
+          scoreA: newScoreA,
+          scoreB: newScoreB,
+          is2xMode: true,
+          matchLogs: filterLogsForBracketMatch(pointLogs, match),
+          teamA: match.teamA,
+          teamB: match.teamB,
+        }).winner
       : null;
     const status = isPlayed ? (match.status === "Selesai" ? "Selesai" : "Berlangsung") : "Siap Tanding";
 
@@ -1127,12 +1138,15 @@ export default function PengaturanPage() {
     const newScoreB = Number(((scoreBLeg1 + scoreBLeg2) / 2).toFixed(2));
 
     const isPlayed = newScoreA !== 0 || newScoreB !== 0;
-    const winner: "A" | "B" | null = isPlayed
-      ? newScoreA > newScoreB
-        ? "A"
-        : newScoreB > newScoreA
-        ? "B"
-        : null
+    const winner = isPlayed
+      ? resolveMatchWinner({
+          scoreA: newScoreA,
+          scoreB: newScoreB,
+          is2xMode: true,
+          matchLogs: filterLogsForBracketMatch(pointLogs, match),
+          teamA: match.teamA,
+          teamB: match.teamB,
+        }).winner
       : null;
     const status = isPlayed ? (match.status === "Selesai" ? "Selesai" : "Berlangsung") : "Siap Tanding";
 

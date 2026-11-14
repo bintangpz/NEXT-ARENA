@@ -366,7 +366,7 @@ export function getAllArenaData() {
   mappedParticipants.sort((a, b) => b.totalPoints - a.totalPoints);
   const participants: Participant[] = mappedParticipants;
 
-  const logsRows = db.prepare("SELECT * FROM point_logs ORDER BY rowid DESC LIMIT 30").all() as any[];
+  const logsRows = db.prepare("SELECT * FROM point_logs ORDER BY rowid DESC LIMIT 1000").all() as any[];
   const pointLogs: PointLog[] = logsRows.map((r) => ({
     id: r.id,
     participantId: r.participant_id,

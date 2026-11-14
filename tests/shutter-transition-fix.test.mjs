@@ -101,12 +101,17 @@ describe("Arena Shutter Transition & Single-Trigger Navigation Test Suite", () =
     });
   });
 
-  describe("Requirement 3: Tanding page transitions smoothly to next match", () => {
-    it("Next match jump button prefetches next match route", () => {
+  describe("Requirement 3: Tanding page returns directly to Bagan on completion", () => {
+    it("Winner modal navigates directly back to /?tab=bracket without cluttered next match jump button", () => {
       assert.strictEqual(
-        tandingContent.includes("router.prefetch(`/tanding/${nextMatch.id}`)"),
+        tandingContent.includes('href="/?tab=bracket"'),
         true,
-        "Tanding page must prefetch next match route"
+        "Tanding page winner modal must provide direct link back to /?tab=bracket"
+      );
+      assert.strictEqual(
+        tandingContent.includes("Lanjut ke Laga Selanjutnya"),
+        false,
+        "Tanding page winner modal must not show the long Lanjut ke Laga Selanjutnya button"
       );
     });
   });

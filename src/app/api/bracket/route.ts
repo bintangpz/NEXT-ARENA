@@ -3,9 +3,17 @@ import { db, getAllArenaData } from "@/lib/db";
 import {
   DEFAULT_TOURNAMENT_STAGES,
   TournamentStage,
+  PointLog,
+  BracketMatch,
   resolveStageIndex,
   calculateParticipantScoreInStage,
 } from "@/data/mockCompetition";
+import { filterLogsForBracketMatch } from "@/lib/scoreBreakdown";
+import {
+  buildFastestFinishMap,
+  getParticipantFastestFinishMs,
+  resolveMatchWinner,
+} from "@/lib/tieBreaker";
 
 export const dynamic = "force-dynamic";
 
@@ -84,14 +92,47 @@ export async function PUT(req: Request) {
     const isPlayed = resolvedScoreA !== 0 || resolvedScoreB !== 0;
 
     let resolvedWinner = winner;
-    if (resolvedWinner === undefined) {
-      resolvedWinner = isPlayed
-        ? resolvedScoreA > resolvedScoreB
-          ? "A"
-          : resolvedScoreB > resolvedScoreA
-          ? "B"
-          : null
-        : null;
+    if (
+      resolvedWinner === undefined ||
+      (resolvedWinner === null &&
+        customStatus !== "Berlangsung" &&
+        isPlayed &&
+        resolvedScoreA === resolvedScoreB)
+    ) {
+      const allLogsRows = db
+        .prepare("SELECT participant_name, stage_label FROM point_logs ORDER BY rowid ASC")
+        .all() as Array<{ participant_name?: string; stage_label?: string }>;
+      const matchStub = {
+        id: currentMatch.id,
+        matchLabel: currentMatch.match_label,
+        teamA: teamA || currentMatch.team_a,
+        teamB: teamB || currentMatch.team_b,
+      } as BracketMatch;
+      const mappedLogs = allLogsRows.map((r) => ({
+        id: "",
+        participantId: "",
+        participantName: r.participant_name || "",
+        category: "",
+        delta: 0,
+        stageLabel: r.stage_label || "",
+        timestamp: "",
+      })) as PointLog[];
+      const relevantLogs = filterLogsForBracketMatch(mappedLogs, matchStub);
+      const inferredIs2x =
+        resolvedScoreALeg1 !== 0 ||
+        resolvedScoreBLeg1 !== 0 ||
+        resolvedScoreALeg2 !== 0 ||
+        resolvedScoreBLeg2 !== 0 ||
+        resolvedLeg === 2;
+
+      resolvedWinner = resolveMatchWinner({
+        scoreA: resolvedScoreA,
+        scoreB: resolvedScoreB,
+        is2xMode: inferredIs2x,
+        matchLogs: relevantLogs,
+        teamA: matchStub.teamA,
+        teamB: matchStub.teamB,
+      }).winner;
     }
 
     const status =
@@ -268,18 +309,60 @@ function generate8BesarMatches(): boolean {
   return true;
 }
 
+function getTieBreakerLogs(): PointLog[] {
+  const rows = db
+    .prepare("SELECT participant_name, stage_label FROM point_logs ORDER BY rowid ASC")
+    .all() as Array<{ participant_name?: string; stage_label?: string }>;
+  return rows.map((r) => ({
+    id: "",
+    participantId: "",
+    participantName: r.participant_name || "",
+    category: "",
+    delta: 0,
+    stageLabel: r.stage_label || "",
+    timestamp: "",
+  }));
+}
+
+function resolveBracketRowSide(m: any, allLogs: PointLog[]): "A" | "B" {
+  if (m.winner === "A") return "A";
+  if (m.winner === "B") return "B";
+  const matchStub = {
+    id: m.id,
+    matchLabel: m.match_label,
+    teamA: m.team_a,
+    teamB: m.team_b,
+  } as BracketMatch;
+  const matchLogs = filterLogsForBracketMatch(allLogs, matchStub);
+  const res = resolveMatchWinner({
+    scoreA: Number(m.score_a || 0),
+    scoreB: Number(m.score_b || 0),
+    is2xMode:
+      Number(m.score_a_leg1 || 0) !== 0 ||
+      Number(m.score_b_leg1 || 0) !== 0 ||
+      Number(m.score_a_leg2 || 0) !== 0 ||
+      Number(m.score_b_leg2 || 0) !== 0,
+    matchLogs,
+    teamA: m.team_a,
+    teamB: m.team_b,
+  });
+  return res.winner || "A";
+}
+
 function generateSemifinalMatches(): boolean {
   const matches8Besar = db
     .prepare("SELECT * FROM bracket_matches WHERE round = 'Babak 8 Besar' ORDER BY id ASC")
     .all() as any[];
+  const allLogs = getTieBreakerLogs();
 
   let semiTeams: { name: string; code: string }[] = [];
 
   // Jika 8 Besar sudah ada dan memiliki pemenang
   if (matches8Besar.length >= 2) {
     for (const m of matches8Besar) {
-      const winnerName = m.winner === "A" ? m.team_a : m.winner === "B" ? m.team_b : (m.score_a >= m.score_b ? m.team_a : m.team_b);
-      const winnerCode = m.winner === "A" ? m.team_a_code : m.winner === "B" ? m.team_b_code : (m.score_a >= m.score_b ? m.team_a_code : m.team_b_code);
+      const side = resolveBracketRowSide(m, allLogs);
+      const winnerName = side === "A" ? m.team_a : m.team_b;
+      const winnerCode = side === "A" ? m.team_a_code : m.team_b_code;
       if (winnerName && !winnerName.startsWith("-")) {
         semiTeams.push({ name: winnerName, code: winnerCode || "-" });
       }
@@ -290,11 +373,18 @@ function generateSemifinalMatches(): boolean {
   if (semiTeams.length < 2) {
     const allP = db.prepare("SELECT * FROM participants").all() as any[];
     const stages = getStagesHelper();
+    const fastestFinishMap = buildFastestFinishMap(allLogs);
     allP.sort((a, b) => {
       const sA = calculateParticipantScoreInStage({ babak1: a.babak1, babak2: a.babak2, babak3: a.babak3 }, 1, stages);
       const sB = calculateParticipantScoreInStage({ babak1: b.babak1, babak2: b.babak2, babak3: b.babak3 }, 1, stages);
       if (sB !== sA) return sB - sA;
-      return (b.total_points || 0) - (a.total_points || 0);
+      if ((b.total_points || 0) !== (a.total_points || 0)) {
+        return (b.total_points || 0) - (a.total_points || 0);
+      }
+      return (
+        getParticipantFastestFinishMs(a.name, fastestFinishMap) -
+        getParticipantFastestFinishMs(b.name, fastestFinishMap)
+      );
     });
     const top4 = allP.slice(0, 4);
     semiTeams = top4.map((p) => ({ name: p.name, code: p.code || p.id }));
@@ -359,19 +449,23 @@ function generateFinalMatches(): boolean {
 
   const category = "Transporter SMP";
 
+  const allLogs = getTieBreakerLogs();
+
   if (sfMatches.length >= 2) {
     const sf1 = sfMatches[0];
     const sf2 = sfMatches[1];
 
-    const sf1Winner = sf1.winner === "A" ? sf1.team_a : sf1.winner === "B" ? sf1.team_b : (sf1.score_a >= sf1.score_b ? sf1.team_a : sf1.team_b);
-    const sf1WinnerCode = sf1.winner === "A" ? sf1.team_a_code : sf1.winner === "B" ? sf1.team_b_code : (sf1.score_a >= sf1.score_b ? sf1.team_a_code : sf1.team_b_code);
-    const sf1Loser = sf1.winner === "A" ? sf1.team_b : sf1.winner === "B" ? sf1.team_a : (sf1.score_a >= sf1.score_b ? sf1.team_b : sf1.team_a);
-    const sf1LoserCode = sf1.winner === "A" ? sf1.team_b_code : sf1.winner === "B" ? sf1.team_a_code : (sf1.score_a >= sf1.score_b ? sf1.team_b_code : sf1.team_a_code);
+    const sf1Side = resolveBracketRowSide(sf1, allLogs);
+    const sf1Winner = sf1Side === "A" ? sf1.team_a : sf1.team_b;
+    const sf1WinnerCode = sf1Side === "A" ? sf1.team_a_code : sf1.team_b_code;
+    const sf1Loser = sf1Side === "A" ? sf1.team_b : sf1.team_a;
+    const sf1LoserCode = sf1Side === "A" ? sf1.team_b_code : sf1.team_a_code;
 
-    const sf2Winner = sf2.winner === "A" ? sf2.team_a : sf2.winner === "B" ? sf2.team_b : (sf2.score_a >= sf2.score_b ? sf2.team_a : sf2.team_b);
-    const sf2WinnerCode = sf2.winner === "A" ? sf2.team_a_code : sf2.winner === "B" ? sf2.team_b_code : (sf2.score_a >= sf2.score_b ? sf2.team_a_code : sf2.team_b_code);
-    const sf2Loser = sf2.winner === "A" ? sf2.team_b : sf2.winner === "B" ? sf2.team_a : (sf2.score_a >= sf2.score_b ? sf2.team_b : sf2.team_a);
-    const sf2LoserCode = sf2.winner === "A" ? sf2.team_b_code : sf2.winner === "B" ? sf2.team_a_code : (sf2.score_a >= sf2.score_b ? sf2.team_b_code : sf2.team_a_code);
+    const sf2Side = resolveBracketRowSide(sf2, allLogs);
+    const sf2Winner = sf2Side === "A" ? sf2.team_a : sf2.team_b;
+    const sf2WinnerCode = sf2Side === "A" ? sf2.team_a_code : sf2.team_b_code;
+    const sf2Loser = sf2Side === "A" ? sf2.team_b : sf2.team_a;
+    const sf2LoserCode = sf2Side === "A" ? sf2.team_b_code : sf2.team_a_code;
 
     // 1. Grand Final (Juara 1 & 2)
     insertMatch.run(
@@ -395,11 +489,18 @@ function generateFinalMatches(): boolean {
   // Fallback jika SF belum ada laga
   const allParticipants = db.prepare("SELECT * FROM participants").all() as any[];
   const stages = getStagesHelper();
+  const fastestFinishMap = buildFastestFinishMap(allLogs);
   allParticipants.sort((a, b) => {
     const scoreA = calculateParticipantScoreInStage({ babak1: a.babak1, babak2: a.babak2, babak3: a.babak3 }, 2, stages);
     const scoreB = calculateParticipantScoreInStage({ babak1: b.babak1, babak2: b.babak2, babak3: b.babak3 }, 2, stages);
     if (scoreB !== scoreA) return scoreB - scoreA;
-    return (b.total_points || 0) - (a.total_points || 0);
+    if ((b.total_points || 0) !== (a.total_points || 0)) {
+      return (b.total_points || 0) - (a.total_points || 0);
+    }
+    return (
+      getParticipantFastestFinishMs(a.name, fastestFinishMap) -
+      getParticipantFastestFinishMs(b.name, fastestFinishMap)
+    );
   });
   const top4 = allParticipants.slice(0, 4);
 

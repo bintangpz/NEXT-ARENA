@@ -54,6 +54,16 @@ import {
 import { ArenaLogo } from "@/components/ArenaLogo";
 import { playSound, stopSound, stopAllSounds } from "@/lib/soundEffects";
 import {
+  computeMatchLogCategoryBreakdown,
+  filterLogsForBracketMatch,
+  getPointLogLeg,
+} from "@/lib/scoreBreakdown";
+import {
+  buildFastestFinishMap,
+  getParticipantFastestFinishMs,
+  resolveMatchWinner,
+} from "@/lib/tieBreaker";
+import {
   BracketMatch,
   CATEGORIES as DEFAULT_CATEGORIES,
   CompetitionCategory,
@@ -119,6 +129,7 @@ export default function NextArenaDashboard() {
   const [resetMatchTarget, setResetMatchTarget] = useState<BracketMatch | null>(null);
   const [resetWithLogs, setResetWithLogs] = useState<boolean>(true);
   const [dashboardLogViewMode, setDashboardLogViewMode] = useState<"split" | "p1" | "p2" | "all">("split");
+  const [logBreakdownLeg, setLogBreakdownLeg] = useState<1 | 2 | "all">("all");
 
   // Babak, Model & Timer States
   const [tournamentStages, setTournamentStages] = useState<TournamentStage[]>(DEFAULT_TOURNAMENT_STAGES);
@@ -661,7 +672,9 @@ export default function NextArenaDashboard() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [bracketMatches, customPointRules, selectedBracketRound, matchTurns, roundMatchTurns]);
 
-  // Compute global rankings sorted by stage-effective points descending, respecting stage resetPoints
+  const fastestFinishMap = useMemo(() => buildFastestFinishMap(pointLogs), [pointLogs]);
+
+  // Compute global rankings sorted by stage-effective points descending, breaking ties by fastest finish time
   const globallyRankedParticipants = useMemo(() => {
     const withEffective = participants.map((p) => {
       // Calculate effective stage score honoring stage resetPoints
@@ -682,7 +695,13 @@ export default function NextArenaDashboard() {
       if (b.totalPoints !== a.totalPoints) {
         return b.totalPoints - a.totalPoints;
       }
-      return (b.rawTotalPoints || 0) - (a.rawTotalPoints || 0);
+      if ((b.rawTotalPoints || 0) !== (a.rawTotalPoints || 0)) {
+        return (b.rawTotalPoints || 0) - (a.rawTotalPoints || 0);
+      }
+      const finishA = getParticipantFastestFinishMs(a.name, fastestFinishMap);
+      const finishB = getParticipantFastestFinishMs(b.name, fastestFinishMap);
+      if (finishA !== finishB) return finishA - finishB;
+      return a.name.localeCompare(b.name);
     });
 
     return sorted.map((p, index) => ({
@@ -690,7 +709,7 @@ export default function NextArenaDashboard() {
       currentRank: index + 1,
       rankDelta: p.previousRank - (index + 1),
     }));
-  }, [participants, activeStageIndex, tournamentStages]);
+  }, [participants, activeStageIndex, tournamentStages, fastestFinishMap]);
 
   // Selected participant for Detail Modal
   const detailParticipant = useMemo(() => {
@@ -746,7 +765,13 @@ export default function NextArenaDashboard() {
       if (b.totalPoints !== a.totalPoints) {
         return b.totalPoints - a.totalPoints;
       }
-      return (b.stageRawScore || 0) - (a.stageRawScore || 0);
+      if ((b.stageRawScore || 0) !== (a.stageRawScore || 0)) {
+        return (b.stageRawScore || 0) - (a.stageRawScore || 0);
+      }
+      const finishA = getParticipantFastestFinishMs(a.name, fastestFinishMap);
+      const finishB = getParticipantFastestFinishMs(b.name, fastestFinishMap);
+      if (finishA !== finishB) return finishA - finishB;
+      return a.name.localeCompare(b.name);
     });
 
     return sorted.map((p, index) => ({
@@ -761,10 +786,19 @@ export default function NextArenaDashboard() {
     activeLeaderboardStageObj,
     tournamentStages,
     showAllInStage,
+    fastestFinishMap,
   ]);
 
   // Filtered and custom-sorted participants for the table
   const filteredParticipants = useMemo(() => {
+    const compareWithFinishTieBreaker = (diff: number, a: Participant, b: Participant) => {
+      if (diff !== 0) return diff;
+      const finishA = getParticipantFastestFinishMs(a.name, fastestFinishMap);
+      const finishB = getParticipantFastestFinishMs(b.name, fastestFinishMap);
+      if (finishA !== finishB) return finishA - finishB;
+      return a.name.localeCompare(b.name);
+    };
+
     return leaderboardRankedParticipants
       .filter((p) => {
         const matchesCategory =
@@ -781,13 +815,21 @@ export default function NextArenaDashboard() {
         return matchesCategory && matchesStatus && matchesSearch;
       })
       .sort((a, b) => {
-        if (sortBy === "total") return b.totalPoints - a.totalPoints;
-        if (sortBy === "babak3") return (b.scores?.babak3 || 0) - (a.scores?.babak3 || 0);
-        if (sortBy === "babak2") return (b.scores?.babak2 || 0) - (a.scores?.babak2 || 0);
-        if (sortBy === "babak1") return (b.scores?.babak1 || 0) - (a.scores?.babak1 || 0);
+        if (sortBy === "total") {
+          return compareWithFinishTieBreaker(b.totalPoints - a.totalPoints, a, b);
+        }
+        if (sortBy === "babak3") {
+          return compareWithFinishTieBreaker((b.scores?.babak3 || 0) - (a.scores?.babak3 || 0), a, b);
+        }
+        if (sortBy === "babak2") {
+          return compareWithFinishTieBreaker((b.scores?.babak2 || 0) - (a.scores?.babak2 || 0), a, b);
+        }
+        if (sortBy === "babak1") {
+          return compareWithFinishTieBreaker((b.scores?.babak1 || 0) - (a.scores?.babak1 || 0), a, b);
+        }
         return a.name.localeCompare(b.name);
       });
-  }, [leaderboardRankedParticipants, selectedCategory, selectedStatus, searchQuery, sortBy]);
+  }, [leaderboardRankedParticipants, selectedCategory, selectedStatus, searchQuery, sortBy, fastestFinishMap]);
 
   // Top 3 for Podium
   const podiumParticipants = useMemo(() => {
@@ -1087,6 +1129,23 @@ export default function NextArenaDashboard() {
     }
   };
 
+  const resolveDashboardMatchWinner = (
+    match: BracketMatch,
+    scoreA: number,
+    scoreB: number,
+    is2xMode: boolean
+  ): "A" | "B" | null => {
+    const matchSpecificLogs = filterLogsForBracketMatch(pointLogs, match);
+    return resolveMatchWinner({
+      scoreA,
+      scoreB,
+      is2xMode,
+      matchLogs: matchSpecificLogs,
+      teamA: match.teamA,
+      teamB: match.teamB,
+    }).winner;
+  };
+
   // Set Exact Bracket Score (Direct Input)
   const handleSetExactScore = async (matchId: string, team: "A" | "B", score: number) => {
     const match = bracketMatches.find((m) => m.id === matchId);
@@ -1095,8 +1154,7 @@ export default function NextArenaDashboard() {
     const newScoreA = team === "A" ? score : match.scoreA;
     const newScoreB = team === "B" ? score : match.scoreB;
     const isPlayed = newScoreA !== 0 || newScoreB !== 0;
-    const autoWinner: "A" | "B" | null =
-      newScoreA > newScoreB ? "A" : newScoreB > newScoreA ? "B" : null;
+    const autoWinner = resolveDashboardMatchWinner(match, newScoreA, newScoreB, false);
     const winner = match.winner || autoWinner;
     const status = isPlayed
       ? winner
@@ -1155,12 +1213,8 @@ export default function NextArenaDashboard() {
     const newScoreA = team === "A" ? updatedScore : match.scoreA;
     const newScoreB = team === "B" ? updatedScore : match.scoreB;
     const isPlayed = newScoreA !== 0 || newScoreB !== 0;
-    const winner: "A" | "B" | null = isPlayed
-      ? newScoreA > newScoreB
-        ? "A"
-        : newScoreB > newScoreA
-        ? "B"
-        : null
+    const winner = isPlayed
+      ? resolveDashboardMatchWinner(match, newScoreA, newScoreB, false)
       : null;
     const status = isPlayed ? (match.status === "Selesai" ? "Selesai" : "Berlangsung") : "Siap Tanding";
     const teamName = team === "A" ? match.teamA : match.teamB;
@@ -1234,12 +1288,8 @@ export default function NextArenaDashboard() {
     const newScoreB = Number(((scoreBLeg1 + scoreBLeg2) / 2).toFixed(2));
 
     const isPlayed = newScoreA !== 0 || newScoreB !== 0;
-    const winner: "A" | "B" | null = isPlayed
-      ? newScoreA > newScoreB
-        ? "A"
-        : newScoreB > newScoreA
-        ? "B"
-        : null
+    const winner = isPlayed
+      ? resolveDashboardMatchWinner(match, newScoreA, newScoreB, true)
       : null;
     const status = isPlayed ? (match.status === "Selesai" ? "Selesai" : "Berlangsung") : "Siap Tanding";
     const teamName = team === "A" ? match.teamA : match.teamB;
@@ -1322,12 +1372,8 @@ export default function NextArenaDashboard() {
     const newScoreB = Number(((scoreBLeg1 + scoreBLeg2) / 2).toFixed(2));
 
     const isPlayed = newScoreA !== 0 || newScoreB !== 0;
-    const winner: "A" | "B" | null = isPlayed
-      ? newScoreA > newScoreB
-        ? "A"
-        : newScoreB > newScoreA
-        ? "B"
-        : null
+    const winner = isPlayed
+      ? resolveDashboardMatchWinner(match, newScoreA, newScoreB, true)
       : null;
     const status = isPlayed ? (match.status === "Selesai" ? "Selesai" : "Berlangsung") : "Siap Tanding";
 
@@ -1481,39 +1527,32 @@ export default function NextArenaDashboard() {
     setShutterMatch(match);
   };
 
+  const resolvedViewLogMatch = useMemo(() => {
+    if (!viewLogMatch) return null;
+    return bracketMatches.find((m) => m.id === viewLogMatch.id) || viewLogMatch;
+  }, [viewLogMatch, bracketMatches]);
+
   // Filter point logs for the selected match in Match Log Modal on Dashboard
   const matchLogs = useMemo(() => {
-    if (!viewLogMatch) return [];
-    const mLabel = (viewLogMatch.matchLabel || "").toLowerCase();
-    const mId = (viewLogMatch.id || "").toLowerCase();
-    const teamA = (viewLogMatch.teamA || "").toLowerCase();
-    const teamB = (viewLogMatch.teamB || "").toLowerCase();
-
-    return pointLogs.filter((log) => {
-      const sl = (log.stageLabel || "").toLowerCase();
-      const pn = (log.participantName || "").toLowerCase();
-      if (sl.includes(mLabel) || sl.includes(mId)) return true;
-      if ((pn === teamA || pn === teamB) && sl.includes("laga")) return true;
-      return false;
-    });
-  }, [viewLogMatch, pointLogs]);
+    return filterLogsForBracketMatch(pointLogs, resolvedViewLogMatch);
+  }, [resolvedViewLogMatch, pointLogs]);
 
   // Deteksi apakah laga yang dilihat merupakan 2x Main
   const viewMatchIs2x = useMemo(() => {
-    if (!viewLogMatch) return false;
-    const r = viewLogMatch.round;
+    if (!resolvedViewLogMatch) return false;
+    const r = resolvedViewLogMatch.round;
     if (roundMatchTurns[r]) return roundMatchTurns[r] === "2x";
     if (r.includes("Penyisihan") || r.includes("16 Besar")) return (roundMatchTurns["Babak Penyisihan"] || "2x") === "2x";
     return false;
-  }, [viewLogMatch, roundMatchTurns]);
+  }, [resolvedViewLogMatch, roundMatchTurns]);
 
   // Log terpisah untuk Putaran 1 dan Putaran 2
   const p1MatchLogs = useMemo(() => {
-    return matchLogs.filter((l) => /P1[\s@)]/i.test(l.stageLabel) || !/P2[\s@)]/i.test(l.stageLabel));
+    return matchLogs.filter((l) => getPointLogLeg(l.stageLabel) === 1);
   }, [matchLogs]);
 
   const p2MatchLogs = useMemo(() => {
-    return matchLogs.filter((l) => /P2[\s@)]/i.test(l.stageLabel));
+    return matchLogs.filter((l) => getPointLogLeg(l.stageLabel) === 2);
   }, [matchLogs]);
 
   // Helper untuk mem-parsing waktu stopwatch (@MM:SS), jam riil (HH:mm:ss), sesi (P1/P2), dan nama aksi tanpa error Invalid Date
@@ -2920,7 +2959,11 @@ export default function NextArenaDashboard() {
                             {/* Tombol Lihat Log Poin Laga */}
                             <button
                               type="button"
-                              onClick={() => setViewLogMatch(match)}
+                              onClick={() => {
+                                setDashboardLogViewMode("split");
+                                setLogBreakdownLeg("all");
+                                setViewLogMatch(match);
+                              }}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 hover:text-white font-mono text-xs font-bold transition-all shadow-sm cursor-pointer"
                               title="Lihat riwayat log poin untuk laga ini"
                             >
@@ -3291,11 +3334,15 @@ export default function NextArenaDashboard() {
                               </div>
                             )}
 
-                            {/* Team Corner (Red) */}
+                              {/* Team Corner (Red) */}
                             <div
                               className={`p-4 rounded-xl border space-y-3 transition-all ${
                                 match.status === "Selesai" &&
-                                (isSwapped ? match.scoreB > match.scoreA : match.scoreA > match.scoreB)
+                                (match.winner
+                                  ? match.winner === redTeamKey
+                                  : isSwapped
+                                  ? match.scoreB > match.scoreA
+                                  : match.scoreA > match.scoreB)
                                   ? "bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/10"
                                   : "bg-zinc-900/70 border-zinc-800"
                               }`}
@@ -3408,7 +3455,11 @@ export default function NextArenaDashboard() {
                             <div
                               className={`p-4 rounded-xl border space-y-3 transition-all ${
                                 match.status === "Selesai" &&
-                                (isSwapped ? match.scoreA > match.scoreB : match.scoreB > match.scoreA)
+                                (match.winner
+                                  ? match.winner === blueTeamKey
+                                  : isSwapped
+                                  ? match.scoreA > match.scoreB
+                                  : match.scoreB > match.scoreA)
                                   ? "bg-emerald-500/10 border-emerald-500/50 shadow-md shadow-emerald-500/10"
                                   : isSingle
                                   ? "bg-zinc-950/40 border-zinc-800/50 border-dashed flex items-center justify-center text-zinc-500 text-xs italic"
@@ -3638,7 +3689,12 @@ export default function NextArenaDashboard() {
                           {p.scores.babak3} PTS
                         </td>
                         <td className="py-4 pl-3 pr-6 text-right font-mono text-base font-extrabold text-amber-400">
-                          {p.totalPoints.toLocaleString("id-ID")} PTS
+                          <div>{p.totalPoints.toLocaleString("id-ID")} PTS</div>
+                          {fastestFinishMap[(p.name || "").trim().toLowerCase()] && (
+                            <div className="text-[10px] font-bold text-emerald-400">
+                              ⏱ {fastestFinishMap[(p.name || "").trim().toLowerCase()].bestFormatted}
+                            </div>
+                          )}
                         </td>
                       </tr>
                     );
@@ -3692,6 +3748,7 @@ export default function NextArenaDashboard() {
         activeRound={activeRound}
         roundTitle={activeStage?.name || "Klasemen Poin"}
         initialStage={selectedLeaderboardStage}
+        fastestFinishMap={fastestFinishMap}
       />
 
       {/* MODULAR MODAL 4: KONFIRMASI HAPUS PESERTA */}
@@ -3857,9 +3914,9 @@ export default function NextArenaDashboard() {
       )}
 
       {/* MODAL LIHAT LOG POIN LAGA */}
-      {viewLogMatch && (
+      {resolvedViewLogMatch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-[#121216] border border-zinc-800 rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+          <div className="bg-[#121216] border border-zinc-800 rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[88vh]">
             {/* Header Modal */}
             <div className="p-5 border-b border-zinc-800/80 flex items-center justify-between gap-4 bg-zinc-900/50">
               <div className="flex items-center gap-3">
@@ -3867,19 +3924,21 @@ export default function NextArenaDashboard() {
                   <ScrollText className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-base font-black text-white font-mono">
-                      Log Poin {viewLogMatch.matchLabel}
+                      Log Poin {resolvedViewLogMatch.matchLabel}
                     </h3>
                     <span className="px-2 py-0.5 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-300 text-xs font-mono font-bold">
-                      {viewLogMatch.round}
+                      {resolvedViewLogMatch.round}
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-cyan-500/15 border border-cyan-500/40 text-cyan-300 text-xs font-mono font-bold">
                       {viewMatchIs2x ? "2x Main (Tukar Sisi)" : "1x Main"}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-400 font-mono mt-0.5">
-                    {viewLogMatch.teamA} vs {viewLogMatch.teamB}
+                    {!resolvedViewLogMatch.teamB || resolvedViewLogMatch.teamB === "BYE"
+                      ? resolvedViewLogMatch.teamA
+                      : `${resolvedViewLogMatch.teamA} vs ${resolvedViewLogMatch.teamB}`}
                   </p>
                 </div>
               </div>
@@ -3892,37 +3951,16 @@ export default function NextArenaDashboard() {
               </button>
             </div>
 
-            {/* Ringkasan Skor 2 Sesi (Jika 2x Main) */}
-            {viewMatchIs2x && (
-              <div className="px-5 py-2.5 bg-zinc-900/90 border-b border-zinc-800/80 grid grid-cols-1 sm:grid-cols-3 gap-2.5 font-mono text-xs">
-                <div className="px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between">
-                  <span className="text-amber-300 font-bold">🟡 SESI 1 (P1):</span>
-                  <span className="text-white font-black">
-                    {viewLogMatch.teamA} ({viewLogMatch.scoreALeg1 || 0}) vs {viewLogMatch.teamB} ({viewLogMatch.scoreBLeg1 || 0})
-                  </span>
-                </div>
-                <div className="px-3 py-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between">
-                  <span className="text-cyan-300 font-bold">🔷 SESI 2 (P2 Tukar Sisi):</span>
-                  <span className="text-white font-black">
-                    {viewLogMatch.teamB} ({viewLogMatch.scoreBLeg2 || 0}) vs {viewLogMatch.teamA} ({viewLogMatch.scoreALeg2 || 0})
-                  </span>
-                </div>
-                <div className="px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
-                  <span className="text-emerald-300 font-bold">🏆 Rata-Rata Akhir:</span>
-                  <span className="text-white font-black">
-                    {viewLogMatch.teamA}: {viewLogMatch.scoreA} | {viewLogMatch.teamB}: {viewLogMatch.scoreB}
-                  </span>
-                </div>
-              </div>
-            )}
-
             {/* Sub-toolbar: Pilihan View Mode Terpisah & Tombol Hapus Log */}
             <div className="px-5 py-3 bg-zinc-950/60 border-b border-zinc-800/60 flex flex-wrap items-center justify-between gap-3">
               {/* Tab Selector Mode Terpisah */}
               <div className="flex flex-wrap items-center gap-1.5 font-mono text-xs">
                 <button
                   type="button"
-                  onClick={() => setDashboardLogViewMode("split")}
+                  onClick={() => {
+                    setDashboardLogViewMode("split");
+                    if (viewMatchIs2x) setLogBreakdownLeg("all");
+                  }}
                   className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
                     dashboardLogViewMode === "split"
                       ? "bg-amber-400 text-zinc-950 shadow"
@@ -3936,7 +3974,10 @@ export default function NextArenaDashboard() {
                   <>
                     <button
                       type="button"
-                      onClick={() => setDashboardLogViewMode("p1")}
+                      onClick={() => {
+                        setDashboardLogViewMode("p1");
+                        setLogBreakdownLeg(1);
+                      }}
                       className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
                         dashboardLogViewMode === "p1"
                           ? "bg-amber-500 text-zinc-950 shadow"
@@ -3947,7 +3988,10 @@ export default function NextArenaDashboard() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setDashboardLogViewMode("p2")}
+                      onClick={() => {
+                        setDashboardLogViewMode("p2");
+                        setLogBreakdownLeg(2);
+                      }}
                       className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
                         dashboardLogViewMode === "p2"
                           ? "bg-cyan-500 text-zinc-950 shadow"
@@ -3968,7 +4012,7 @@ export default function NextArenaDashboard() {
                           : "bg-zinc-900 text-rose-300 hover:text-white border border-zinc-800"
                       }`}
                     >
-                      🔴 {viewLogMatch.teamA} ({matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamA?.toLowerCase()).length})
+                      🔴 {resolvedViewLogMatch.teamA} ({matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase()).length})
                     </button>
                     <button
                       type="button"
@@ -3979,14 +4023,17 @@ export default function NextArenaDashboard() {
                           : "bg-zinc-900 text-blue-300 hover:text-white border border-zinc-800"
                       }`}
                     >
-                      🔵 {viewLogMatch.teamB} ({matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamB?.toLowerCase()).length})
+                      🔵 {resolvedViewLogMatch.teamB} ({matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase()).length})
                     </button>
                   </>
                 )}
 
                 <button
                   type="button"
-                  onClick={() => setDashboardLogViewMode("all")}
+                  onClick={() => {
+                    setDashboardLogViewMode("all");
+                    if (viewMatchIs2x) setLogBreakdownLeg("all");
+                  }}
                   className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer ${
                     dashboardLogViewMode === "all"
                       ? "bg-zinc-700 text-white shadow"
@@ -4000,7 +4047,7 @@ export default function NextArenaDashboard() {
               {matchLogs.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => handleClearLogsOnly(viewLogMatch.id)}
+                  onClick={() => handleClearLogsOnly(resolvedViewLogMatch.id)}
                   className="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/40 text-rose-300 text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer ml-auto"
                   title="Hapus semua rekaman log poin untuk laga ini dari database"
                 >
@@ -4010,10 +4057,154 @@ export default function NextArenaDashboard() {
               )}
             </div>
 
-            {/* List Logs Content: Terpisah Dua Sesi atau Mode Tunggal */}
-            <div className="p-5 overflow-y-auto flex-1 font-mono text-xs">
+            {/* Rincian Per Skor + List Logs Content */}
+            <div className="p-5 overflow-y-auto flex-1 font-mono text-xs space-y-5">
+              {/* RINGKASAN SKOR & RINCIAN PER KATEGORI (Point, Cekpoint, Finish, Bonus, Retry) */}
+              {(() => {
+                const isSingleLogMatch = !resolvedViewLogMatch.teamB || resolvedViewLogMatch.teamB === "BYE";
+                const teams = [
+                  {
+                    key: "A" as const,
+                    name: resolvedViewLogMatch.teamA,
+                    leg1: resolvedViewLogMatch.scoreALeg1 || 0,
+                    leg2: resolvedViewLogMatch.scoreALeg2 || 0,
+                    finalScore: resolvedViewLogMatch.scoreA || 0,
+                    label: viewMatchIs2x ? "Tim A" : "Sudut Merah",
+                    accentBorder: "border-rose-500/30 bg-rose-500/5",
+                    accentText: "text-rose-400",
+                  },
+                  ...(!isSingleLogMatch
+                    ? [
+                        {
+                          key: "B" as const,
+                          name: resolvedViewLogMatch.teamB,
+                          leg1: resolvedViewLogMatch.scoreBLeg1 || 0,
+                          leg2: resolvedViewLogMatch.scoreBLeg2 || 0,
+                          finalScore: resolvedViewLogMatch.scoreB || 0,
+                          label: viewMatchIs2x ? "Tim B" : "Sudut Biru",
+                          accentBorder: "border-blue-500/30 bg-blue-500/5",
+                          accentText: "text-blue-400",
+                        },
+                      ]
+                    : []),
+                ];
+
+                return (
+                  <div className="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-cyan-300">
+                        Rincian Per Skor (Point, Cekpoint, Finish, Bonus, Retry)
+                      </span>
+                      {viewMatchIs2x && (
+                        <div className="inline-flex p-1 rounded-xl bg-zinc-900 border border-zinc-800 gap-1 text-[11px]">
+                          {(
+                            [
+                              { id: "all" as const, label: "Gabungan" },
+                              { id: 1 as const, label: "Putaran 1" },
+                              { id: 2 as const, label: "Putaran 2" },
+                            ]
+                          ).map((tab) => (
+                            <button
+                              key={String(tab.id)}
+                              type="button"
+                              onClick={() => setLogBreakdownLeg(tab.id)}
+                              className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                                logBreakdownLeg === tab.id
+                                  ? "bg-cyan-500 text-zinc-950"
+                                  : "text-zinc-400 hover:text-white"
+                              }`}
+                            >
+                              {tab.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={`grid gap-3 ${isSingleLogMatch ? "grid-cols-1" : "grid-cols-1 md:grid-cols-2"}`}>
+                      {teams.map((teamInfo) => {
+                        const rows = computeMatchLogCategoryBreakdown({
+                          logs: matchLogs,
+                          match: resolvedViewLogMatch,
+                          is2xMode: viewMatchIs2x,
+                          legFilter: viewMatchIs2x ? logBreakdownLeg : "all",
+                          team: teamInfo.key,
+                          customPointRules,
+                        });
+                        return (
+                          <div
+                            key={teamInfo.key}
+                            className={`p-3.5 rounded-2xl border space-y-2.5 ${teamInfo.accentBorder}`}
+                          >
+                            <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2">
+                              <div className="min-w-0">
+                                <span className={`text-[10px] uppercase font-bold block ${teamInfo.accentText}`}>
+                                  {teamInfo.label}
+                                </span>
+                                <span className="text-sm font-black text-white block truncate">
+                                  {teamInfo.name}
+                                </span>
+                                {viewMatchIs2x && (
+                                  <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[10px] text-zinc-400">
+                                    <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800">
+                                      P1: <strong className="text-white">{teamInfo.leg1}</strong>
+                                    </span>
+                                    <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-cyan-500/30">
+                                      P2: <strong className="text-cyan-300">{teamInfo.leg2}</strong>
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="text-right shrink-0">
+                                <span className="text-[9px] uppercase text-zinc-400 block">
+                                  {viewMatchIs2x ? "Nilai Akhir (Rata-Rata)" : "Nilai Akhir"}
+                                </span>
+                                <span className="text-lg sm:text-xl font-black text-amber-400">
+                                  {teamInfo.finalScore} PTS
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              {rows.map((row) => {
+                                const subtotalText =
+                                  row.totalPts > 0 ? `+${row.totalPts}` : `${row.totalPts}`;
+                                return (
+                                  <div
+                                    key={row.key}
+                                    className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg bg-zinc-950/60 border border-zinc-800/70 text-[11px]"
+                                  >
+                                    <span className="font-bold text-zinc-200">{row.label}</span>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 text-[10px]">
+                                        {row.count}x
+                                      </span>
+                                      <span
+                                        className={`min-w-[56px] text-right font-black ${
+                                          row.totalPts > 0
+                                            ? "text-emerald-400"
+                                            : row.totalPts < 0
+                                            ? "text-rose-400"
+                                            : "text-zinc-500"
+                                        }`}
+                                      >
+                                        {subtotalText} PTS
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {matchLogs.length === 0 ? (
-                <div className="py-12 text-center text-zinc-500 font-mono space-y-2">
+                <div className="py-10 text-center text-zinc-500 font-mono space-y-2">
                   <Clock className="w-8 h-8 mx-auto text-zinc-600 mb-1" />
                   <p className="text-sm font-bold text-zinc-400">Belum Ada Catatan Log Poin</p>
                   <p className="text-xs text-zinc-600">
@@ -4029,33 +4220,33 @@ export default function NextArenaDashboard() {
                       <div>
                         <span className="font-bold text-amber-300 flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-amber-400" />
-                          {viewMatchIs2x ? "SESI 1 • PUTARAN 1" : `TIM A • ${viewLogMatch.teamA}`}
+                          {viewMatchIs2x ? "SESI 1 • PUTARAN 1" : `TIM A • ${resolvedViewLogMatch.teamA}`}
                         </span>
                         {viewMatchIs2x && (
                           <p className="text-[10px] text-zinc-400 mt-0.5">
-                            🔴 {viewLogMatch.teamA} ({viewLogMatch.scoreALeg1 || 0}) vs 🔵 {viewLogMatch.teamB} ({viewLogMatch.scoreBLeg1 || 0})
+                            🔴 {resolvedViewLogMatch.teamA} ({resolvedViewLogMatch.scoreALeg1 || 0}) vs 🔵 {resolvedViewLogMatch.teamB} ({resolvedViewLogMatch.scoreBLeg1 || 0})
                           </p>
                         )}
                       </div>
                       <span className="text-[11px] px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30">
                         {viewMatchIs2x
                           ? `${p1MatchLogs.length} Log`
-                          : `${matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamA?.toLowerCase()).length} Log`}
+                          : `${matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase()).length} Log`}
                       </span>
                     </div>
 
                     <div className="max-h-72 overflow-y-auto space-y-2 pr-1 divide-y divide-zinc-800/40">
                       {(viewMatchIs2x
                         ? p1MatchLogs
-                        : matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamA?.toLowerCase())
+                        : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase())
                       ).length === 0 ? (
                         <p className="text-zinc-600 py-6 text-center text-[11px]">Belum ada catatan log di Sesi 1.</p>
                       ) : (
                         (viewMatchIs2x
                           ? p1MatchLogs
-                          : matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamA?.toLowerCase())
+                          : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase())
                         ).map((log) => {
-                          const parsed = parsePointLogItem(log, viewLogMatch, viewMatchIs2x);
+                          const parsed = parsePointLogItem(log, resolvedViewLogMatch, viewMatchIs2x);
                           return (
                             <div
                               key={log.id}
@@ -4110,33 +4301,33 @@ export default function NextArenaDashboard() {
                       <div>
                         <span className="font-bold text-cyan-400 flex items-center gap-2">
                           <span className="w-2 h-2 rounded-full bg-cyan-400" />
-                          {viewMatchIs2x ? "SESI 2 • PUTARAN 2 (TUKAR SISI)" : `TIM B • ${viewLogMatch.teamB}`}
+                          {viewMatchIs2x ? "SESI 2 • PUTARAN 2 (TUKAR SISI)" : `TIM B • ${resolvedViewLogMatch.teamB}`}
                         </span>
                         {viewMatchIs2x && (
                           <p className="text-[10px] text-zinc-400 mt-0.5">
-                            🔴 {viewLogMatch.teamB} ({viewLogMatch.scoreBLeg2 || 0}) vs 🔵 {viewLogMatch.teamA} ({viewLogMatch.scoreALeg2 || 0})
+                            🔴 {resolvedViewLogMatch.teamB} ({resolvedViewLogMatch.scoreBLeg2 || 0}) vs 🔵 {resolvedViewLogMatch.teamA} ({resolvedViewLogMatch.scoreALeg2 || 0})
                           </p>
                         )}
                       </div>
                       <span className="text-[11px] px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
                         {viewMatchIs2x
                           ? `${p2MatchLogs.length} Log`
-                          : `${matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamB?.toLowerCase()).length} Log`}
+                          : `${matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase()).length} Log`}
                       </span>
                     </div>
 
                     <div className="max-h-72 overflow-y-auto space-y-2 pr-1 divide-y divide-zinc-800/40">
                       {(viewMatchIs2x
                         ? p2MatchLogs
-                        : matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamB?.toLowerCase())
+                        : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase())
                       ).length === 0 ? (
                         <p className="text-zinc-600 py-6 text-center text-[11px]">Belum ada catatan log di Sesi 2.</p>
                       ) : (
                         (viewMatchIs2x
                           ? p2MatchLogs
-                          : matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamB?.toLowerCase())
+                          : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase())
                         ).map((log) => {
-                          const parsed = parsePointLogItem(log, viewLogMatch, viewMatchIs2x);
+                          const parsed = parsePointLogItem(log, resolvedViewLogMatch, viewMatchIs2x);
                           return (
                             <div
                               key={log.id}
@@ -4191,14 +4382,14 @@ export default function NextArenaDashboard() {
                   {(dashboardLogViewMode === "p1"
                     ? viewMatchIs2x
                       ? p1MatchLogs
-                      : matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamA?.toLowerCase())
+                      : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamA?.toLowerCase())
                     : dashboardLogViewMode === "p2"
                     ? viewMatchIs2x
                       ? p2MatchLogs
-                      : matchLogs.filter(l => l.participantName?.toLowerCase() === viewLogMatch.teamB?.toLowerCase())
+                      : matchLogs.filter(l => l.participantName?.toLowerCase() === resolvedViewLogMatch.teamB?.toLowerCase())
                     : matchLogs
                   ).map((log) => {
-                    const parsed = parsePointLogItem(log, viewLogMatch, viewMatchIs2x);
+                    const parsed = parsePointLogItem(log, resolvedViewLogMatch, viewMatchIs2x);
                     return (
                       <div
                         key={log.id}

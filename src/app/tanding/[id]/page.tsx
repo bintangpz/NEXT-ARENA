@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -40,16 +40,14 @@ import {
   DEFAULT_POINT_RULES,
 } from "@/data/mockCompetition";
 import { playSound, stopAllSounds } from "@/lib/soundEffects";
-import { ArenaShutterTransition } from "@/components/ArenaShutterTransition";
+import { resolveMatchWinner } from "@/lib/tieBreaker";
 
 export default function ArenaBattleMatchPage() {
   const params = useParams();
-  const router = useRouter();
   const matchId = params?.id as string;
 
   // Data States
   const [match, setMatch] = useState<BracketMatch | null>(null);
-  const [allMatches, setAllMatches] = useState<BracketMatch[]>([]);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [customPointRules, setCustomPointRules] = useState<CustomPointRule[]>(
     DEFAULT_POINT_RULES
@@ -155,24 +153,17 @@ export default function ArenaBattleMatchPage() {
 
   // Winner Celebration & Leg 1 Transition Modal
   const [showWinnerModal, setShowWinnerModal] = useState<boolean>(false);
+  const [winnerBreakdownLeg, setWinnerBreakdownLeg] = useState<1 | 2 | "all">(2);
   const [showLeg1Modal, setShowLeg1Modal] = useState<boolean>(false);
   const [revisedLeg1ScoreA, setRevisedLeg1ScoreA] = useState<number>(0);
   const [revisedLeg1ScoreB, setRevisedLeg1ScoreB] = useState<number>(0);
   const [leg1LogFilter, setLeg1LogFilter] = useState<"all" | "A" | "B">("all");
-  const [shutterToNext, setShutterToNext] = useState<BracketMatch | null>(null);
+  const [leg1RuleAdjustments, setLeg1RuleAdjustments] = useState<{
+    A: Record<string, number>;
+    B: Record<string, number>;
+  }>({ A: {}, B: {} });
   const [showResetMatchModal, setShowResetMatchModal] = useState<boolean>(false);
   const [resetWithLogs, setResetWithLogs] = useState<boolean>(true);
-
-  // Compute Next Match in same tournament round
-  const nextMatch = useMemo(() => {
-    if (!match || !allMatches || allMatches.length === 0) return null;
-    const currentRoundMatches = allMatches.filter((m) => m.round === match.round);
-    const curIdx = currentRoundMatches.findIndex((m) => m.id === match.id);
-    if (curIdx >= 0 && curIdx < currentRoundMatches.length - 1) {
-      return currentRoundMatches[curIdx + 1];
-    }
-    return null;
-  }, [match, allMatches]);
 
   // Unique sender ID to avoid processing self-broadcasts
   const SENDER_ID = useMemo(() => Math.random().toString(36).substring(2, 9), []);
@@ -249,7 +240,6 @@ export default function ArenaBattleMatchPage() {
       if (res.ok) {
         const json = await res.json();
         if (json.bracketMatches) {
-          setAllMatches(json.bracketMatches);
           const found = json.bracketMatches.find((m: BracketMatch) => m.id === matchId);
           if (found) {
             setMatch(found);
@@ -1480,6 +1470,174 @@ export default function ArenaBattleMatchPage() {
     } catch (e) {}
   };
 
+  type Leg1RuleKey = "point" | "cekpoint" | "finish" | "bonus" | "retry";
+
+  const LEG1_SCORE_CATEGORIES: Array<{
+    key: Leg1RuleKey;
+    label: string;
+    fallbackPoints: number;
+  }> = [
+    { key: "point", label: "Point", fallbackPoints: 5 },
+    { key: "cekpoint", label: "Cekpoint", fallbackPoints: 10 },
+    { key: "finish", label: "Finish", fallbackPoints: 15 },
+    { key: "bonus", label: "Bonus", fallbackPoints: 5 },
+    { key: "retry", label: "Retry", fallbackPoints: -0.5 },
+  ];
+
+  const matchesLeg1RuleKey = (rawLabel: string | undefined, key: Leg1RuleKey): boolean => {
+    const al = (rawLabel || "").trim().toLowerCase();
+    if (key === "point") return al === "point" || al === "poin";
+    if (key === "cekpoint") return al.includes("cekpoint") || al.includes("checkpoint");
+    if (key === "finish") return al.includes("finish") && !al.includes("menyerah");
+    if (key === "bonus") return al.includes("bonus");
+    return al.includes("retry");
+  };
+
+  const getRulePointsForKey = (key: Leg1RuleKey): number => {
+    const matched = customPointRules.find((r) => matchesLeg1RuleKey(r.label, key));
+    if (matched) return matched.points;
+    return LEG1_SCORE_CATEGORIES.find((c) => c.key === key)?.fallbackPoints ?? 0;
+  };
+
+  const getScoreCategoryBreakdown = (
+    legFilter: 1 | 2 | "all",
+    team: "A" | "B",
+    includeLeg1Adj: boolean = false
+  ) => {
+    const targetName = team === "A" ? match?.teamA : match?.teamB;
+    const teamLogs = matchHistory.filter((item) => {
+      if (item.corner === "system") return false;
+      if (legFilter !== "all" && item.leg !== legFilter) return false;
+      if (item.teamName === targetName) return true;
+      const itemCornerTeam =
+        item.leg === 2
+          ? item.corner === "blue"
+            ? "A"
+            : "B"
+          : item.corner === "red"
+          ? "A"
+          : "B";
+      return itemCornerTeam === team;
+    });
+
+    return LEG1_SCORE_CATEGORIES.map((cat) => {
+      const rulePoints = getRulePointsForKey(cat.key);
+      const matchingLogs = teamLogs.filter((item) => matchesLeg1RuleKey(item.actionLabel, cat.key));
+      const baseCount = matchingLogs.length;
+      const basePts = matchingLogs.reduce((sum, item) => sum + (Number(item.delta) || 0), 0);
+      const adjCount = includeLeg1Adj ? (leg1RuleAdjustments[team][cat.key] || 0) : 0;
+      const count = Math.max(0, baseCount + adjCount);
+      const totalPts = Number((basePts + adjCount * rulePoints).toFixed(2));
+
+      return {
+        ...cat,
+        rulePoints,
+        count,
+        totalPts,
+      };
+    });
+  };
+
+  const getLeg1CategoryBreakdown = (team: "A" | "B") =>
+    getScoreCategoryBreakdown(1, team, true);
+
+  const handleAdjustLeg1Rule = (
+    team: "A" | "B",
+    key: Leg1RuleKey,
+    rulePoints: number,
+    step: 1 | -1,
+    currentCount: number
+  ) => {
+    if (step === -1 && currentCount <= 0) return;
+
+    setLeg1RuleAdjustments((prev) => ({
+      ...prev,
+      [team]: {
+        ...prev[team],
+        [key]: (prev[team][key] || 0) + step,
+      },
+    }));
+
+    const scoreDelta = step * rulePoints;
+    if (team === "A") {
+      setRevisedLeg1ScoreA((prev) => Math.max(0, Number((prev + scoreDelta).toFixed(2))));
+    } else {
+      setRevisedLeg1ScoreB((prev) => Math.max(0, Number((prev + scoreDelta).toFixed(2))));
+    }
+  };
+
+  const renderLeg1CategoryBreakdown = (team: "A" | "B") => {
+    const rows = getLeg1CategoryBreakdown(team);
+    return (
+      <div className="pt-2 border-t border-white/10 space-y-1.5">
+        <span className="text-[10px] text-zinc-400 uppercase tracking-wider block">
+          Rincian Per Skor (Putaran 1):
+        </span>
+        <div className="space-y-1">
+          {rows.map((row) => {
+            const pointBadgeText = row.rulePoints > 0 ? `+${row.rulePoints}` : `${row.rulePoints}`;
+            const subtotalText = row.totalPts > 0 ? `+${row.totalPts}` : `${row.totalPts}`;
+            return (
+              <div
+                key={row.key}
+                className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-xl bg-zinc-950/60 border border-zinc-800/80 text-[11px]"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-bold text-white truncate">{row.label}</span>
+                  <span className="text-[10px] text-zinc-500 font-mono">({pointBadgeText})</span>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 text-[10px] font-mono font-bold">
+                    {row.count}x
+                  </span>
+                  <span
+                    className={`min-w-[52px] text-right font-mono font-black text-[11px] ${
+                      row.totalPts > 0
+                        ? "text-emerald-400"
+                        : row.totalPts < 0
+                        ? "text-rose-400"
+                        : "text-zinc-500"
+                    }`}
+                  >
+                    {subtotalText}
+                  </span>
+                  <div className="flex items-center gap-1 ml-1">
+                    <button
+                      type="button"
+                      disabled={row.count <= 0}
+                      onClick={() =>
+                        handleAdjustLeg1Rule(team, row.key, row.rulePoints, -1, row.count)
+                      }
+                      className={`w-6 h-6 rounded-lg border font-bold text-xs flex items-center justify-center transition-colors ${
+                        row.count <= 0
+                          ? "bg-zinc-900/40 border-zinc-800/60 text-zinc-600 cursor-not-allowed"
+                          : "bg-zinc-900 hover:bg-zinc-800 border-zinc-700 text-zinc-300 hover:text-white cursor-pointer"
+                      }`}
+                      title={`Kurangi 1 ${row.label}`}
+                    >
+                      -
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleAdjustLeg1Rule(team, row.key, row.rulePoints, 1, row.count)
+                      }
+                      className="w-6 h-6 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-200 hover:text-white font-bold text-xs flex items-center justify-center transition-colors cursor-pointer"
+                      title={`Tambah 1 ${row.label} (${pointBadgeText})`}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   // Handler Selesai Putaran 1 (Untuk 2x Main: buka modal tinjau & revisi log P1, timer ke idle/stop)
   const handleCompleteLeg1 = async (
     stopSounds: boolean = true,
@@ -1514,6 +1672,7 @@ export default function ArenaBattleMatchPage() {
     setRevisedLeg1ScoreA(sAL1);
     setRevisedLeg1ScoreB(sBL1);
     setLeg1LogFilter("all");
+    setLeg1RuleAdjustments({ A: {}, B: {} });
 
     // Timer diset ke idle & stop (sama seperti kondisi awal)
     const sec = prepDuration > 0 ? prepDuration : 10;
@@ -1580,19 +1739,62 @@ export default function ArenaBattleMatchPage() {
     setShowLeg1Modal(false);
 
     const nowClock = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    setMatchHistory((prev) => [
-      {
-        id: `hist-acc-p1-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        timestamp: nowClock,
-        timeFormatted: "00:00",
-        corner: "system",
-        teamName: "ARENA SYSTEM",
-        actionLabel: `✅ Putaran 1 di-ACC (${match.teamA}: ${sAL1} PTS | ${match.teamB}: ${sBL1} PTS) • Beralih ke Putaran 2 (Tukar Sisi)`,
-        delta: 0,
-        leg: 1,
-      },
-      ...prev,
-    ]);
+    setMatchHistory((prev) => {
+      let nextHistory = [...prev];
+      (["A", "B"] as const).forEach((teamKey) => {
+        const teamName = teamKey === "A" ? match.teamA : match.teamB;
+        const cornerKey = teamKey === "A" ? "red" : "blue";
+        const teamAdjs = leg1RuleAdjustments[teamKey] || {};
+        LEG1_SCORE_CATEGORIES.forEach((cat) => {
+          const adj = teamAdjs[cat.key] || 0;
+          if (adj > 0) {
+            const pts = getRulePointsForKey(cat.key);
+            for (let i = 0; i < adj; i += 1) {
+              nextHistory.unshift({
+                id: `hist-rev-${teamKey}-${cat.key}-${Date.now()}-${i}-${Math.random().toString(36).substring(2, 6)}`,
+                timestamp: nowClock,
+                timeFormatted: "Revisi",
+                corner: cornerKey,
+                teamName,
+                actionLabel: cat.label,
+                delta: pts,
+                leg: 1,
+              });
+            }
+          } else if (adj < 0) {
+            let remainingToRemove = Math.abs(adj);
+            nextHistory = nextHistory.filter((item) => {
+              if (
+                remainingToRemove > 0 &&
+                item.leg === 1 &&
+                item.corner !== "system" &&
+                (item.teamName === teamName || item.corner === cornerKey) &&
+                matchesLeg1RuleKey(item.actionLabel, cat.key)
+              ) {
+                remainingToRemove -= 1;
+                return false;
+              }
+              return true;
+            });
+          }
+        });
+      });
+
+      return [
+        {
+          id: `hist-acc-p1-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          timestamp: nowClock,
+          timeFormatted: "00:00",
+          corner: "system",
+          teamName: "ARENA SYSTEM",
+          actionLabel: `✅ Putaran 1 di-ACC (${match.teamA}: ${sAL1} PTS | ${match.teamB}: ${sBL1} PTS) • Beralih ke Putaran 2 (Tukar Sisi)`,
+          delta: 0,
+          leg: 1,
+        },
+        ...nextHistory,
+      ];
+    });
+    setLeg1RuleAdjustments({ A: {}, B: {} });
 
     showArenaToast({
       kind: "switch_leg",
@@ -1670,8 +1872,24 @@ export default function ArenaBattleMatchPage() {
       ? overrideScores.scoreB
       : (match.scoreB || 0);
 
-    const winner: "A" | "B" | null =
-      finalScoreA > finalScoreB ? "A" : finalScoreB > finalScoreA ? "B" : null;
+    const historyFinishLogs = matchHistory
+      .filter((item) => item.corner !== "system" && item.actionLabel.toUpperCase().includes("FINISH"))
+      .map((item) => ({
+        participantName: item.teamName,
+        stageLabel: `${item.actionLabel} (Laga ${match.matchLabel} P${item.leg} @${item.timeFormatted})`,
+      }));
+
+    const resolution = resolveMatchWinner({
+      scoreA: finalScoreA,
+      scoreB: finalScoreB,
+      is2xMode: is2x,
+      finishedCorners,
+      matchLogs: historyFinishLogs,
+      teamA: match.teamA,
+      teamB: match.teamB,
+    });
+
+    const winner: "A" | "B" | null = resolution.winner;
 
     setMatch((prev) =>
       prev
@@ -1688,7 +1906,17 @@ export default function ArenaBattleMatchPage() {
           }
         : null
     );
+    setWinnerBreakdownLeg(is2x ? 2 : "all");
     setShowWinnerModal(true);
+
+    const tieNote =
+      resolution.decidedBy === "finish_time" &&
+      resolution.teamAFinishFormatted &&
+      resolution.teamBFinishFormatted
+        ? ` • Waktu Finish Lebih Cepat (${resolution.teamAFinishFormatted} vs ${resolution.teamBFinishFormatted})`
+        : resolution.decidedBy === "finish_time"
+        ? " • Waktu Finish Lebih Cepat"
+        : "";
 
     const nowClock = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
     setMatchHistory((prev) => [
@@ -1698,7 +1926,7 @@ export default function ArenaBattleMatchPage() {
         timeFormatted: formatTime(matchElapsedMs),
         corner: "system",
         teamName: "ARENA SYSTEM",
-        actionLabel: `🏆 Pertandingan Selesai Resmi! ${winner === "A" ? match.teamA : winner === "B" ? match.teamB : "Hasil Seri"} (${finalScoreA} - ${finalScoreB})`,
+        actionLabel: `🏆 Pertandingan Selesai Resmi! ${winner === "A" ? match.teamA : winner === "B" ? match.teamB : "Hasil Seri"} (${finalScoreA} - ${finalScoreB})${tieNote}`,
         delta: 0,
         leg: activeLeg,
       },
@@ -2105,6 +2333,20 @@ export default function ArenaBattleMatchPage() {
   }
 
   const isSingle = match.teamB === "- (Tanding Tunggal)";
+  const winnerResolution = resolveMatchWinner({
+    scoreA: match.scoreA || 0,
+    scoreB: match.scoreB || 0,
+    is2xMode: is2x,
+    finishedCorners,
+    matchLogs: matchHistory
+      .filter((item) => item.corner !== "system" && item.actionLabel.toUpperCase().includes("FINISH"))
+      .map((item) => ({
+        participantName: item.teamName,
+        stageLabel: `${item.actionLabel} (Laga ${match.matchLabel} P${item.leg} @${item.timeFormatted})`,
+      })),
+    teamA: match.teamA,
+    teamB: match.teamB,
+  });
   const winnerTeamName =
     match.winner === "A" ? match.teamA : match.winner === "B" ? match.teamB : null;
 
@@ -2586,6 +2828,7 @@ export default function ArenaBattleMatchPage() {
                   setRevisedLeg1ScoreA(match.scoreALeg1 || 0);
                   setRevisedLeg1ScoreB(match.scoreBLeg1 || 0);
                   setLeg1LogFilter("all");
+                  setLeg1RuleAdjustments({ A: {}, B: {} });
                   setShowLeg1Modal(true);
                 }}
                 className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-300 hover:text-white text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm"
@@ -3369,6 +3612,8 @@ export default function ArenaBattleMatchPage() {
                     </span>
                   )}
                 </div>
+
+                {renderLeg1CategoryBreakdown("A")}
               </div>
 
               {/* TIM B (SUDUT BIRU DI PUTARAN 1) */}
@@ -3441,6 +3686,8 @@ export default function ArenaBattleMatchPage() {
                     </span>
                   )}
                 </div>
+
+                {renderLeg1CategoryBreakdown("B")}
               </div>
             </div>
 
@@ -3586,97 +3833,186 @@ export default function ArenaBattleMatchPage() {
 
       {/* WINNER CELEBRATION MODAL */}
       {showWinnerModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-4">
-          <div className="bg-[#0a172c] border-2 border-cyan-500/80 rounded-3xl p-8 max-w-lg w-full text-center space-y-6 shadow-[0_0_80px_rgba(0,163,255,0.4)] animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-cyan-400 via-sky-400 to-amber-400 mx-auto flex items-center justify-center text-zinc-950 shadow-xl shadow-cyan-500/30">
-              <Trophy className="w-10 h-10 fill-current" />
-            </div>
-
-            <div className="space-y-2">
-              <span className="text-xs font-mono font-bold uppercase tracking-widest text-cyan-400">
-                HASIL RESMI PERTANDINGAN
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-white">
-                {winnerTeamName ? (
-                  <>
-                    <span className="text-amber-400">{winnerTeamName}</span> MENANG!
-                  </>
-                ) : (
-                  "PERTANDINGAN SERI!"
-                )}
-              </h2>
-              <p className="text-xs text-zinc-400">
-                {is2x
-                  ? "Skor resmi telah terkunci berdasarkan nilai rata-rata dari kedua putaran tanding."
-                  : "Skor resmi telah terkunci dan data peringkat klasemen babak telah otomatis diperbarui."}
-              </p>
-            </div>
-
-            {/* Score Summary Box */}
-            <div className="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-3 font-mono">
-              {is2x && (
-                <div className="grid grid-cols-2 gap-2 text-xs pb-3 border-b border-zinc-800/80 text-left">
-                  <div className="bg-zinc-900/70 p-2.5 rounded-xl border border-zinc-800">
-                    <span className="text-[10px] text-zinc-400 font-bold block mb-1">PUTARAN 1:</span>
-                    <span className="text-zinc-200 block truncate">{match.teamA}: <strong>{match.scoreALeg1 || 0}</strong></span>
-                    <span className="text-zinc-200 block truncate">{match.teamB}: <strong>{match.scoreBLeg1 || 0}</strong></span>
-                  </div>
-                  <div className="bg-[#060d1a]/80 p-2.5 rounded-xl border border-cyan-500/30">
-                    <span className="text-[10px] text-cyan-400 font-bold block mb-1">PUTARAN 2 (TUKAR SISI):</span>
-                    <span className="text-zinc-200 block truncate">{match.teamB}: <strong>{match.scoreBLeg2 || 0}</strong></span>
-                    <span className="text-zinc-200 block truncate">{match.teamA}: <strong>{match.scoreALeg2 || 0}</strong></span>
-                  </div>
-                </div>
-              )}
-
-              <div className="flex items-center justify-around">
-                <div>
-                  <span className="text-[10px] text-rose-400 uppercase block font-bold">
-                    {is2x ? "Rata-Rata Tim A" : "Sudut Merah"}
-                  </span>
-                  <span className="text-sm font-bold text-white block truncate max-w-[130px]">{match.teamA}</span>
-                  <span className="text-2xl font-black text-amber-400">{match.scoreA} PTS</span>
-                </div>
-                <div className="text-zinc-600 font-black text-lg">VS</div>
-                <div>
-                  <span className="text-[10px] text-blue-400 uppercase block font-bold">
-                    {is2x ? "Rata-Rata Tim B" : "Sudut Biru"}
-                  </span>
-                  <span className="text-sm font-bold text-white block truncate max-w-[130px]">{match.teamB}</span>
-                  <span className="text-2xl font-black text-amber-400">{match.scoreB} PTS</span>
-                </div>
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xl flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-[#0a172c] border-2 border-cyan-500/80 rounded-3xl p-6 sm:p-8 max-w-2xl w-full max-h-[92vh] overflow-y-auto text-center space-y-5 shadow-[0_0_80px_rgba(0,163,255,0.4)] animate-in fade-in zoom-in-95 duration-200 my-auto">
+            <div className="flex items-center justify-center gap-4">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-cyan-400 via-sky-400 to-amber-400 flex items-center justify-center text-zinc-950 shadow-xl shadow-cyan-500/30 shrink-0">
+                <Trophy className="w-8 h-8 fill-current" />
+              </div>
+              <div className="text-left space-y-1">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-widest text-cyan-400 block">
+                  HASIL RESMI PERTANDINGAN
+                </span>
+                <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                  {winnerTeamName ? (
+                    <>
+                      <span className="text-amber-400">{winnerTeamName}</span> MENANG!
+                    </>
+                  ) : (
+                    "PERTANDINGAN SERI!"
+                  )}
+                </h2>
+                <p className="text-xs text-zinc-400">
+                  {winnerResolution.decidedBy === "finish_time" && winnerTeamName
+                    ? `Poin sama (${match.scoreA} - ${match.scoreB}) — ${winnerTeamName} menang lewat waktu finish lebih cepat!`
+                    : is2x
+                    ? "Nilai akhir dihitung dari rata-rata Putaran 1 & Putaran 2."
+                    : "Skor resmi telah terkunci dan peringkat klasemen diperbarui."}
+                </p>
               </div>
             </div>
 
-            {/* Next Match Quick Jump Button */}
-            {nextMatch && (
-              <button
-                type="button"
-                onMouseEnter={() => {
-                  try {
-                    router.prefetch(`/tanding/${nextMatch.id}`);
-                  } catch {}
-                }}
-                onClick={() => {
-                  setShowWinnerModal(false);
-                  try {
-                    router.prefetch(`/tanding/${nextMatch.id}`);
-                  } catch {}
-                  setShutterToNext(nextMatch);
-                }}
-                className="w-full py-3.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 via-sky-400 to-amber-400 text-zinc-950 font-black text-xs sm:text-sm hover:brightness-110 shadow-lg shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all cursor-pointer"
-              >
-                <Play className="w-4 h-4 fill-current" />
-                <span>
-                  Lanjut ke Laga Selanjutnya ({nextMatch.matchLabel}: {nextMatch.teamA} vs {nextMatch.teamB}) ➔
-                </span>
-              </button>
-            )}
+            {/* Score Summary + Final Average Box */}
+            <div className="p-4 rounded-2xl bg-zinc-950/80 border border-zinc-800 space-y-4 font-mono">
+              <div className={`grid gap-3 text-left ${isSingle ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2"}`}>
+                {(
+                  [
+                    {
+                      key: "A" as const,
+                      name: match.teamA,
+                      leg1: match.scoreALeg1 || 0,
+                      leg2: match.scoreALeg2 || 0,
+                      finalScore: match.scoreA || 0,
+                      finishTimeFormatted: winnerResolution.teamAFinishFormatted,
+                      label: is2x ? "Tim A" : "Sudut Merah",
+                      accentBorder: "border-rose-500/30 bg-rose-500/5",
+                      accentText: "text-rose-400",
+                    },
+                    ...(!isSingle
+                      ? [
+                          {
+                            key: "B" as const,
+                            name: match.teamB,
+                            leg1: match.scoreBLeg1 || 0,
+                            leg2: match.scoreBLeg2 || 0,
+                            finalScore: match.scoreB || 0,
+                            finishTimeFormatted: winnerResolution.teamBFinishFormatted,
+                            label: is2x ? "Tim B" : "Sudut Biru",
+                            accentBorder: "border-blue-500/30 bg-blue-500/5",
+                            accentText: "text-blue-400",
+                          },
+                        ]
+                      : []),
+                  ]
+                ).map((teamInfo) => {
+                  const rows = getScoreCategoryBreakdown(
+                    is2x ? winnerBreakdownLeg : "all",
+                    teamInfo.key
+                  );
+                  return (
+                    <div
+                      key={teamInfo.key}
+                      className={`p-3.5 rounded-2xl border space-y-3 ${teamInfo.accentBorder}`}
+                    >
+                      <div className="flex items-start justify-between gap-2 border-b border-white/10 pb-2.5">
+                        <div className="min-w-0">
+                          <span className={`text-[10px] uppercase font-bold block ${teamInfo.accentText}`}>
+                            {teamInfo.label}
+                          </span>
+                          <span className="text-sm font-black text-white block truncate">
+                            {teamInfo.name}
+                          </span>
+                          {(is2x || teamInfo.finishTimeFormatted) && (
+                            <div className="flex flex-wrap items-center gap-1.5 mt-1 text-[10px] text-zinc-400">
+                              {is2x && (
+                                <>
+                                  <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800">
+                                    P1: <strong className="text-white">{teamInfo.leg1}</strong>
+                                  </span>
+                                  <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-cyan-500/30">
+                                    P2: <strong className="text-cyan-300">{teamInfo.leg2}</strong>
+                                  </span>
+                                </>
+                              )}
+                              {teamInfo.finishTimeFormatted && (
+                                <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+                                  ⏱ Finish: <strong>{teamInfo.finishTimeFormatted}</strong>
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-[9px] uppercase text-zinc-400 block">
+                            {is2x ? "Nilai Akhir (Rata-Rata)" : "Nilai Akhir"}
+                          </span>
+                          <span className="text-xl sm:text-2xl font-black text-amber-400">
+                            {teamInfo.finalScore} PTS
+                          </span>
+                        </div>
+                      </div>
 
-            <div className="pt-2">
+                      {/* Rincian Per Kategori Skor (Point, Cekpoint, Finish, Bonus, Retry) */}
+                      <div className="space-y-1">
+                        {rows.map((row) => {
+                          const subtotalText =
+                            row.totalPts > 0 ? `+${row.totalPts}` : `${row.totalPts}`;
+                          return (
+                            <div
+                              key={row.key}
+                              className="flex items-center justify-between gap-2 px-2 py-1 rounded-lg bg-zinc-950/60 border border-zinc-800/70 text-[11px]"
+                            >
+                              <span className="font-bold text-zinc-200">{row.label}</span>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-400 text-[10px]">
+                                  {row.count}x
+                                </span>
+                                <span
+                                  className={`min-w-[52px] text-right font-black ${
+                                    row.totalPts > 0
+                                      ? "text-emerald-400"
+                                      : row.totalPts < 0
+                                      ? "text-rose-400"
+                                      : "text-zinc-500"
+                                  }`}
+                                >
+                                  {subtotalText} PTS
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {is2x && (
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+                  <span className="text-zinc-400 font-bold">
+                    Tampilan Rincian Per Skor:
+                  </span>
+                  <div className="inline-flex p-1 rounded-xl bg-zinc-900 border border-zinc-800 gap-1">
+                    {(
+                      [
+                        { id: 2 as const, label: "Putaran 2" },
+                        { id: 1 as const, label: "Putaran 1" },
+                        { id: "all" as const, label: "Gabungan" },
+                      ]
+                    ).map((tab) => (
+                      <button
+                        key={String(tab.id)}
+                        type="button"
+                        onClick={() => setWinnerBreakdownLeg(tab.id)}
+                        className={`px-2.5 py-1 rounded-lg font-bold transition-colors cursor-pointer ${
+                          winnerBreakdownLeg === tab.id
+                            ? "bg-cyan-500 text-zinc-950"
+                            : "text-zinc-400 hover:text-white"
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-1">
               <Link
                 href="/?tab=bracket"
-                className="w-full py-3.5 rounded-2xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-white font-bold text-xs sm:text-sm hover:border-zinc-500 shadow-md text-center flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-400 to-emerald-400 text-zinc-950 font-black text-xs sm:text-sm hover:brightness-110 shadow-lg shadow-cyan-500/25 text-center flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <Check className="w-4 h-4 stroke-[3]" />
                 <span>Kembali ke Bagan</span>
@@ -3741,21 +4077,6 @@ export default function ArenaBattleMatchPage() {
           </div>
         </div>
       )}
-
-      {/* Shutter Transition to Next Match */}
-      <ArenaShutterTransition
-        isActive={Boolean(shutterToNext)}
-        matchLabel={shutterToNext?.matchLabel}
-        category={shutterToNext?.category}
-        teamA={shutterToNext?.teamA}
-        teamB={shutterToNext?.teamB}
-        round={shutterToNext?.round}
-        onComplete={() => {
-          if (shutterToNext) {
-            router.push(`/tanding/${shutterToNext.id}`);
-          }
-        }}
-      />
     </div>
   );
 }
